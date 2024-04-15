@@ -63,9 +63,13 @@ pub fn begin_session(
     Ok(SteamSession(steam_id))
 }
 
-pub fn end_session(steam_id: SteamSession) {
-    STEAM_SERVER.get_or_init(|| init_steam_server().expect("Could not init steam server"))
-        .end_authentication_session(steam_id.0);
+impl Drop for SteamSession {
+    fn drop(&mut self) {
+        log::info!("Ending steam session for {:?}", self);
+
+        STEAM_SERVER.get_or_init(|| init_steam_server().expect("Could not init steam server"))
+            .end_authentication_session(self.0);
+    }
 }
 
 fn hex_to_bytes(s: &str) -> Option<Vec<u8>> {
