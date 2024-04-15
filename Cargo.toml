@@ -1,0 +1,18 @@
+[workspace]
+members = [
+    "server",
+    "fnrpc",
+]
+
+[profile.release]
+strip = true
+lto = true
+codegen-units = 1
+panic = "abort"
+opt-level = "z"
+
+[workspace.dependencies.serde]
+version = "1.0"
+features = [
+    "derive",
+]

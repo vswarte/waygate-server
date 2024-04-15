@@ -1,0 +1,58 @@
+[package]
+name = "waygate-server"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+url = "2"
+rand = "0.8"
+async-trait = "0.1"
+log = "0.4"
+futures = "0.3"
+futures-channel = "0.3"
+thiserror = "1"
+env_logger = "0.11"
+dotenvy = "0.15"
+sodiumoxide = "*"
+
+[dependencies.sqlx]
+version = "0.7"
+features = [
+    "postgres",
+    "migrate",
+    "runtime-tokio-native-tls",
+    "macros",
+]
+
+[dependencies.serde]
+workspace = true
+
+[dependencies.futures-util]
+version = "0.3"
+features = [
+    "sink",
+]
+
+[dependencies.tungstenite]
+version = "0.20"
+features = [
+    "rustls",
+]
+
+[dependencies.tokio-tungstenite]
+version = "0.20"
+features = [
+    "rustls-tls-native-roots",
+]
+
+[dependencies.tokio]
+version = "1"
+features = [
+    "full",
+]
+
+[dependencies.fnrpc]
+path = "../fnrpc"
+
+[dependencies.steamworks]
+git = "https://github.com/vswarte/steamworks-rs"

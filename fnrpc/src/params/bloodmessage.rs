@@ -1,0 +1,43 @@
+use serde::{Serialize, Deserialize};
+
+use crate::params::shared::*;
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct RequestCreateBloodMessageParams {
+    pub area: OnlineArea,
+    pub character_id: i32,
+    pub data: Vec<u8>,
+    pub unk: i32,
+    pub group_passwords: Vec<String>,
+}
+
+pub type ResponseCreateBloodMessageParams = ObjectIdentifier;
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct RequestGetBloodMessageListParams {
+    pub search_areas: Vec<OnlineArea>,
+    pub group_passwords: Vec<String>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct ResponseGetBloodMessageListParamsEntry {
+    pub player_id: i32,
+    pub character_id: i32,
+    pub identifier: ObjectIdentifier,
+    pub rating_good: i32,
+    pub rating_bad: i32,
+    pub data: Vec<u8>,
+    pub area: OnlineArea,
+    pub group_passwords: Vec<String>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct ResponseGetBloodMessageListParams {
+    pub entries: Vec<ResponseGetBloodMessageListParamsEntry>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct RequestEvaluateBloodMessageParams {
+    pub identifier: ObjectIdentifier,
+    pub rating: u32,
+}
