@@ -11,7 +11,7 @@ pub enum DatabaseError {
 }
 
 pub async fn pool() -> Result<Pool<Postgres>, DatabaseError> {
-    let pool = Pool::<Postgres>::connect("postgres://postgres:test123@localhost/waygate").await?;
+    let pool = Pool::<Postgres>::connect(&dotenvy::var("DATABASE_URL")?).await?;
 
     Ok(pool)
 }
