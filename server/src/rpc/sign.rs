@@ -23,7 +23,7 @@ pub async fn handle_create_sign(
     request: RequestCreateSignParams,
 ) -> rpc::HandlerResult {
     let key = crate::pool::sign_pool_mut()
-        .insert(session.player_id as u32, (&request).into())?;
+        .insert(session.player_id, (&request).into())?;
 
     Ok(ResponseParams::CreateSign(
         ResponseCreateSignParams {
@@ -77,7 +77,6 @@ pub async fn handle_summon_sign(
         return Err(Box::new(SummonError::SignMissing));
     }
 
-    // TODO: move this to a factory or something?
     let push_payload = PushParams::Join(PushJoinParams {
         identifier: ObjectIdentifier {
             object_id: rand::thread_rng().gen::<i32>(),

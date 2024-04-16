@@ -42,7 +42,6 @@ impl SignHostMatcher {
 
 impl PoolEntryMatcher<SignPoolEntry, SignPoolQuery> for SignHostMatcher {
     fn matches(entry: &SignPoolEntry, query: &SignPoolQuery) -> bool {
-        // TODO: we can probably index entries by area instead
         if !query.areas.contains(&entry.area) {
             false
         } else if !entry.password.is_empty() || !query.password.is_empty() {

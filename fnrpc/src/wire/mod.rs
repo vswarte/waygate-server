@@ -99,6 +99,4 @@ mod tests {
             RequestUseItemLog::deserialize(&mut Deserializer::new(buf.as_slice())).unwrap();
         assert!(msg_deser == msg)
     }
-
-    // TODO: Add more tests
 }

@@ -8,7 +8,6 @@ use crate::database::{pool, DatabaseError};
 pub const SESSION_VALIDITY: u64 = 60 * 60;
 pub const SESSION_COOKIE_SIZE: usize = 32;
 
-// TODO: stop copying this shit around everywhere
 #[derive(Clone, Debug)]
 pub struct ClientSession {
     pub external_id: String,

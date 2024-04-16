@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use std::sync::atomic::{AtomicU32, Ordering};
+use std::sync::atomic::{AtomicI32, Ordering};
 
 use super::key::PoolKey;
 use super::PoolError;
@@ -10,14 +10,14 @@ pub struct MatchResult<TEntry>(pub PoolKey, pub TEntry);
 
 #[derive(Debug)]
 pub struct Pool<TEntry: Clone> {
-    counter: AtomicU32,
+    counter: AtomicI32,
     entries: HashMap<PoolKey, TEntry>,
 }
 
 impl<TEntry: Clone> Default for Pool<TEntry> {
     fn default() -> Self {
         Self {
-            counter: AtomicU32::default(),
+            counter: AtomicI32::default(),
             entries: Default::default(),
         }
     }
@@ -47,7 +47,7 @@ impl<TEntry: Clone> Pool<TEntry> {
 
     pub fn insert(
         &mut self,
-        topic: u32,
+        topic: i32,
         entry: TEntry,
     ) -> Result<PoolKey, PoolError> {
         let identifier = self.counter.fetch_add(1, Ordering::Relaxed);

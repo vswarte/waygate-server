@@ -331,12 +331,6 @@ pub struct ClientStateAuthenticated {
 
 impl ClientState for ClientStateAuthenticated {}
 
-impl Drop for ClientStateAuthenticated {
-    fn drop(&mut self) {
-        log::info!("Cleaning up...");
-    }
-}
-
 impl Client<ClientStateAuthenticated> {
     pub async fn serve(&mut self) -> Result<(), ClientError> {
         tokio::select! {
