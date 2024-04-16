@@ -17,6 +17,9 @@ mod util;
 async fn main () -> Result<(), io::Error> {
     env_logger::init();
 
+    #[cfg(feature = "dump")]
+    std::fs::create_dir_all("./dump/")?;
+
     log::info!("Initing matching pools");
     pool::init_pools()
         .expect("Could not initialize pools");

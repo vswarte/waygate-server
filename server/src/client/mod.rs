@@ -392,8 +392,19 @@ impl Client<ClientStateAuthenticated> {
         message: &[u8],
     ) -> Result<(), ClientError> {
         let (responder, request) = rpc::create_handling_context(&message)?;
-
         log::debug!("Handling incoming request. request = {request:?}");
+
+        #[cfg(feature = "dump")]
+        {
+            std::fs::write(
+                format!(
+                    "./dump/request-{}-{}.bin",
+                    self.state.session.session_id,
+                    responder.sequence,
+                ),
+                message,
+            )?;
+        }
 
         let response: Result<ResponseParams, Box<dyn std::error::Error>> = match rpc::handler::spawn_handling_task(
             self.state.session.clone(),

@@ -14,33 +14,28 @@ type UpdateListener = fn(
     &RequestUpdatePlayerStatusParams,
 );
 
-const UPDATE_LISTENERS: [UpdateListener; 0] = [
-    // update_break_in_status,
-];
-
 pub async fn handle_update_player_status(
     session: ClientSession,
     params: RequestUpdatePlayerStatusParams
 ) -> rpc::HandlerResult {
+    #[cfg(feature = "debug-push")]
+    listen_debug_buffs(&params, &session).await;
+
+    Ok(ResponseParams::UpdatePlayerStatus)
+}
+
+async fn listen_debug_buffs(params: &RequestUpdatePlayerStatusParams, session: &ClientSession) {
+    log::info!("Passwords: {:?}", params.character.group_passwords);
+
     if params.character.group_passwords.iter().any(|e| e == "freebuff") {
+        log::info!("Sending test shardbearer buff to {}", session.player_id);
         push::send_push(session.player_id, get_test_buff()).await.unwrap();
     }
 
     if params.character.group_passwords.iter().any(|e| e == "announce") {
+        log::info!("Sending test announcement to {}", session.player_id);
         push::send_push(session.player_id, get_test_announcement()).await.unwrap();
     }
-
-    // let mut status_map = STATUS_MAP.get_or_init(Default::default)
-    //     .lock()
-    //     .expect("Could not acquire lock for status map");
-    //
-    // let previous_params = status_map.insert(session.player_id, params.clone());
-    for listener in UPDATE_LISTENERS.iter() {
-        // listener(&session, &params, previous_params.as_ref());
-        listener(session.clone(), &params);
-    }
-
-    Ok(ResponseParams::UpdatePlayerStatus)
 }
 
 fn get_test_buff() -> fnrpc::push::PushParams {
@@ -85,41 +80,12 @@ fn get_test_announcement() -> fnrpc::push::PushParams {
             unk2: 0x0,
         },
         section2: fnrpc::push::PushNotifyParamsSection2::Variant1 {
-            message: "Test announcement: I ate too much cheese".to_string(),
+            message: "Test Announcement".to_string(),
             unk1: 0x0,
             unk2: 0x0,
             unk3: 0x0,
         },
     })
-}
-
-// TODO: make this less cursed
-fn update_break_in_status(
-    session: ClientSession,
-    status: &RequestUpdatePlayerStatusParams,
-    _previous: Option<&RequestUpdatePlayerStatusParams>,
-) {
-    // let invasion_pool = invasion_pool_mut()
-    //     .unwrap()
-    //
-    // match &session.invasion_pool_token {
-    //     Some(_) => {
-    //         if status.character.online_activity == 0x0 {
-    //             // Drop entry from pool
-    //             let _ = session.invasion_pool_token.take();
-    //         } else {
-    //
-    //         }
-    //     },
-    //     None => {
-    //         if status.character.online_activity != 0x0 {
-    //             let token = invasion_pool.insert(
-    //                 session.player_id as u32,
-    //                 status.into(),
-    //             );
-    //         }
-    //     },
-    // }
 }
 
 impl From<(String, &RequestUpdatePlayerStatusParams)> for InvasionPoolEntry {
