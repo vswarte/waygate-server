@@ -4,7 +4,7 @@ use fnrpc::shared::*;
 use fnrpc::ResponseParams;
 use thiserror::Error;
 
-use crate::database::pool;
+use crate::database;
 use crate::rpc;
 use crate::session::ClientSession;
 
@@ -12,7 +12,7 @@ pub async fn handle_create_blood_message(
     session: ClientSession,
     params: RequestCreateBloodMessageParams,
 ) -> rpc::HandlerResult {
-    let pool = pool().await?;
+    let mut connection = database::acquire().await?;
     let bloodmessage_id = sqlx::query("INSERT INTO bloodmessages (
             player_id,
             character_id,
@@ -38,7 +38,7 @@ pub async fn handle_create_blood_message(
         .bind(params.data)
         .bind(params.area.area)
         .bind(params.area.play_region)
-        .fetch_one(&pool)
+        .fetch_one(&mut *connection)
         .await?
         .get("bloodmessage_id");
 
@@ -57,10 +57,10 @@ pub async fn handle_get_blood_message_list(
         .map(|a| a.play_region)
         .collect::<Vec<i32>>();
 
-    let pool = pool().await?;
+    let mut connection = database::acquire().await?;
     let entries = sqlx::query_as::<_, BloodMessage>("SELECT * FROM bloodmessages WHERE play_region = ANY($1) ORDER BY random() LIMIT 64")
         .bind(play_regions)
-        .fetch_all(&pool)
+        .fetch_all(&mut *connection)
         .await?
         .into_iter()
         .map(|e| e.into())
@@ -74,8 +74,6 @@ pub async fn handle_get_blood_message_list(
 pub async fn handle_evaluate_blood_message(
     params: RequestEvaluateBloodMessageParams,
 ) -> rpc::HandlerResult {
-    let pool = pool().await?;
-
     let query = match params.rating.try_into()? {
         BloodMessageRating::Good => {
             sqlx::query("UPDATE bloodmessages SET rating_good = rating_good + 1 WHERE bloodmessage_id = $1")
@@ -85,8 +83,9 @@ pub async fn handle_evaluate_blood_message(
         },
     };
 
+    let mut connection = database::acquire().await?;
     query.bind(params.identifier.object_id)
-        .execute(&pool)
+        .execute(&mut *connection)
         .await?;
 
     Ok(ResponseParams::EvaluateBloodMessage)
@@ -100,10 +99,10 @@ pub async fn handle_reentry_blood_message(
         .map(|a| a.object_id)
         .collect::<Vec<i32>>();
 
-    let pool = pool().await?;
+    let mut connection = database::acquire().await?;
     let identifiers = sqlx::query_as::<_, BloodMessage>("SELECT * FROM bloodmessages WHERE bloodmessage_id = ANY($1)")
         .bind(bloodmessages)
-        .fetch_all(&pool)
+        .fetch_all(&mut *connection)
         .await?
         .into_iter()
         .map(|e| ObjectIdentifier {
@@ -127,11 +126,11 @@ pub async fn handle_remove_blood_message(
         params.identifier.object_id,
     );
 
-    let pool = pool().await?;
+    let mut connection = database::acquire().await?;
     let identifiers = sqlx::query_as::<_, BloodMessage>("DELETE FROM bloodmessages WHERE bloodmessage_id = $1 AND player_id = $2")
         .bind(params.identifier.object_id)
         .bind(session.player_id)
-        .fetch_all(&pool)
+        .fetch_all(&mut *connection)
         .await?
         .into_iter()
         .map(|e| ObjectIdentifier {

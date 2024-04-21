@@ -4,7 +4,7 @@ use fnrpc::shared::*;
 use fnrpc::ghostdata::*;
 use fnrpc::ResponseParams;
 
-use crate::database::pool;
+use crate::database;
 use crate::rpc;
 use crate::session::ClientSession;
 
@@ -12,7 +12,7 @@ pub async fn handle_create_ghostdata(
     session: ClientSession,
     params: RequestCreateGhostDataParams,
 ) -> rpc::HandlerResult {
-    let pool = pool().await?;
+    let mut connection = database::acquire().await?;
     let ghostdata_id = sqlx::query("INSERT INTO ghostdata (
             player_id,
             session_id,
@@ -31,7 +31,7 @@ pub async fn handle_create_ghostdata(
         .bind(params.replay_data)
         .bind(params.area.area)
         .bind(params.area.play_region)
-        .fetch_one(&pool)
+        .fetch_one(&mut *connection)
         .await?
         .get("ghostdata_id");
 
@@ -50,10 +50,10 @@ pub async fn handle_get_ghostdata_list(
         .map(|a| a.play_region)
         .collect::<Vec<i32>>();
 
-    let pool = pool().await?;
+    let mut connection = database::acquire().await?;
     let entries = sqlx::query_as::<_, GhostData>("SELECT * FROM ghostdata WHERE play_region = ANY($1) ORDER BY random() LIMIT 64")
         .bind(play_regions)
-        .fetch_all(&pool)
+        .fetch_all(&mut *connection)
         .await?
         .into_iter()
         .map(|e| e.into())

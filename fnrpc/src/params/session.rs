@@ -36,17 +36,9 @@ pub struct ResponseCreateSessionParams {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct RequestRestoreSessionParams {
     pub game_version: u32,
-    /*
     pub unk1: u32,
     pub unk2: u32,
     pub steam_ticket: Vec<u8>,
-    pub unk: u32,
-    pub session_id: i32,
-    pub valid_from: u64,
-    pub valid_until: u64,
-    pub cookie: String,
-    pub unk_string: String,
-    */
 }
 
 #[derive(Serialize, Deserialize, Debug)]

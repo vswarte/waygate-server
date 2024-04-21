@@ -2,7 +2,7 @@ use std::time;
 use rand::prelude::*;
 use sqlx::Row;
 
-use crate::database::{pool, DatabaseError};
+use crate::database::{self, DatabaseError};
 
 // Sessions are valid for an hour
 pub const SESSION_VALIDITY: u64 = 60 * 60;
@@ -22,11 +22,11 @@ pub async fn new_client_session(external_id: &str) -> Result<ClientSession, Data
     let player_id = acquire_player_id(external_id).await?;
     let cookie = generate_session_cookie();
 
-    let pool = pool().await?;
+    let mut connection = database::acquire().await?;
     let session_id = sqlx::query("INSERT INTO sessions (player_id, cookie) VALUES ($1, $2) RETURNING session_id")
         .bind(player_id)
         .bind(cookie)
-        .fetch_one(&pool)
+        .fetch_one(&mut *connection)
         .await?
         .get("session_id");
 
@@ -54,10 +54,10 @@ struct Player {
 /// Tries to fetch our player ID by the external_id, creates the record and
 /// returns ID of newly created row if none exists with that external ID.
 async fn acquire_player_id(external_id: &str) -> Result<i32, DatabaseError> {
-    let pool = pool().await?;
+    let mut connection = database::acquire().await?;
     let result = sqlx::query_as::<_, Player>("SELECT player_id FROM players WHERE external_id = $1",)
         .bind(external_id)
-        .fetch_optional(&pool)
+        .fetch_optional(&mut *connection)
         .await?;
 
     match result {
@@ -65,8 +65,9 @@ async fn acquire_player_id(external_id: &str) -> Result<i32, DatabaseError> {
         None => {
             let inserted = sqlx::query("INSERT INTO players (external_id) VALUES ($1) RETURNING player_id")
                 .bind(external_id)
-                .fetch_one(&pool)
+                .fetch_one(&mut *connection)
                 .await?;
+
             Ok(inserted.get("player_id"))
         }
     }

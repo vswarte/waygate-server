@@ -22,7 +22,6 @@ pub enum SteamError {
 }
 
 pub fn init() -> Result<(), SteamAPIInitError> {
-
     let (server, _) = steamworks::Server::init(
         "127.0.0.1".parse().unwrap(),
         10901,

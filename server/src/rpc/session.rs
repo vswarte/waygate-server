@@ -34,8 +34,14 @@ pub async fn handle_create_session(
 
 pub async fn handle_restore_session(
     external_id: &str,
-    _params: RequestRestoreSessionParams,
+    params: RequestRestoreSessionParams,
 ) -> Result<(session::ClientSession, ResponseParams), Box<dyn Error>> {
+    log::info!(
+        "Player sent RestoreSession. external_id = {}. params = {:#?}.",
+        external_id,
+        params,
+    );
+
     let session = session::new_client_session(external_id).await?;
 
     let session_id = session.session_id;
