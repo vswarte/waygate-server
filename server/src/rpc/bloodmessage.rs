@@ -58,7 +58,7 @@ pub async fn handle_get_blood_message_list(
         .collect::<Vec<i32>>();
 
     let pool = pool().await?;
-    let mut entries = sqlx::query_as::<_, BloodMessage>("SELECT * FROM bloodmessages WHERE play_region = ANY($1) ORDER BY random() LIMIT 64")
+    let entries = sqlx::query_as::<_, BloodMessage>("SELECT * FROM bloodmessages WHERE play_region = ANY($1) ORDER BY random() LIMIT 64")
         .bind(play_regions)
         .fetch_all(&pool)
         .await?
@@ -101,7 +101,7 @@ pub async fn handle_reentry_blood_message(
         .collect::<Vec<i32>>();
 
     let pool = pool().await?;
-    let mut identifiers = sqlx::query_as::<_, BloodMessage>("SELECT * FROM bloodmessages WHERE bloodmessage_id = ANY($1)")
+    let identifiers = sqlx::query_as::<_, BloodMessage>("SELECT * FROM bloodmessages WHERE bloodmessage_id = ANY($1)")
         .bind(bloodmessages)
         .fetch_all(&pool)
         .await?
@@ -128,7 +128,7 @@ pub async fn handle_remove_blood_message(
     );
 
     let pool = pool().await?;
-    let mut identifiers = sqlx::query_as::<_, BloodMessage>("DELETE FROM bloodmessages WHERE bloodmessage_id = $1 AND player_id = $2")
+    let identifiers = sqlx::query_as::<_, BloodMessage>("DELETE FROM bloodmessages WHERE bloodmessage_id = $1 AND player_id = $2")
         .bind(params.identifier.object_id)
         .bind(session.player_id)
         .fetch_all(&pool)

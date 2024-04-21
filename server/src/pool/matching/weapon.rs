@@ -1,5 +1,6 @@
 use std::ops::Range;
 
+#[allow(unused)]
 pub struct WeaponLevelTableEntry {
     regular: u16,
     special: u16,

@@ -440,12 +440,3 @@ impl Client<ClientStateAuthenticated> {
         Ok(())
     }
 }
-
-pub fn hex_encode(input: &[u8]) -> String {
-    format!("{:02x?}", input)
-        .replace("[", "")
-        .replace("]", "")
-        .replace(" ", "")
-        .replace("0x", "")
-        .replace(",", "")
-}

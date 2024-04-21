@@ -55,7 +55,7 @@ pub async fn handle_get_bloodstain_list(
         .collect::<Vec<i32>>();
 
     let pool = pool().await?;
-    let mut entries = sqlx::query_as::<_, Bloodstain>("SELECT * FROM bloodstains WHERE play_region = ANY($1) ORDER BY random() LIMIT 64")
+    let entries = sqlx::query_as::<_, Bloodstain>("SELECT * FROM bloodstains WHERE play_region = ANY($1) ORDER BY random() LIMIT 64")
         .bind(play_regions)
         .fetch_all(&pool)
         .await?
@@ -93,7 +93,6 @@ pub async fn handle_get_deading_ghost<'a>(
 #[derive(sqlx::FromRow)]
 struct Bloodstain {
     bloodstain_id: i32,
-    player_id: i32,
     session_id: i32,
     advertisement_data: Vec<u8>,
     replay_data: Vec<u8>,

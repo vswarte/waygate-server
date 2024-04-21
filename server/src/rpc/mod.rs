@@ -117,10 +117,3 @@ impl ResponseContext {
         Ok(b.into_inner())
     }
 }
-
-fn encode_external_id(external_id: &str) -> String {
-    format!(
-        "{:x}",
-        u64::from_str_radix(external_id, 10).unwrap()
-    )
-}

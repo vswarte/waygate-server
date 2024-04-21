@@ -4,8 +4,6 @@ use std::sync::atomic::{AtomicI32, Ordering};
 use super::key::PoolKey;
 use super::PoolError;
 
-type EntryMap<TEntry> = HashMap<PoolKey, TEntry>;
-
 pub struct MatchResult<TEntry>(pub PoolKey, pub TEntry);
 
 #[derive(Debug)]

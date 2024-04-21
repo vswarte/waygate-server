@@ -10,7 +10,6 @@ pub const SESSION_COOKIE_SIZE: usize = 32;
 
 #[derive(Clone, Debug)]
 pub struct ClientSession {
-    pub external_id: String,
     pub cookie: String,
     pub player_id: i32,
     pub session_id: i32,
@@ -36,13 +35,11 @@ pub async fn new_client_session(external_id: &str) -> Result<ClientSession, Data
     let valid_from = (now - valid_for).as_secs();
     let valid_until = (now + valid_for).as_secs();
 
-    let external_id = external_id.to_string();
     let cookie = encode_session_cookie(cookie);
 
     Ok(ClientSession {
         player_id,
         session_id,
-        external_id,
         cookie,
         valid_from,
         valid_until,
@@ -52,15 +49,14 @@ pub async fn new_client_session(external_id: &str) -> Result<ClientSession, Data
 #[derive(sqlx::FromRow)]
 struct Player {
     player_id: i32,
-    external_id: String,
 }
 
 /// Tries to fetch our player ID by the external_id, creates the record and
 /// returns ID of newly created row if none exists with that external ID.
 async fn acquire_player_id(external_id: &str) -> Result<i32, DatabaseError> {
     let pool = pool().await?;
-    let result = sqlx::query_as::<_, Player>("SELECT player_id, external_id FROM players WHERE external_id = $1",)
-        .bind(external_id.clone())
+    let result = sqlx::query_as::<_, Player>("SELECT player_id FROM players WHERE external_id = $1",)
+        .bind(external_id)
         .fetch_optional(&pool)
         .await?;
 

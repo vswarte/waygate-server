@@ -4,7 +4,6 @@ use fnrpc::shared::*;
 use fnrpc::ghostdata::*;
 use fnrpc::ResponseParams;
 
-use crate::database;
 use crate::database::pool;
 use crate::rpc;
 use crate::session::ClientSession;
@@ -52,7 +51,7 @@ pub async fn handle_get_ghostdata_list(
         .collect::<Vec<i32>>();
 
     let pool = pool().await?;
-    let mut entries = sqlx::query_as::<_, GhostData>("SELECT * FROM ghostdata WHERE play_region = ANY($1) ORDER BY random() LIMIT 64")
+    let entries = sqlx::query_as::<_, GhostData>("SELECT * FROM ghostdata WHERE play_region = ANY($1) ORDER BY random() LIMIT 64")
         .bind(play_regions)
         .fetch_all(&pool)
         .await?
@@ -68,7 +67,6 @@ pub async fn handle_get_ghostdata_list(
 #[derive(sqlx::FromRow)]
 struct GhostData {
     ghostdata_id: i32,
-    player_id: i32,
     session_id: i32,
     replay_data: Vec<u8>,
     area: i32,

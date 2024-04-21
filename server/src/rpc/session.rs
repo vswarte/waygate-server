@@ -56,6 +56,8 @@ pub async fn handle_restore_session(
 pub async fn handle_delete_session(
     session: session::ClientSession,
 ) -> rpc::HandlerResult {
+    log::info!("Player sent DeleteSession. player = {}", session.player_id);
+
     // TODO: do actual session cleanup stuff
     Ok(ResponseParams::DeleteSession)
 }

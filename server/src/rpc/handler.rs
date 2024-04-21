@@ -12,6 +12,9 @@ pub fn spawn_handling_task(
     request: RequestParams,
 ) -> Option<HandlerTask> {
     Some(match request {
+        RequestParams::DeleteSession
+            => Box::pin(session::handle_delete_session(session)),
+
         // Client throws a steamworks error if this is returns an error
         RequestParams::RegisterUGC
             => Box::pin(ugc::handle_register_ugc()),

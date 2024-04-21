@@ -17,7 +17,7 @@ mod util;
 async fn main () -> Result<(), io::Error> {
     dotenvy::dotenv().expect("Could not init env vars");
     env_logger::init();
-    steam::init();
+    steam::init().expect("Could not initialize steam");
 
     #[cfg(feature = "dump")]
     std::fs::create_dir_all("./dump/")?;

@@ -31,7 +31,11 @@ pub fn init() -> Result<(), SteamAPIInitError> {
         ""
     )?;
 
-    STEAM_SERVER.set(server);
+    // steamworks::Server doesn't implement std::fmt::Debug...
+    match STEAM_SERVER.set(server) {
+        Ok(_) => {},
+        Err(_) => panic!("Could not initialize STEAM_SERVER static"),
+    }
 
     log::info!("Initialized steamworks");
 

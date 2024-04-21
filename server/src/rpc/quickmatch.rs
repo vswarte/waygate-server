@@ -1,21 +1,11 @@
-use fnrpc::push::PushPlayerJoiningQuickMatchParams;
-use fnrpc::push::PushJoiningQuickMatchParams;
-use fnrpc::push::PushParams;
-use fnrpc::push::PushJoinParams;
-use fnrpc::shared;
 use fnrpc::quickmatch::*;
 use fnrpc::ResponseParams;
-use fnrpc::push::JoinPayload;
-use rand::Rng;
 
 use crate::rpc;
-use crate::push;
 use crate::session::ClientSession;
 
-use super::encode_external_id;
-
 pub async fn handle_search_quick_match(
-    params: RequestSearchQuickMatchParams,
+    _params: RequestSearchQuickMatchParams,
 ) -> rpc::HandlerResult {
     todo!();
     // Ok(ResponseParams::SearchQuickMatch(ResponseSearchQuickMatchParams {
@@ -32,26 +22,26 @@ pub async fn handle_search_quick_match(
 }
 
 pub async fn handle_register_quick_match(
-    session: ClientSession,
-    params: RequestRegisterQuickMatchParams,
+    _session: ClientSession,
+    _params: RequestRegisterQuickMatchParams,
 ) -> rpc::HandlerResult {
     todo!();
     // let _quickmatch_id = repository::quickmatch::register_quickmatch(
     //     &params,
     //     &session.player_id,
     // );
-
-    Ok(ResponseParams::RegisterQuickMatch)
+    //
+    // Ok(ResponseParams::RegisterQuickMatch)
 }
 
 pub async fn handle_unregister_quick_match(
-    session: ClientSession,
+    _session: ClientSession,
 ) -> rpc::HandlerResult {
     todo!();
     // repository::quickmatch::unregister_quickmatches_for_player(&session.player_id)
     //     .map_err(|_| 0x0 as u32)?;
-
-    Ok(ResponseParams::UnregisterQuickMatch)
+    //
+    // Ok(ResponseParams::UnregisterQuickMatch)
 }
 
 pub async fn handle_update_quick_match() -> rpc::HandlerResult {
@@ -60,8 +50,8 @@ pub async fn handle_update_quick_match() -> rpc::HandlerResult {
 }
 
 pub async fn handle_join_quick_match(
-    session: ClientSession,
-    request: RequestJoinQuickMatchParams,
+    _session: ClientSession,
+    _request: RequestJoinQuickMatchParams,
 ) -> rpc::HandlerResult {
     todo!();
     // let quickmatch = repository::quickmatch::get_quick_match(request.host_player_id)
@@ -90,8 +80,8 @@ pub async fn handle_join_quick_match(
 }
 
 pub async fn handle_accept_quick_match(
-    session: ClientSession,
-    request: RequestAcceptQuickMatchParams,
+    _session: ClientSession,
+    _request: RequestAcceptQuickMatchParams,
 ) -> rpc::HandlerResult {
     todo!();
     // let quickmatch = repository::quickmatch::get_quick_match(session.player_id)

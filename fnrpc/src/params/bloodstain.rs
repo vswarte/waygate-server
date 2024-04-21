@@ -58,8 +58,8 @@ mod tests {
         let deserialized = RequestCreateBloodstainParams::deserialize(&mut Deserializer::new(buf))
             .unwrap();
 
-        assert_eq!(6043340, deserialized.area.area);
-        assert_eq!(6102002, deserialized.area.play_region);
+        assert_eq!(6043340, deserialized.area.play_region);
+        assert_eq!(6102002, deserialized.area.area);
         assert_ne!(0, deserialized.advertisement_data.len());
         assert_ne!(0, deserialized.replay_data.len());
         assert_eq!(String::from("group1"), deserialized.group_passwords[0]);
@@ -75,26 +75,26 @@ mod tests {
         let deserialized = RequestGetBloodstainListParams::deserialize(&mut Deserializer::new(buf))
             .unwrap();
 
-        assert_eq!(3000001, deserialized.search_areas[0].area);
         assert_eq!(3000001, deserialized.search_areas[0].play_region);
-        assert_eq!(6043330, deserialized.search_areas[1].area);
-        assert_eq!(6102002, deserialized.search_areas[1].play_region);
-        assert_eq!(6042330, deserialized.search_areas[2].area);
-        assert_eq!(6102002, deserialized.search_areas[2].play_region);
-        assert_eq!(3000000, deserialized.search_areas[3].area);
+        assert_eq!(3000001, deserialized.search_areas[0].area);
+        assert_eq!(6043330, deserialized.search_areas[1].play_region);
+        assert_eq!(6102002, deserialized.search_areas[1].area);
+        assert_eq!(6042330, deserialized.search_areas[2].play_region);
+        assert_eq!(6102002, deserialized.search_areas[2].area);
         assert_eq!(3000000, deserialized.search_areas[3].play_region);
-        assert_eq!(6043330, deserialized.search_areas[4].area);
-        assert_eq!(6102000, deserialized.search_areas[4].play_region);
-        assert_eq!(6043340, deserialized.search_areas[5].area);
-        assert_eq!(6102002, deserialized.search_areas[5].play_region);
-        assert_eq!(6043340, deserialized.search_areas[6].area);
-        assert_eq!(6102000, deserialized.search_areas[6].play_region);
-        assert_eq!(6043320, deserialized.search_areas[7].area);
-        assert_eq!(6102002, deserialized.search_areas[7].play_region);
-        assert_eq!(6042340, deserialized.search_areas[8].area);
-        assert_eq!(6102002, deserialized.search_areas[8].play_region);
-        assert_eq!(6042320, deserialized.search_areas[9].area);
-        assert_eq!(6102002, deserialized.search_areas[9].play_region);
+        assert_eq!(3000000, deserialized.search_areas[3].area);
+        assert_eq!(6043330, deserialized.search_areas[4].play_region);
+        assert_eq!(6102000, deserialized.search_areas[4].area);
+        assert_eq!(6043340, deserialized.search_areas[5].play_region);
+        assert_eq!(6102002, deserialized.search_areas[5].area);
+        assert_eq!(6043340, deserialized.search_areas[6].play_region);
+        assert_eq!(6102000, deserialized.search_areas[6].area);
+        assert_eq!(6043320, deserialized.search_areas[7].play_region);
+        assert_eq!(6102002, deserialized.search_areas[7].area);
+        assert_eq!(6042340, deserialized.search_areas[8].play_region);
+        assert_eq!(6102002, deserialized.search_areas[8].area);
+        assert_eq!(6042320, deserialized.search_areas[9].play_region);
+        assert_eq!(6102002, deserialized.search_areas[9].area);
         assert_eq!(String::from("group1"), deserialized.group_passwords[0]);
         assert_eq!(String::from("group2"), deserialized.group_passwords[1]);
         assert_eq!(String::from("group3"), deserialized.group_passwords[2]);
