@@ -32,32 +32,23 @@ impl From<(String, &RequestUpdatePlayerStatusParams)> for BreakinPoolEntry {
 }
 
 pub async fn handle_use_item_log(
-    session: ClientSession,
-    params: RequestUseItemLogParams,
+    _session: ClientSession,
+    _params: RequestUseItemLogParams,
 ) -> rpc::HandlerResult {
-    log::info!("Player sent UseItemLog. player = {}", session.player_id);
-    log::info!("params = {:#?}", params);
-
     Ok(ResponseParams::UseItemLog)
 }
 
 pub async fn handle_get_item_log(
-    session: ClientSession,
-    params: RequestGetItemLogParams,
+    _session: ClientSession,
+    _params: RequestGetItemLogParams,
 ) -> rpc::HandlerResult {
-    log::info!("Player sent GetItemLog. player = {}", session.player_id);
-    log::info!("params = {:#?}", params);
-
     Ok(ResponseParams::UseItemLog)
 }
 
 pub async fn handle_kill_enemy_log(
-    session: ClientSession,
-    params: RequestKillEnemyLogParams,
+    _session: ClientSession,
+    _params: RequestKillEnemyLogParams,
 ) -> rpc::HandlerResult {
-    log::info!("Player sent KillEnemyLog. player = {}", session.player_id);
-    log::info!("params = {:#?}", params);
-
     Ok(ResponseParams::KillEnemyLog)
 }
 

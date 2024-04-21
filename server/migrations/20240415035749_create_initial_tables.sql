@@ -1,12 +1,13 @@
 CREATE TABLE players (
     player_id SERIAL PRIMARY KEY,
-    external_id varchar NOT NULL
+    external_id VARCHAR NOT NULL
 );
 
 CREATE TABLE sessions (
     session_id SERIAL PRIMARY KEY,
     player_id INTEGER NOT NULL,
-    cookie BYTEA NOT NULL
+    cookie VARCHAR NOT NULL,
+    valid_until BIGINT NOT NULL
 );
 
 CREATE TABLE bloodmessages (

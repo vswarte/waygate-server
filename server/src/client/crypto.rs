@@ -53,12 +53,14 @@ impl ClientCrypto<ClientCryptoStateCreated> {
         let server_nonce = crypto::secretbox::gen_nonce();
         let client_nonce = crypto::secretbox::gen_nonce();
 
-        ClientCrypto { state: ClientCryptoStateParametersGenerated {
-            server_pk,
-            server_sk,
-            server_nonce,
-            client_nonce,
-        } }
+        ClientCrypto {
+            state: ClientCryptoStateParametersGenerated {
+                server_pk,
+                server_sk,
+                server_nonce,
+                client_nonce,
+            }
+        }
     }
 }
 

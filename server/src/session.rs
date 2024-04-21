@@ -6,15 +6,14 @@ use crate::database::{self, DatabaseError};
 
 // Sessions are valid for an hour
 pub const SESSION_VALIDITY: u64 = 60 * 60;
-pub const SESSION_COOKIE_SIZE: usize = 32;
 
 #[derive(Clone, Debug)]
 pub struct ClientSession {
     pub cookie: String,
     pub player_id: i32,
     pub session_id: i32,
-    pub valid_from: u64,
-    pub valid_until: u64,
+    pub valid_from: i64,
+    pub valid_until: i64,
 }
 
 /// Creates a new session for a given external_id
@@ -22,20 +21,19 @@ pub async fn new_client_session(external_id: &str) -> Result<ClientSession, Data
     let player_id = acquire_player_id(external_id).await?;
     let cookie = generate_session_cookie();
 
+    let now = time::SystemTime::now().duration_since(time::UNIX_EPOCH).unwrap();
+    let valid_for = time::Duration::from_secs(SESSION_VALIDITY);
+    let valid_from = (now - valid_for).as_secs() as i64;
+    let valid_until = (now + valid_for).as_secs() as i64;
+
     let mut connection = database::acquire().await?;
-    let session_id = sqlx::query("INSERT INTO sessions (player_id, cookie) VALUES ($1, $2) RETURNING session_id")
+    let session_id = sqlx::query("INSERT INTO sessions (player_id, cookie, valid_until) VALUES ($1, $2, $3) RETURNING session_id")
         .bind(player_id)
-        .bind(cookie)
+        .bind(&cookie)
+        .bind(valid_until)
         .fetch_one(&mut *connection)
         .await?
         .get("session_id");
-
-    let valid_for = time::Duration::from_secs(SESSION_VALIDITY);
-    let now = time::SystemTime::now().duration_since(time::UNIX_EPOCH).unwrap();
-    let valid_from = (now - valid_for).as_secs();
-    let valid_until = (now + valid_for).as_secs();
-
-    let cookie = encode_session_cookie(cookie);
 
     Ok(ClientSession {
         player_id,
@@ -46,9 +44,41 @@ pub async fn new_client_session(external_id: &str) -> Result<ClientSession, Data
     })
 }
 
+/// Creates a client session from an already existing session 
+pub async fn get_client_session(session_id: i32, cookie: &str) -> Result<ClientSession, DatabaseError> {
+    let now = time::SystemTime::now().duration_since(time::UNIX_EPOCH).unwrap();
+
+    let mut connection = database::acquire().await?;
+    let session = sqlx::query_as::<_, Session>("SELECT * FROM sessions WHERE session_id = $1 AND cookie = $2 AND valid_until > $3")
+        .bind(session_id)
+        .bind(cookie)
+        .bind(now.as_secs() as i64)
+        .fetch_one(&mut *connection)
+        .await?;
+
+    let valid_for = time::Duration::from_secs(SESSION_VALIDITY);
+    let valid_from = (now - valid_for).as_secs() as i64;
+
+    Ok(ClientSession {
+        player_id: session.player_id,
+        session_id: session.session_id,
+        cookie: session.cookie,
+        valid_from,
+        valid_until: session.valid_until,
+    })
+}
+
 #[derive(sqlx::FromRow)]
 struct Player {
     player_id: i32,
+}
+
+#[derive(sqlx::FromRow, Debug)]
+struct Session {
+    session_id: i32,
+    player_id: i32,
+    valid_until: i64,
+    cookie: String,
 }
 
 /// Tries to fetch our player ID by the external_id, creates the record and
@@ -73,11 +103,11 @@ async fn acquire_player_id(external_id: &str) -> Result<i32, DatabaseError> {
     }
 }
 
-fn generate_session_cookie() -> [u8; SESSION_COOKIE_SIZE] {
-    thread_rng().gen::<[u8; 32]>()
+fn generate_session_cookie() -> String {
+    encode_session_cookie(&thread_rng().gen::<[u8; 32]>())
 }
 
-fn encode_session_cookie(cookie: [u8; SESSION_COOKIE_SIZE]) -> String {
+fn encode_session_cookie(cookie: &[u8]) -> String {
     format!("{:02x?}", cookie)
         .replace("[", "")
         .replace("]", "")

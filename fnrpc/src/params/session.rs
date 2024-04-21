@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
 
+use crate::shared::ObjectIdentifier;
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct RequestCreateSessionParams {
     pub unk1: u32,
@@ -21,15 +23,19 @@ pub struct RequestCreateSessionParams {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+pub struct SessionData {
+    pub identifier: ObjectIdentifier,
+    pub valid_from: i64,
+    pub valid_until: i64,
+    pub cookie: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
 pub struct ResponseCreateSessionParams {
     pub player_id: i32,
     pub steam_id: String,
     pub ip_address: String,
-    pub unk: u32,
-    pub session_id: i32,
-    pub valid_from: u64,
-    pub valid_until: u64,
-    pub cookie: String,
+    pub session_data: SessionData,
     pub unk_string: String,
 }
 
@@ -39,15 +45,12 @@ pub struct RequestRestoreSessionParams {
     pub unk1: u32,
     pub unk2: u32,
     pub steam_ticket: Vec<u8>,
+    pub session_data: SessionData,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ResponseRestoreSessionParams {
-    pub unk: u32,
-    pub session_id: i32,
-    pub valid_from: u64,
-    pub valid_until: u64,
-    pub cookie: String,
+    pub session_data: SessionData,
     pub unk_string: String,
 }
 
@@ -64,13 +67,17 @@ mod tests {
             player_id: 288724,
             steam_id: String::from("01100001023a7e18"),
             ip_address: String::from("99.99.999.999"),
-            unk: 2131458904,
-            session_id: 291891302,
-            valid_from: 1695716746,
-            valid_until: 1695720346,
-            cookie: String::from(
-                "a6ab6316a2e7683db73c6fe281b280e251f1756458bad659428799adcfbffc4e",
-            ),
+            session_data: SessionData {
+                identifier: ObjectIdentifier {
+                    object_id: 2131458904,
+                    secondary_id: 291891302,
+                },
+                valid_from: 1695716746,
+                valid_until: 1695720346,
+                cookie: String::from(
+                    "a6ab6316a2e7683db73c6fe281b280e251f1756458bad659428799adcfbffc4e",
+                ),
+            },
             unk_string: String::from(""),
         };
 

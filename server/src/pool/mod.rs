@@ -30,6 +30,8 @@ pub fn init_pools() -> Result<(), PoolError> {
     BREAKIN_POOL.set(RwLock::new(Pool::default()))
         .map_err(|_| PoolError::Initialize)?;
 
+    log::info!("Initialized matching pools");
+
     Ok(())
 }
 

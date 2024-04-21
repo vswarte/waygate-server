@@ -215,10 +215,11 @@ pub struct RequestGetItemLogParamsEntry {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct RequestKillEnemyLogParams {
     pub killed_enemies: Vec<RequestKillEnemyLogParamsEntry>,
+    pub location: Location,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct RequestKillEnemyLogParamsEntry {
-    pub npc_param_id: Location,
-    pub count: u32,
+    pub npc_param: u32,
+    pub killed_count: u32,
 }

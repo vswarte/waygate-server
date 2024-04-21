@@ -127,21 +127,13 @@ pub async fn handle_remove_blood_message(
     );
 
     let mut connection = database::acquire().await?;
-    let identifiers = sqlx::query_as::<_, BloodMessage>("DELETE FROM bloodmessages WHERE bloodmessage_id = $1 AND player_id = $2")
+    sqlx::query("DELETE FROM bloodmessages WHERE bloodmessage_id = $1 AND player_id = $2")
         .bind(params.identifier.object_id)
         .bind(session.player_id)
         .fetch_all(&mut *connection)
-        .await?
-        .into_iter()
-        .map(|e| ObjectIdentifier {
-            object_id: e.bloodmessage_id,
-            secondary_id: e.session_id,
-        })
-        .collect();
+        .await?;
 
-    Ok(ResponseParams::ReentryBloodMessage(
-        ResponseReentryBloodMessageParams { identifiers }
-    ))
+    Ok(ResponseParams::RemoveBloodMessage)
 }
 
 #[derive(sqlx::FromRow)]

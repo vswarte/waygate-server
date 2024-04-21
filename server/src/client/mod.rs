@@ -7,6 +7,7 @@ use std::io;
 use std::net::SocketAddr;
 use fnrpc::ResponseParams;
 use thiserror::Error;
+use tokio::io::AsyncReadExt;
 use tungstenite::Message;
 use futures_util::SinkExt;
 use fnrpc::{PayloadType, RequestParams};
@@ -391,13 +392,19 @@ impl Client<ClientStateAuthenticated> {
         &mut self,
         message: &[u8],
     ) -> Result<(), ClientError> {
+        let test = (&message[5..9]).read_u32_le().await?;
+        log::info!(
+            "Received message for session {}. Type int = {}",
+            self.state.session.session_id,
+            test,
+        );
+
         let (responder, request) = rpc::create_handling_context(&message)?;
         log::info!(
-            "Received message type {} for session {}",
+            "Parsed message as type {} for session {}",
             request.name(),
             self.state.session.session_id,
         );
-        log::debug!("Data = {request:?}");
 
         #[cfg(feature = "dump")]
         {

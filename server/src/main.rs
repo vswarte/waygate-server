@@ -19,13 +19,10 @@ async fn main () -> Result<(), io::Error> {
     env_logger::init();
     database::init().await.expect("Could not initialize database");
     steam::init().expect("Could not initialize steam");
+    pool::init_pools().expect("Could not initialize pools");
 
     #[cfg(feature = "dump")]
     std::fs::create_dir_all("./dump/")?;
-
-    log::info!("Initing matching pools");
-    pool::init_pools()
-        .expect("Could not initialize pools");
 
     let bind = env::args()
         .nth(1)
