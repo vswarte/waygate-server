@@ -21,7 +21,7 @@ pub enum ResponseParams {
     RejectSign,
     CreateBloodMessage(bloodmessage::ResponseCreateBloodMessageParams),
     RemoveBloodMessage,
-    ReentryBloodMessage,
+    ReentryBloodMessage(bloodmessage::ResponseReentryBloodMessageParams),
     GetBloodMessageList(bloodmessage::ResponseGetBloodMessageListParams),
     EvaluateBloodMessage,
     GetBloodMessageDetail,

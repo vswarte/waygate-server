@@ -25,6 +25,9 @@ pub fn spawn_handling_task(
         RequestParams::GetAnnounceMessageList(_)
             => Box::pin(announcement::handle_get_announce_message_list()),
 
+        RequestParams::CreateMatchingTicket(p)
+            => Box::pin(matchingticket::handle_create_matching_ticket(session, p)),
+
         RequestParams::CreateBloodstain(p)
             => Box::pin(bloodstain::handle_create_bloodstain(session, p)),
         RequestParams::GetBloodstainList(p)
@@ -43,20 +46,23 @@ pub fn spawn_handling_task(
             => Box::pin(bloodmessage::handle_get_blood_message_list(p)),
         RequestParams::EvaluateBloodMessage(p)
             => Box::pin(bloodmessage::handle_evaluate_blood_message(p)),
-
+        RequestParams::ReentryBloodMessage(p)
+            => Box::pin(bloodmessage::handle_reentry_blood_message(p)),
+        RequestParams::RemoveBloodMessage(p)
+            => Box::pin(bloodmessage::handle_remove_blood_message(session, p)),
 
         RequestParams::CreateSign(p)
             => Box::pin(sign::handle_create_sign(session, p)),
         RequestParams::GetSignList(p)
-            => Box::pin(sign::handle_get_sign_list(p)),
+            => Box::pin(sign::handle_get_sign_list(session, p)),
         RequestParams::SummonSign(p)
             => Box::pin(sign::handle_summon_sign(session, p)),
         RequestParams::RejectSign(_)
-            => Box::pin(sign::handle_reject_sign()),
+            => Box::pin(sign::handle_reject_sign(session)),
         RequestParams::RemoveSign(p)
-            => Box::pin(sign::handle_remove_sign(p)),
+            => Box::pin(sign::handle_remove_sign(session, p)),
         RequestParams::UpdateSign(p)
-            => Box::pin(sign::handle_update_sign(p)),
+            => Box::pin(sign::handle_update_sign(session,p)),
 
         RequestParams::SearchQuickMatch(p)
             => Box::pin(quickmatch::handle_search_quick_match(p)),
@@ -75,10 +81,17 @@ pub fn spawn_handling_task(
             => Box::pin(breakin::handle_get_break_in_target_list(p)),
         RequestParams::BreakInTarget(p)
             => Box::pin(breakin::handle_break_in_target(session, p)),
-         RequestParams::AllowBreakInTarget(p)
+        RequestParams::AllowBreakInTarget(p)
             => Box::pin(breakin::handle_allow_break_in_target(session, p)), 
 
-         RequestParams::GrGetPlayerEquipments(p)
+        RequestParams::GetItemLog(p)
+            => Box::pin(player::handle_get_item_log(session, p)), 
+        RequestParams::UseItemLog(p)
+            => Box::pin(player::handle_use_item_log(session, p)), 
+        RequestParams::KillEnemyLog(p)
+            => Box::pin(player::handle_kill_enemy_log(session, p)), 
+
+        RequestParams::GrGetPlayerEquipments(p)
             => Box::pin(player_equipments::handle_gr_get_player_equipments(p)), 
 
         _ => return None,

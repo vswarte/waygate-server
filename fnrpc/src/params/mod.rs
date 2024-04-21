@@ -11,3 +11,4 @@ pub mod character;
 pub mod quickmatch;
 pub mod breakin;
 pub mod player_equipments;
+pub mod matchingticket;

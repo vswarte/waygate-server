@@ -25,6 +25,13 @@ pub async fn handle_create_sign(
     let key = crate::pool::sign_pool_mut()
         .insert(session.player_id, (&request).into())?;
 
+    log::info!(
+        "Player sent CreateSign. player = {}. area = {}. play_region = {}",
+        session.player_id,
+        request.area.area,
+        request.area.play_region,
+    );
+
     Ok(ResponseParams::CreateSign(
         ResponseCreateSignParams {
             identifier: (&key).into()
@@ -33,8 +40,11 @@ pub async fn handle_create_sign(
 }
 
 pub async fn handle_get_sign_list(
+    session: ClientSession,
     request: RequestGetSignListParams,
 ) -> rpc::HandlerResult {
+    log::info!("Player sent GetSignList. player = {}", session.player_id);
+
     let query = (&request).into();
     let mut pool_matches = sign_pool()
         .match_entries::<SignPoolQuery, SignHostMatcher>(&query);
@@ -72,6 +82,8 @@ pub async fn handle_summon_sign(
     session: ClientSession,
     request: RequestSummonSignParams,
 ) -> rpc::HandlerResult {
+    log::info!("Player sent SummonSign. player = {}", session.player_id);
+
     let poolkey: PoolKey = (&request.identifier).into();
     if !sign_pool().has(&poolkey) {
         return Err(Box::new(SummonError::SignMissing));
@@ -99,8 +111,11 @@ pub async fn handle_summon_sign(
 }
 
 pub async fn handle_remove_sign(
+    session: ClientSession,
     request: RequestRemoveSignParams,
 ) -> rpc::HandlerResult {
+    log::info!("Player sent RemoveSign. player = {}", session.player_id);
+
     crate::pool::sign_pool_mut()
         .remove(&(&request.sign_identifier).into())?;
 
@@ -108,15 +123,20 @@ pub async fn handle_remove_sign(
 }
 
 pub async fn handle_reject_sign(
+    session: ClientSession,
 ) -> rpc::HandlerResult {
+    log::info!("Player sent RejectSign. player = {}", session.player_id);
 
     // TODO: notify summoner of rejected summon
     Ok(ResponseParams::RejectSign)
 }
 
 pub async fn handle_update_sign(
+    session: ClientSession,
     request: RequestUpdateSignParams,
 ) -> rpc::HandlerResult {
+    log::info!("Player sent UpdateSign. player = {}", session.player_id);
+
     let exists = crate::pool::sign_pool_mut()
         .has(&(&request.identifier).into());
 
@@ -133,7 +153,7 @@ impl From<&RequestCreateSignParams> for SignPoolEntry {
             character_level: value.matching_parameters.soul_level,
             weapon_level: value.matching_parameters.max_reinforce,
             area: MatchingArea::new(
-                value.area.map as u32,
+                value.area.area as u32,
                 value.area.play_region as u32,
             ),
             password: value.matching_parameters.password.clone(),

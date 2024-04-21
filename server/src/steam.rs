@@ -21,7 +21,8 @@ pub enum SteamError {
     SteamAuth(#[from] steamworks::AuthSessionError),
 }
 
-fn init_steam_server() -> Result<steamworks::Server, SteamAPIInitError> {
+pub fn init() -> Result<(), SteamAPIInitError> {
+
     let (server, _) = steamworks::Server::init(
         "127.0.0.1".parse().unwrap(),
         10901,
@@ -30,9 +31,11 @@ fn init_steam_server() -> Result<steamworks::Server, SteamAPIInitError> {
         ""
     )?;
 
+    STEAM_SERVER.set(server);
+
     log::info!("Initialized steamworks");
 
-    Ok(server)
+    Ok(())
 }
 
 #[derive(Debug)]
@@ -57,7 +60,8 @@ pub fn begin_session(
 
     log::info!("Starting steam session for {:?}", steam_id);
 
-    STEAM_SERVER.get_or_init(|| init_steam_server().expect("Could not init steam server"))
+    STEAM_SERVER.get()
+        .expect("Could not get steam API instace")
         .begin_authentication_session(steam_id, ticket.as_slice())?;
 
     Ok(SteamSession(steam_id))
@@ -67,7 +71,8 @@ impl Drop for SteamSession {
     fn drop(&mut self) {
         log::info!("Ending steam session for {:?}", self);
 
-        STEAM_SERVER.get_or_init(|| init_steam_server().expect("Could not init steam server"))
+        STEAM_SERVER.get()
+            .expect("Could not get steam API instace")
             .end_authentication_session(self.0);
     }
 }

@@ -41,3 +41,20 @@ pub struct RequestEvaluateBloodMessageParams {
     pub identifier: ObjectIdentifier,
     pub rating: u32,
 }
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct RequestReentryBloodMessageParams {
+    pub identifiers: Vec<ObjectIdentifier>,
+    pub unk: u32,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct ResponseReentryBloodMessageParams {
+    pub identifiers: Vec<ObjectIdentifier>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct RequestRemoveBloodMessageParams {
+    pub identifier: ObjectIdentifier,
+}
+

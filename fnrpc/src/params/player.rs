@@ -1,5 +1,7 @@
 use serde::{Serialize, Deserialize};
 
+use crate::shared::Location;
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct RequestUpdatePlayerStatusParams {
     pub unk1: u32,
@@ -179,4 +181,45 @@ pub struct CharacterEquipment {
     pub arrows: Vec<u32>,
     pub bolts: Vec<u32>,
     pub spells: Vec<u32>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct RequestUseItemLogParams {
+    pub used_items: Vec<RequestUseItemLogParamsEntry>,
+    pub location: Location,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct RequestUseItemLogParamsEntry {
+    pub item_id: u32,
+    pub times_used: u32,
+    pub unk3: u32,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct RequestGetItemLogParams {
+    pub acquired_items: Vec<RequestGetItemLogParamsEntry>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct RequestGetItemLogParamsEntry {
+    pub location: Location,
+    pub item_category: u32,
+    pub item_id: u32,
+    pub quantity: u32,
+    pub unk1: u32,
+    pub unk2: u32,
+    pub unk3: u32,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct RequestKillEnemyLogParams {
+    pub killed_enemies: Vec<RequestKillEnemyLogParamsEntry>,
+    pub location: Location,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct RequestKillEnemyLogParamsEntry {
+    pub npc_param_id: Location,
+    pub count: u32,
 }

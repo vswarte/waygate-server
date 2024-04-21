@@ -392,15 +392,21 @@ impl Client<ClientStateAuthenticated> {
         message: &[u8],
     ) -> Result<(), ClientError> {
         let (responder, request) = rpc::create_handling_context(&message)?;
-        log::debug!("Handling incoming request. request = {request:?}");
+        log::info!(
+            "Received message type {} for session {}",
+            request.name(),
+            self.state.session.session_id,
+        );
+        log::debug!("Data = {request:?}");
 
         #[cfg(feature = "dump")]
         {
             std::fs::write(
                 format!(
-                    "./dump/request-{}-{}.bin",
+                    "./dump/request-{}-{}-{}.bin",
                     self.state.session.session_id,
                     responder.sequence,
+                    request.name(),
                 ),
                 message,
             )?;

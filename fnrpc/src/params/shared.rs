@@ -3,14 +3,14 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct OnlineArea {
-    pub map: i32,
     pub play_region: i32,
+    pub area: i32,
 }
 
 impl fmt::Debug for OnlineArea {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_tuple("OnlineArea")
-            .field(&self.map)
+            .field(&self.area)
             .field(&self.play_region)
             .finish()
     }
@@ -52,4 +52,12 @@ pub struct MatchingParameters {
     pub max_reinforce: u16,
     // TODO: fact-check this
     pub unk6: u16,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct Location {
+    pub map: u32,
+    pub x: f32,
+    pub y: f32,
+    pub z: f32,
 }

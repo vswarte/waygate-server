@@ -91,11 +91,3 @@ pub struct RequestUpdateSignParams {
     pub identifier: ObjectIdentifier,
     pub unk0: u32,
 }
-
-pub struct PushJoinParams {
-    pub summoning_player_id: i32,
-    pub summoning_player_external_id: String,
-    pub summoned_player_id: i32,
-    pub sign_identifier: ObjectIdentifier,
-    pub data: Vec<u8>,
-}

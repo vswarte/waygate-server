@@ -19,7 +19,7 @@ pub async fn handle_create_bloodstain(
             session_id,
             advertisement_data,
             replay_data,
-            map,
+            area,
             play_region
         ) VALUES (
             $1,
@@ -33,7 +33,7 @@ pub async fn handle_create_bloodstain(
         .bind(session.session_id)
         .bind(params.advertisement_data)
         .bind(params.replay_data)
-        .bind(params.area.map)
+        .bind(params.area.area)
         .bind(params.area.play_region)
         .fetch_one(&pool)
         .await?
@@ -97,7 +97,7 @@ struct Bloodstain {
     session_id: i32,
     advertisement_data: Vec<u8>,
     replay_data: Vec<u8>,
-    map: i32,
+    area: i32,
     play_region: i32,
 }
 
@@ -105,7 +105,7 @@ impl Into<ResponseGetBloodstainListParamsEntry> for Bloodstain {
     fn into(self) -> ResponseGetBloodstainListParamsEntry {
         ResponseGetBloodstainListParamsEntry {
             area: OnlineArea {
-                map: self.map,
+                area: self.area,
                 play_region: self.play_region,
             },
             identifier: ObjectIdentifier {

@@ -17,7 +17,7 @@ CREATE TABLE bloodmessages (
     rating_good INTEGER NOT NULL,
     rating_bad INTEGER NOT NULL,
     data BYTEA NOT NULL,
-    map INTEGER NOT NULL,
+    area INTEGER NOT NULL,
     play_region INTEGER NOT NULL
 );
 
@@ -26,7 +26,7 @@ CREATE TABLE ghostdata (
     player_id INTEGER NOT NULL,
     session_id INTEGER NOT NULL,
     replay_data BYTEA NOT NULL,
-    map INTEGER NOT NULL,
+    area INTEGER NOT NULL,
     play_region INTEGER NOT NULL
 );
 
@@ -36,6 +36,6 @@ CREATE TABLE bloodstains (
     session_id INTEGER NOT NULL,
     advertisement_data BYTEA NOT NULL,
     replay_data BYTEA NOT NULL,
-    map INTEGER NOT NULL,
+    area INTEGER NOT NULL,
     play_region INTEGER NOT NULL
 );

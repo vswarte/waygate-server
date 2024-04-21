@@ -11,6 +11,7 @@ pub(crate) mod character;
 pub(crate) mod quickmatch;
 pub(crate) mod breakin;
 pub(crate) mod player_equipments;
+pub(crate) mod matchingticket;
 
 use std::{error::Error, io::{self, Read, Write}};
 

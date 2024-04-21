@@ -15,7 +15,9 @@ mod util;
 
 #[tokio::main]
 async fn main () -> Result<(), io::Error> {
+    dotenvy::dotenv().expect("Could not init env vars");
     env_logger::init();
+    steam::init();
 
     #[cfg(feature = "dump")]
     std::fs::create_dir_all("./dump/")?;

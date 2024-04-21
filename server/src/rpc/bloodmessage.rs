@@ -20,7 +20,7 @@ pub async fn handle_create_blood_message(
             rating_good,
             rating_bad,
             data,
-            map,
+            area,
             play_region
         ) VALUES (
             $1,
@@ -36,7 +36,7 @@ pub async fn handle_create_blood_message(
         .bind(params.character_id)
         .bind(session.session_id)
         .bind(params.data)
-        .bind(params.area.map)
+        .bind(params.area.area)
         .bind(params.area.play_region)
         .fetch_one(&pool)
         .await?
@@ -92,6 +92,59 @@ pub async fn handle_evaluate_blood_message(
     Ok(ResponseParams::EvaluateBloodMessage)
 }
 
+
+pub async fn handle_reentry_blood_message(
+    params: RequestReentryBloodMessageParams,
+) -> rpc::HandlerResult {
+    let bloodmessages = params.identifiers.iter()
+        .map(|a| a.object_id)
+        .collect::<Vec<i32>>();
+
+    let pool = pool().await?;
+    let mut identifiers = sqlx::query_as::<_, BloodMessage>("SELECT * FROM bloodmessages WHERE bloodmessage_id = ANY($1)")
+        .bind(bloodmessages)
+        .fetch_all(&pool)
+        .await?
+        .into_iter()
+        .map(|e| ObjectIdentifier {
+            object_id: e.bloodmessage_id,
+            secondary_id: e.session_id,
+        })
+        .collect();
+
+    Ok(ResponseParams::ReentryBloodMessage(
+        ResponseReentryBloodMessageParams { identifiers }
+    ))
+}
+
+pub async fn handle_remove_blood_message(
+    session: ClientSession,
+    params: RequestRemoveBloodMessageParams,
+) -> rpc::HandlerResult {
+    log::info!(
+        "Player sent RemoveBloodMessage. player = {}. bloodmessage_id = {}.",
+        session.player_id,
+        params.identifier.object_id,
+    );
+
+    let pool = pool().await?;
+    let mut identifiers = sqlx::query_as::<_, BloodMessage>("DELETE FROM bloodmessages WHERE bloodmessage_id = $1 AND player_id = $2")
+        .bind(params.identifier.object_id)
+        .bind(session.player_id)
+        .fetch_all(&pool)
+        .await?
+        .into_iter()
+        .map(|e| ObjectIdentifier {
+            object_id: e.bloodmessage_id,
+            secondary_id: e.session_id,
+        })
+        .collect();
+
+    Ok(ResponseParams::ReentryBloodMessage(
+        ResponseReentryBloodMessageParams { identifiers }
+    ))
+}
+
 #[derive(sqlx::FromRow)]
 struct BloodMessage {
     bloodmessage_id: i32,
@@ -101,7 +154,7 @@ struct BloodMessage {
     rating_good: i32,
     rating_bad: i32,
     data: Vec<u8>,
-    map: i32,
+    area: i32,
     play_region: i32,
 }
 
@@ -118,7 +171,7 @@ impl Into<ResponseGetBloodMessageListParamsEntry> for BloodMessage {
             rating_bad: self.rating_bad,
             data: self.data,
             area: OnlineArea {
-                map: self.map,
+                area: self.area,
                 play_region: self.play_region,
             },
             group_passwords: vec![],
@@ -149,3 +202,4 @@ impl TryFrom<u32> for BloodMessageRating {
         })
     }
 }
+

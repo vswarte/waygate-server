@@ -1,6 +1,9 @@
 use std::borrow::BorrowMut;
 
+use fnrpc::player::RequestGetItemLogParams;
+use fnrpc::player::RequestKillEnemyLogParams;
 use fnrpc::player::RequestUpdatePlayerStatusParams;
+use fnrpc::player::RequestUseItemLogParams;
 use rand::prelude::*;
 use fnrpc::ResponseParams;
 use crate::pool::breakin::InvasionPoolEntry;
@@ -18,22 +21,20 @@ pub async fn handle_update_player_status(
     session: ClientSession,
     params: RequestUpdatePlayerStatusParams
 ) -> rpc::HandlerResult {
+    log::info!("Player sent UpdatePlayerStatus. player = {}", session.player_id);
+
     #[cfg(feature = "debug-push")]
-    listen_debug_buffs(&params, &session).await;
+    listen_debug_notifs(&params, &session).await;
 
     Ok(ResponseParams::UpdatePlayerStatus)
 }
 
-async fn listen_debug_buffs(params: &RequestUpdatePlayerStatusParams, session: &ClientSession) {
-    log::info!("Passwords: {:?}", params.character.group_passwords);
-
+async fn listen_debug_notifs(params: &RequestUpdatePlayerStatusParams, session: &ClientSession) {
     if params.character.group_passwords.iter().any(|e| e == "freebuff") {
-        log::info!("Sending test shardbearer buff to {}", session.player_id);
         push::send_push(session.player_id, get_test_buff()).await.unwrap();
     }
 
     if params.character.group_passwords.iter().any(|e| e == "announce") {
-        log::info!("Sending test announcement to {}", session.player_id);
         push::send_push(session.player_id, get_test_announcement()).await.unwrap();
     }
 }
@@ -96,4 +97,34 @@ impl From<(String, &RequestUpdatePlayerStatusParams)> for InvasionPoolEntry {
             steam_id: value.0.to_string(),
         }
     }
+}
+
+pub async fn handle_use_item_log(
+    session: ClientSession,
+    params: RequestUseItemLogParams,
+) -> rpc::HandlerResult {
+    log::info!("Player sent UseItemLog. player = {}", session.player_id);
+    log::info!("params = {:#?}", params);
+
+    Ok(ResponseParams::UseItemLog)
+}
+
+pub async fn handle_get_item_log(
+    session: ClientSession,
+    params: RequestGetItemLogParams,
+) -> rpc::HandlerResult {
+    log::info!("Player sent GetItemLog. player = {}", session.player_id);
+    log::info!("params = {:#?}", params);
+
+    Ok(ResponseParams::UseItemLog)
+}
+
+pub async fn handle_kill_enemy_log(
+    session: ClientSession,
+    params: RequestKillEnemyLogParams,
+) -> rpc::HandlerResult {
+    log::info!("Player sent KillEnemyLog. player = {}", session.player_id);
+    log::info!("params = {:#?}", params);
+
+    Ok(ResponseParams::KillEnemyLog)
 }

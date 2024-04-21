@@ -18,7 +18,7 @@ pub async fn handle_create_ghostdata(
             player_id,
             session_id,
             replay_data,
-            map,
+            area,
             play_region
         ) VALUES (
             $1,
@@ -30,7 +30,7 @@ pub async fn handle_create_ghostdata(
         .bind(session.player_id)
         .bind(session.session_id)
         .bind(params.replay_data)
-        .bind(params.area.map)
+        .bind(params.area.area)
         .bind(params.area.play_region)
         .fetch_one(&pool)
         .await?
@@ -71,7 +71,7 @@ struct GhostData {
     player_id: i32,
     session_id: i32,
     replay_data: Vec<u8>,
-    map: i32,
+    area: i32,
     play_region: i32,
 }
 
@@ -79,7 +79,7 @@ impl Into<ResponseGetGhostDataListParamsEntry> for GhostData {
     fn into(self) -> ResponseGetGhostDataListParamsEntry {
         ResponseGetGhostDataListParamsEntry {
             area: OnlineArea {
-                map: self.map,
+                area: self.area,
                 play_region: self.play_region,
             },
             identifier: ObjectIdentifier {
