@@ -13,7 +13,7 @@ pub async fn handle_get_announce_message_list(
                     order: 1,
                     unk1: 1,
                     title: String::from("[Welcome to online multiplayer world of BINGUSTAN]"),
-                    body: format!("Bingus is pleased to welcome you to his country.\n"),
+                    body: "Bingus is pleased to welcome you to his country.\n".to_string(),
                     published_at: 1645681378,
                 },
                 ResponseGetAnnounceMessageListParamsEntry {

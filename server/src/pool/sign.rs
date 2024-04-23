@@ -1,10 +1,11 @@
-use super::pool::PoolEntryMatcher;
+use super::PoolQuery;
 use crate::pool::matching::weapon;
 
 use super::matching::area::MatchingArea;
 
 #[derive(Clone, Debug)]
 pub struct SignPoolEntry {
+    pub external_id: String,
     pub character_level: u16,
     pub weapon_level: u16,
     pub area: MatchingArea,
@@ -21,9 +22,7 @@ pub struct SignPoolQuery {
     pub password: String,
 }
 
-pub struct SignHostMatcher;
-
-impl SignHostMatcher {
+impl SignPoolQuery {
     fn check_character_level(host: u16, finger: u16) -> bool {
         let lower = host - (host / 10);
         let upper = host + (host / 10) + 10;
@@ -40,44 +39,45 @@ impl SignHostMatcher {
     }
 }
 
-impl PoolEntryMatcher<SignPoolEntry, SignPoolQuery> for SignHostMatcher {
-    fn matches(entry: &SignPoolEntry, query: &SignPoolQuery) -> bool {
-        if !query.areas.contains(&entry.area) {
+impl PoolQuery<SignPoolEntry> for SignPoolQuery {
+    fn matches(&self, entry: &SignPoolEntry) -> bool {
+        if !self.areas.contains(&entry.area) {
             false
-        } else if !entry.password.is_empty() || !query.password.is_empty() {
-            entry.password == query.password
+        } else if !entry.password.is_empty() || !self.password.is_empty() {
+            entry.password == self.password
         } else {
-            Self::check_character_level(query.character_level, entry.character_level)
-                && Self::check_weapon_level(query.weapon_level, entry.weapon_level)
+            Self::check_character_level(self.character_level, entry.character_level)
+                && Self::check_weapon_level(self.weapon_level, entry.weapon_level)
         }
     }
 }
 
 #[cfg(test)]
 mod test {
-    use super::PoolEntryMatcher;
     use crate::pool::matching::area::MatchingArea;
-    use crate::pool::sign::{SignHostMatcher, SignPoolEntry, SignPoolQuery};
+    use crate::pool::PoolQuery;
+    use crate::pool::sign::{SignPoolEntry, SignPoolQuery};
 
     #[test]
     fn test_character_level() {
-        assert!(SignHostMatcher::check_character_level(1, 300) == false);
-        assert!(SignHostMatcher::check_character_level(28, 31) == true);
+        assert!(!SignPoolQuery::check_character_level(1, 300));
+        assert!(SignPoolQuery::check_character_level(28, 31));
     }
 
     #[test]
     fn test_weapon_level() {
-        assert!(SignHostMatcher::check_weapon_level(0, 0) == true);
-        assert!(SignHostMatcher::check_weapon_level(0, 2) == true);
-        assert!(SignHostMatcher::check_weapon_level(0, 3) == false);
-        assert!(SignHostMatcher::check_weapon_level(12, 14) == true);
-        assert!(SignHostMatcher::check_weapon_level(12, 8) == true);
-        assert!(SignHostMatcher::check_weapon_level(12, 25) == false);
+        assert!(SignPoolQuery::check_weapon_level(0, 0));
+        assert!(SignPoolQuery::check_weapon_level(0, 2));
+        assert!(!SignPoolQuery::check_weapon_level(0, 3));
+        assert!(SignPoolQuery::check_weapon_level(12, 14));
+        assert!(SignPoolQuery::check_weapon_level(12, 8));
+        assert!(!SignPoolQuery::check_weapon_level(12, 25));
     }
 
     #[test]
     fn level_1_characters_match() {
         let finger = SignPoolEntry {
+            external_id: String::new(),
             character_level: 1,
             weapon_level: 1,
             area: MatchingArea::new(1, 1),
@@ -93,12 +93,13 @@ mod test {
             password: String::default(),
         };
 
-        assert!(SignHostMatcher::matches(&finger, &host) == true);
+        assert!(host.matches(&finger));
     }
 
     #[test]
     fn doesnt_match_differing_levels() {
         let finger = SignPoolEntry {
+            external_id: String::new(),
             character_level: 1,
             weapon_level: 1,
             area: MatchingArea::new(1, 1),
@@ -114,12 +115,13 @@ mod test {
             password: String::default(),
         };
 
-        assert!(SignHostMatcher::matches(&finger, &host) == false);
+        assert!(!host.matches(&finger));
     }
 
     #[test]
     fn password_matches_regardless() {
         let finger = SignPoolEntry {
+            external_id: String::new(),
             character_level: 1,
             weapon_level: 1,
             area: MatchingArea::new(1, 1),
@@ -135,12 +137,13 @@ mod test {
             password: String::from("test"),
         };
 
-        assert!(SignHostMatcher::matches(&finger, &host) == true);
+        assert!(host.matches(&finger));
     }
 
     #[test]
     fn doesnt_match_on_differing_passwords() {
         let finger = SignPoolEntry {
+            external_id: String::new(),
             character_level: 1,
             weapon_level: 1,
             area: MatchingArea::new(1, 1),
@@ -156,12 +159,13 @@ mod test {
             password: String::from("456"),
         };
 
-        assert!(SignHostMatcher::matches(&finger, &host) == false);
+        assert!(!host.matches(&finger));
     }
 
     #[test]
     fn doesnt_match_when_password_isnt_set_on_finger() {
         let finger = SignPoolEntry {
+            external_id: String::new(),
             character_level: 1,
             weapon_level: 1,
             area: MatchingArea::new(1, 1),
@@ -177,12 +181,13 @@ mod test {
             password: String::from("456"),
         };
 
-        assert!(SignHostMatcher::matches(&finger, &host) == false);
+        assert!(!host.matches(&finger));
     }
 
     #[test]
-    fn search_areas_work() {
+    fn doesnt_match_across_search_areas() {
         let finger = SignPoolEntry {
+            external_id: String::new(),
             character_level: 1,
             weapon_level: 1,
             area: MatchingArea::new(1, 1),
@@ -198,6 +203,6 @@ mod test {
             password: String::default(),
         };
 
-        assert!(SignHostMatcher::matches(&finger, &host) == false);
+        assert!(!host.matches(&finger));
     }
 }

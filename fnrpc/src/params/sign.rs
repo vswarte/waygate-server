@@ -6,7 +6,7 @@ use crate::params::shared::*;
 pub struct RequestCreateSignParams {
     pub area: OnlineArea,
     pub matching_parameters: MatchingParameters,
-    pub unk0: u32,
+    pub unk0: u32, // Could be sign type although this is also embedded in the sign data itself
     pub data: Vec<u8>,
     pub group_passwords: Vec<String>,
 }

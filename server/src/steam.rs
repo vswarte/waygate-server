@@ -1,4 +1,3 @@
-use core::fmt;
 use std::sync;
 
 use steamworks::SteamAPIInitError;
@@ -44,9 +43,9 @@ pub fn init() -> Result<(), SteamAPIInitError> {
 #[derive(Debug)]
 pub struct SteamSession(steamworks::SteamId);
 
-impl fmt::Display for SteamSession {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.0.steamid32())
+impl std::fmt::Display for SteamSession {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:x}", self.0.raw())
     }
 }
 
@@ -55,7 +54,7 @@ pub fn begin_session(
     ticket: &str,
 ) -> Result<SteamSession, SteamError> {
     let steam_id = steam_id.parse::<u64>()
-        .map(|id| steamworks::SteamId::from_raw(id))
+        .map(steamworks::SteamId::from_raw)
         .map_err(|_| SteamError::InvalidSteamID)?;
 
     let ticket = hex_to_bytes(ticket)

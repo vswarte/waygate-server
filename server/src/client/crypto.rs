@@ -1,7 +1,7 @@
-use std::io;
+use std::io::{self, Read};
 use sodiumoxide::crypto;
 use thiserror::Error;
-use tokio::io::{AsyncWriteExt, AsyncReadExt};
+use tokio::io::AsyncWriteExt;
 
 use crate::client::ClientError;
 
@@ -10,25 +10,25 @@ use super::key;
 #[derive(Debug, Error)]
 pub enum CryptoError {
     #[error("Could not derive session key")]
-    SessionKeyDerivationFailed,
+    SessionKeyDerivation,
 
     #[error("Could not create a public key for session")]
-    PublicKeyCreationFailed,
+    PublicKeyCreation,
 
     #[error("Could not create a secret key for session")]
-    SecretKeyCreationFailed,
+    SecretKeyCreation,
 
     #[error("Could not create a MAC for message")]
-    MacCreationFailed,
+    MacCreation,
 
     #[error("Could not create a none for message")]
-    NonceCreationFailed,
+    NonceCreation,
 
     #[error("Could not decrypt message")]
-    DecryptFailed,
+    Decrypt,
 
     #[error("Could not convert keys")]
-    KeyConversionFailed,
+    KeyConversion,
 }
 
 pub fn new_client_crypto() -> ClientCrypto<ClientCryptoStateCreated> {
@@ -78,16 +78,16 @@ impl ClientCrypto<ClientCryptoStateParametersGenerated> {
     pub async fn create_crypto_advertisement_buffer(
         &self
     ) -> Result<Vec<u8>, ClientError> {
-        let mut writer = io::Cursor::new(vec![]);
+        let mut buffer = vec![];
 
-        writer.write_all(&self.state.server_pk.0)
+        buffer.write_all(&self.state.server_pk.0)
             .await.map_err(ClientError::Io)?;
-        writer.write_all(&self.state.server_nonce.0)
+        buffer.write_all(&self.state.server_nonce.0)
             .await.map_err(ClientError::Io)?;
-        writer.write_all(&self.state.client_nonce.0)
+        buffer.write_all(&self.state.client_nonce.0)
             .await.map_err(ClientError::Io)?;
 
-        Ok(writer.into_inner())
+        Ok(buffer)
     }
 
     pub fn derive_session_keys(
@@ -98,7 +98,7 @@ impl ClientCrypto<ClientCryptoStateParametersGenerated> {
             &self.state.server_pk,
             &self.state.server_sk,
             &client_pk,
-        ).map_err(|_| ClientError::Crypto(CryptoError::SessionKeyDerivationFailed))?;
+        ).map_err(|_| ClientError::Crypto(CryptoError::SessionKeyDerivation))?;
 
         Ok(ClientCrypto {
             state: ClientCryptoStateActiveSession {
@@ -110,26 +110,23 @@ impl ClientCrypto<ClientCryptoStateParametersGenerated> {
         })
     }
 
-    pub async fn kx_decrypt(
-        &mut self,
-        message: &[u8]
-    ) -> Result<Vec<u8>, ClientError> {
-        let (nonce, mac, mut payload) = Self::split_nonce_mac_and_payload(message)
+    pub async fn kx_decrypt<R: Read>(&mut self, r: R) -> Result<Vec<u8>, ClientError> {
+        let (nonce, mac, mut payload) = Self::split_nonce_mac_and_payload(r)
             .await.map_err(ClientError::Io)?;
 
         let mac = crypto::box_::Tag::from_slice(mac.as_slice())
-            .ok_or(ClientError::Crypto(CryptoError::MacCreationFailed))?;
+            .ok_or(ClientError::Crypto(CryptoError::MacCreation))?;
 
         let nonce = crypto::box_::Nonce::from_slice(nonce.as_slice())
-            .ok_or(ClientError::Crypto(CryptoError::NonceCreationFailed))?;
+            .ok_or(ClientError::Crypto(CryptoError::NonceCreation))?;
 
         let client_pk = crypto::box_::PublicKey::from_slice(
             key::CLIENT_PUBLIC_KEY
-        ).ok_or(ClientError::Crypto(CryptoError::PublicKeyCreationFailed))?;
+        ).ok_or(ClientError::Crypto(CryptoError::PublicKeyCreation))?;
 
         let server_sk = crypto::box_::SecretKey::from_slice(
             key::SERVER_SECRET_KEY
-        ).ok_or(ClientError::Crypto(CryptoError::SecretKeyCreationFailed))?;
+        ).ok_or(ClientError::Crypto(CryptoError::SecretKeyCreation))?;
 
         crypto::box_::open_detached(
             &mut payload,
@@ -137,22 +134,19 @@ impl ClientCrypto<ClientCryptoStateParametersGenerated> {
             &nonce,
             &client_pk,
             &server_sk,
-        ).map_err(|_| ClientError::Crypto(CryptoError::DecryptFailed))?;
+        ).map_err(|_| ClientError::Crypto(CryptoError::Decrypt))?;
 
         Ok(payload)
     }
 
-    async fn split_nonce_mac_and_payload(
-        message: &[u8],
-    ) -> Result<(Vec<u8>, Vec<u8>, Vec<u8>), io::Error> {
+    async fn split_nonce_mac_and_payload<R: Read>(mut r: R) -> Result<(Vec<u8>, Vec<u8>, Vec<u8>), io::Error> {
         let mut nonce = vec![0; crypto::secretbox::NONCEBYTES];
         let mut mac = vec![0; crypto::secretbox::MACBYTES];
         let mut payload = vec![];
 
-        let mut reader = io::Cursor::new(message);
-        reader.read_exact(nonce.as_mut_slice()).await?;
-        reader.read_exact(mac.as_mut_slice()).await?;
-        reader.read_to_end(&mut payload).await?;
+        r.read_exact(nonce.as_mut_slice())?;
+        r.read_exact(mac.as_mut_slice())?;
+        r.read_to_end(&mut payload)?;
 
         Ok((nonce, mac, payload))
     }
@@ -163,11 +157,11 @@ impl ClientCrypto<ClientCryptoStateParametersGenerated> {
     ) -> Result<Vec<u8>, ClientError> {
         let client_pk = crypto::box_::PublicKey::from_slice(
             key::CLIENT_PUBLIC_KEY
-        ).ok_or(ClientError::Crypto(CryptoError::PublicKeyCreationFailed))?;
+        ).ok_or(ClientError::Crypto(CryptoError::PublicKeyCreation))?;
 
         let server_sk = crypto::box_::SecretKey::from_slice(
             key::SERVER_SECRET_KEY
-        ).ok_or(ClientError::Crypto(CryptoError::SecretKeyCreationFailed))?;
+        ).ok_or(ClientError::Crypto(CryptoError::SecretKeyCreation))?;
 
         let bootstrap_nonce = crypto::box_::gen_nonce();
         let mac = crypto::box_::seal_detached(
@@ -191,11 +185,13 @@ impl ClientCrypto<ClientCryptoStateParametersGenerated> {
         mac: crypto::box_::Tag,
         payload: &[u8],
     ) -> Result<Vec<u8>, io::Error> {
-        let mut writer = io::Cursor::new(vec![]);
-        writer.write_all(&nonce.0).await?;
-        writer.write_all(&mac.0).await?;
-        writer.write_all(payload).await?;
-        Ok(writer.into_inner())
+        let mut buffer = vec![];
+
+        buffer.write_all(&nonce.0).await?;
+        buffer.write_all(&mac.0).await?;
+        buffer.write_all(payload).await?;
+
+        Ok(buffer)
     }
 }
 
@@ -210,24 +206,21 @@ pub struct ClientCryptoStateActiveSession {
 impl ClientCryptoState for ClientCryptoStateActiveSession {}
 
 impl ClientCrypto<ClientCryptoStateActiveSession> {
-    pub async fn session_decrypt(
-        &mut self,
-        message: &[u8]
-    ) -> Result<Vec<u8>, ClientError> {
+    pub async fn session_decrypt<R: Read>(&mut self, r: R) -> Result<Vec<u8>, ClientError> {
         let rx = Self::session_key_to_secretbox_key(&self.state.rx)
             .map_err(ClientError::Crypto)?;
 
-        let (mac, mut payload) = Self::split_mac_and_payload(message).await?;
+        let (mac, mut payload) = Self::split_mac_and_payload(r).await?;
 
         let mac = crypto::secretbox::Tag::from_slice(mac.as_slice())
-            .ok_or(ClientError::Crypto(CryptoError::MacCreationFailed))?;
+            .ok_or(ClientError::Crypto(CryptoError::MacCreation))?;
 
         crypto::secretbox::open_detached(
             &mut payload,
             &mac,
             &self.state.client_nonce,
             &rx,
-        ).map_err(|_| ClientError::Crypto(CryptoError::DecryptFailed))?;
+        ).map_err(|_| ClientError::Crypto(CryptoError::Decrypt))?;
 
         self.state.client_nonce.increment_le_inplace();
 
@@ -258,30 +251,27 @@ impl ClientCrypto<ClientCryptoStateActiveSession> {
         key: &crypto::kx::SessionKey,
     ) -> Result<crypto::secretbox::Key, CryptoError> {
         crypto::secretbox::Key::from_slice(&key.0)
-            .ok_or(CryptoError::KeyConversionFailed)
+            .ok_or(CryptoError::KeyConversion)
     }
 
     async fn frame_payload(
         mac: crypto::secretbox::Tag,
         payload: &[u8],
     ) -> Result<Vec<u8>, io::Error> {
-        let mut writer = io::Cursor::new(vec![]);
+        let mut buffer = vec![];
 
-        writer.write_all(&mac.0).await?;
-        writer.write_all(payload).await?;
+        buffer.write_all(&mac.0).await?;
+        buffer.write_all(payload).await?;
 
-        Ok(writer.into_inner())
+        Ok(buffer)
     }
 
-    async fn split_mac_and_payload(
-        message: &[u8]
-    ) -> Result<(Vec<u8>, Vec<u8>), io::Error> {
+    async fn split_mac_and_payload<R: Read>(mut r: R) -> Result<(Vec<u8>, Vec<u8>), io::Error> {
         let mut mac = vec![0; crypto::secretbox::MACBYTES];
         let mut payload = vec![];
 
-        let mut reader = io::Cursor::new(message);
-        reader.read_exact(mac.as_mut_slice()).await?;
-        reader.read_to_end(&mut payload).await?;
+        r.read_exact(mac.as_mut_slice())?;
+        r.read_to_end(&mut payload)?;
 
         Ok((mac, payload))
     }

@@ -73,18 +73,18 @@ struct GhostData {
     play_region: i32,
 }
 
-impl Into<ResponseGetGhostDataListParamsEntry> for GhostData {
-    fn into(self) -> ResponseGetGhostDataListParamsEntry {
+impl From<GhostData> for ResponseGetGhostDataListParamsEntry {
+    fn from(val: GhostData) -> Self {
         ResponseGetGhostDataListParamsEntry {
             area: OnlineArea {
-                area: self.area,
-                play_region: self.play_region,
+                area: val.area,
+                play_region: val.play_region,
             },
             identifier: ObjectIdentifier {
-                object_id: self.ghostdata_id,
-                secondary_id: self.session_id,
+                object_id: val.ghostdata_id,
+                secondary_id: val.session_id,
             },
-            replay_data: self.replay_data,
+            replay_data: val.replay_data,
             group_passwords: vec![],
         }
     }

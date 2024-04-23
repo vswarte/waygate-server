@@ -11,7 +11,7 @@ type ClientPushMap = collections::HashMap<i32, ClientPushChannelTX>;
 static CLIENT_PUSH_MAP: sync::OnceLock<tokiosync::RwLock<ClientPushMap>> = sync::OnceLock::new();
 
 pub async fn add_client_channel(player_id: i32, channel: ClientPushChannelTX) {
-    CLIENT_PUSH_MAP.get_or_init(|| Default::default())
+    CLIENT_PUSH_MAP.get_or_init(Default::default)
         .write()
         .await
         .insert(player_id, channel);
@@ -45,7 +45,7 @@ pub async fn send_push(
         buffer
     };
 
-    CLIENT_PUSH_MAP.get_or_init(|| Default::default())
+    CLIENT_PUSH_MAP.get_or_init(Default::default)
         .write()
         .await
         .get_mut(&player_id)

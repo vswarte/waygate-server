@@ -21,11 +21,11 @@ impl From<&OnlineArea> for MatchingArea {
     }
 }
 
-impl Into<OnlineArea> for &MatchingArea {
-    fn into(self) -> OnlineArea {
+impl From<&MatchingArea> for OnlineArea {
+    fn from(val: &MatchingArea) -> Self {
         OnlineArea {
-            area: self.area as i32,
-            play_region: self.play_region as i32,
+            area: val.area as i32,
+            play_region: val.play_region as i32,
         }
     }
 }

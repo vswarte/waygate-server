@@ -10,6 +10,7 @@ pub const SESSION_VALIDITY: u64 = 60 * 60;
 #[derive(Clone, Debug)]
 pub struct ClientSession {
     pub cookie: String,
+    pub external_id: String,
     pub player_id: i32,
     pub session_id: i32,
     pub valid_from: i64,
@@ -17,8 +18,8 @@ pub struct ClientSession {
 }
 
 /// Creates a new session for a given external_id
-pub async fn new_client_session(external_id: &str) -> Result<ClientSession, DatabaseError> {
-    let player_id = acquire_player_id(external_id).await?;
+pub async fn new_client_session(external_id: String) -> Result<ClientSession, DatabaseError> {
+    let player_id = acquire_player_id(&external_id).await?;
     let cookie = generate_session_cookie();
 
     let now = time::SystemTime::now().duration_since(time::UNIX_EPOCH).unwrap();
@@ -36,16 +37,17 @@ pub async fn new_client_session(external_id: &str) -> Result<ClientSession, Data
         .get("session_id");
 
     Ok(ClientSession {
+        cookie,
+        external_id,
         player_id,
         session_id,
-        cookie,
         valid_from,
         valid_until,
     })
 }
 
 /// Creates a client session from an already existing session 
-pub async fn get_client_session(session_id: i32, cookie: &str) -> Result<ClientSession, DatabaseError> {
+pub async fn get_client_session(external_id: String, session_id: i32, cookie: &str) -> Result<ClientSession, DatabaseError> {
     let now = time::SystemTime::now().duration_since(time::UNIX_EPOCH).unwrap();
 
     let mut connection = database::acquire().await?;
@@ -60,9 +62,10 @@ pub async fn get_client_session(session_id: i32, cookie: &str) -> Result<ClientS
     let valid_from = (now - valid_for).as_secs() as i64;
 
     Ok(ClientSession {
+        cookie: session.cookie,
+        external_id,
         player_id: session.player_id,
         session_id: session.session_id,
-        cookie: session.cookie,
         valid_from,
         valid_until: session.valid_until,
     })
@@ -109,9 +112,6 @@ fn generate_session_cookie() -> String {
 
 fn encode_session_cookie(cookie: &[u8]) -> String {
     format!("{:02x?}", cookie)
-        .replace("[", "")
-        .replace("]", "")
-        .replace(" ", "")
+        .replace(['[', ']', ' ', ','], "")
         .replace("0x", "")
-        .replace(",", "")
 }

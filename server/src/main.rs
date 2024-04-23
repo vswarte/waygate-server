@@ -11,7 +11,6 @@ mod pool;
 mod steam;
 mod client;
 mod session;
-mod util;
 
 #[tokio::main]
 async fn main () -> Result<(), io::Error> {

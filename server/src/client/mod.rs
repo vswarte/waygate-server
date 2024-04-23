@@ -43,6 +43,9 @@ pub enum ClientError {
 
     #[error("Could not get a handler for message")]
     NoHandler,
+
+    #[error("Client closed connection")]
+    ClosedConnection,
 }
 
 #[derive(Debug, Error)]
@@ -113,6 +116,7 @@ impl Client<ClientStateConnected> {
             message = self.state.transport.receive_next() => {
                 let hello = match message.map_err(ClientError::Transport)? {
                     Message::Binary(b) => b,
+                    Message::Close(_) => return Err(ClientError::ClosedConnection),
                     _ => return Err(ClientError::Protocol(
                         ProtocolError::NonBinaryMessage
                     ))
@@ -182,7 +186,7 @@ impl Client<ClientStateAwaitingPublicKey> {
             _ = tokio::time::sleep(
                 tokio::time::Duration::from_secs(CLIENT_PUBLIC_KEY_TIMEOUT)
             ) => {
-                return Err(ClientError::Protocol(ProtocolError::TimeoutPublicKey))
+                Err(ClientError::Protocol(ProtocolError::TimeoutPublicKey))
             },
 
             message = self.state.transport.receive_next() => {
@@ -193,7 +197,7 @@ impl Client<ClientStateAwaitingPublicKey> {
                     ))
                 };
 
-                let client_pk = self.state.crypto.kx_decrypt(&client_pk).await?;
+                let client_pk = self.state.crypto.kx_decrypt(client_pk.as_slice()).await?;
                 if client_pk.len() != 32 {
                     return Err(ClientError::Protocol(
                         ProtocolError::MalformedPublicKey
@@ -201,7 +205,7 @@ impl Client<ClientStateAwaitingPublicKey> {
                 }
 
                 let client_pk = sodiumoxide::crypto::kx::x25519blake2b::PublicKey::from_slice(&client_pk)
-                    .ok_or(ClientError::Crypto(crypto::CryptoError::PublicKeyCreationFailed))?;
+                    .ok_or(ClientError::Crypto(crypto::CryptoError::PublicKeyCreation))?;
 
                 let crypto = self.state.crypto.derive_session_keys(client_pk)?;
 
@@ -234,7 +238,7 @@ impl Client<ClientStateAwaitingSession> {
             _ = tokio::time::sleep(
                 tokio::time::Duration::from_secs(CLIENT_SESSION_TIMEOUT)
             ) => {
-                return Err(ClientError::Protocol(ProtocolError::TimeoutSessionCreation))
+                Err(ClientError::Protocol(ProtocolError::TimeoutSessionCreation))
             },
 
             message = self.state.transport.receive_next() => {
@@ -245,10 +249,10 @@ impl Client<ClientStateAwaitingSession> {
                     ))
                 };
 
-                let message = self.state.crypto.session_decrypt(&message)
+                let message = self.state.crypto.session_decrypt(message.as_slice())
                     .await?;
 
-                let (responder, request) = rpc::create_handling_context(&message)?;
+                let (responder, request) = rpc::create_handling_context(message.as_slice())?;
                 match &request {
                     RequestParams::CreateSession(_) => {},
                     RequestParams::RestoreSession(_) => {},
@@ -288,13 +292,18 @@ impl Client<ClientStateReceivedSessionDetails> {
         mut self
     ) -> Result<Client<ClientStateAuthenticated>, Box<dyn std::error::Error>> {
 
-        let steam_id = self.steam_session.to_string();
         let (session, response) = match self.state.request {
             RequestParams::CreateSession(p) =>
-                rpc::session::handle_create_session(steam_id.as_str(), p).await?,
+                rpc::session::handle_create_session(
+                    self.steam_session.to_string(),
+                    *p
+                ).await?,
 
             RequestParams::RestoreSession(p) =>
-                rpc::session::handle_restore_session(steam_id.as_str(), p).await?,
+                rpc::session::handle_restore_session(
+                    self.steam_session.to_string(),
+                    *p,
+                ).await?,
 
             _=> unimplemented!(),
         };
@@ -392,14 +401,7 @@ impl Client<ClientStateAuthenticated> {
         &mut self,
         message: &[u8],
     ) -> Result<(), ClientError> {
-        let test = (&message[5..9]).read_u32_le().await?;
-        log::info!(
-            "Received message for session {}. Type int = {}",
-            self.state.session.session_id,
-            test,
-        );
-
-        let (responder, request) = rpc::create_handling_context(&message)?;
+        let (responder, request) = rpc::create_handling_context(message)?;
         log::info!(
             "Parsed message as type {} for session {}",
             request.name(),

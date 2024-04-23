@@ -10,10 +10,10 @@ use crate::session;
 
 // TODO: actually handle the request in some capacity
 pub async fn handle_create_session(
-    external_id: &str,
+    external_id: String,
     _params: RequestCreateSessionParams,
 ) -> Result<(session::ClientSession, ResponseParams), Box<dyn Error>> {
-    let session = session::new_client_session(external_id).await?;
+    let session = session::new_client_session(external_id.clone()).await?;
 
     let player_id = session.player_id;
     let session_id = session.session_id;
@@ -23,7 +23,7 @@ pub async fn handle_create_session(
 
     Ok((session, ResponseParams::CreateSession(ResponseCreateSessionParams {
         player_id,
-        steam_id: external_id.to_string(),
+        steam_id: external_id,
         ip_address: String::from(""),
         session_data: SessionData {
             identifier: ObjectIdentifier {
@@ -39,7 +39,7 @@ pub async fn handle_create_session(
 }
 
 pub async fn handle_restore_session(
-    external_id: &str,
+    external_id: String,
     params: RequestRestoreSessionParams,
 ) -> Result<(session::ClientSession, ResponseParams), Box<dyn Error>> {
     log::info!(
@@ -48,6 +48,7 @@ pub async fn handle_restore_session(
     );
 
     let session = session::get_client_session(
+        external_id,
         params.session_data.identifier.object_id,
         &params.session_data.cookie,
     ).await?;

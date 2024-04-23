@@ -68,7 +68,7 @@ pub async fn handle_get_bloodstain_list(
     ))
 }
 
-pub async fn handle_get_deading_ghost<'a>(
+pub async fn handle_get_deading_ghost(
     params: RequestGetDeadingGhostParams,
 ) -> rpc::HandlerResult {
     let mut connection = database::acquire().await?;
@@ -100,33 +100,33 @@ struct Bloodstain {
     play_region: i32,
 }
 
-impl Into<ResponseGetBloodstainListParamsEntry> for Bloodstain {
-    fn into(self) -> ResponseGetBloodstainListParamsEntry {
+impl From<Bloodstain> for ResponseGetBloodstainListParamsEntry {
+    fn from(val: Bloodstain) -> Self {
         ResponseGetBloodstainListParamsEntry {
             area: OnlineArea {
-                area: self.area,
-                play_region: self.play_region,
+                area: val.area,
+                play_region: val.play_region,
             },
             identifier: ObjectIdentifier {
-                object_id: self.bloodstain_id,
-                secondary_id: self.session_id,
+                object_id: val.bloodstain_id,
+                secondary_id: val.session_id,
             },
-            advertisement_data: self.advertisement_data,
+            advertisement_data: val.advertisement_data,
             group_passwords: vec![],
         }
     }
 }
 
-impl Into<ResponseGetDeadingGhostParams> for Bloodstain {
-    fn into(self) -> ResponseGetDeadingGhostParams {
+impl From<Bloodstain> for ResponseGetDeadingGhostParams {
+    fn from(val: Bloodstain) -> Self {
         ResponseGetDeadingGhostParams {
             unk0: 0,
             unk4: 0,
             identifier: ObjectIdentifier {
-                object_id: self.bloodstain_id,
-                secondary_id: self.session_id,
+                object_id: val.bloodstain_id,
+                secondary_id: val.session_id,
             },
-            replay_data: self.replay_data,
+            replay_data: val.replay_data,
         }
     }
 }

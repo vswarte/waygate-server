@@ -9,11 +9,11 @@ impl From<&ObjectIdentifier> for PoolKey {
     }
 }
 
-impl Into<ObjectIdentifier> for &PoolKey {
-    fn into(self) -> ObjectIdentifier {
+impl From<&PoolKey> for ObjectIdentifier {
+    fn from(val: &PoolKey) -> Self {
         ObjectIdentifier {
-            object_id: self.0,
-            secondary_id: self.1,
+            object_id: val.0,
+            secondary_id: val.1,
         }
     }
 }

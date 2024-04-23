@@ -1,41 +1,40 @@
 use fnrpc::quickmatch::*;
 use fnrpc::ResponseParams;
 
+use crate::pool::quickmatch_pool;
+use crate::pool::quickmatch::QuickmatchPoolEntry;
+use crate::pool::quickmatch::QuickmatchPoolQuery;
+use crate::pool::MatchResult;
 use crate::rpc;
 use crate::session::ClientSession;
 
 pub async fn handle_search_quick_match(
-    _params: RequestSearchQuickMatchParams,
+    request: RequestSearchQuickMatchParams,
 ) -> rpc::HandlerResult {
-    todo!();
-    // Ok(ResponseParams::SearchQuickMatch(ResponseSearchQuickMatchParams {
-    //     items: repository::quickmatch::quickmatch_search(params.arena_id, params.quickmatch_settings)
-    //         .iter()
-    //         .map(|m| ResponseSearchQuickMatchParamsEntry {
-    //             host_player_id: m.host_id,
-    //             arena_id: m.arena_id,
-    //             host_steam_id: "".to_string(),
-    //         })
-    //     .collect(),
-    //     unk1: 0x0,
-    // }))
+    let matches = quickmatch_pool()?
+        .match_entries::<QuickmatchPoolQuery>(&request.into())
+        .iter()
+        .map(|m| m.into())
+        .collect();
+
+    Ok(ResponseParams::SearchQuickMatch(ResponseSearchQuickMatchParams {
+        matches,
+        unk1: 0x0,
+    }))
 }
 
 pub async fn handle_register_quick_match(
-    _session: ClientSession,
-    _params: RequestRegisterQuickMatchParams,
+    session: ClientSession,
+    request: RequestRegisterQuickMatchParams,
 ) -> rpc::HandlerResult {
-    todo!();
-    // let _quickmatch_id = repository::quickmatch::register_quickmatch(
-    //     &params,
-    //     &session.player_id,
-    // );
-    //
-    // Ok(ResponseParams::RegisterQuickMatch)
+    let _key = quickmatch_pool()?
+        .insert(session.player_id, request.into())?;
+
+    Ok(ResponseParams::RegisterQuickMatch)
 }
 
 pub async fn handle_unregister_quick_match(
-    _session: ClientSession,
+    session: ClientSession,
 ) -> rpc::HandlerResult {
     todo!();
     // repository::quickmatch::unregister_quickmatches_for_player(&session.player_id)
@@ -45,7 +44,8 @@ pub async fn handle_unregister_quick_match(
 }
 
 pub async fn handle_update_quick_match() -> rpc::HandlerResult {
-    // TODO: ???
+    // TODO: Set new params if received, error if otherwise as this'll prompt a 
+    // recreate.
     Ok(ResponseParams::UpdateQuickMatch)
 }
 
@@ -105,4 +105,40 @@ pub async fn handle_accept_quick_match(
     //     Err(_) => Err(0 as u32),
     //     Ok(_) => Ok(ResponseParams::AcceptQuickMatch)
     // }
+}
+
+impl From<RequestRegisterQuickMatchParams> for QuickmatchPoolEntry {
+    fn from(val: RequestRegisterQuickMatchParams) -> Self {
+        QuickmatchPoolEntry {
+            external_id: String::new(),
+            character_level: val.matching_parameters.soul_level,
+            weapon_level: val.matching_parameters.max_reinforce,
+            arena_id: val.arena_id,
+            password: val.matching_parameters.password.clone(),
+            settings: val.quickmatch_settings,
+        }
+
+    }
+}
+
+impl From<&MatchResult<QuickmatchPoolEntry>> for ResponseSearchQuickMatchParamsEntry {
+    fn from(val: &MatchResult<QuickmatchPoolEntry>) -> Self {
+        ResponseSearchQuickMatchParamsEntry {
+            host_player_id: val.0.1,
+            host_steam_id: val.1.external_id.clone(),
+            arena_id: val.1.arena_id,
+        }
+    }
+}
+
+impl From<RequestSearchQuickMatchParams> for QuickmatchPoolQuery {
+    fn from(value: RequestSearchQuickMatchParams) -> Self {
+        Self {
+            character_level: value.matching_parameters.soul_level,
+            weapon_level: value.matching_parameters.max_reinforce,
+            password: value.matching_parameters.password.clone(),
+            arena_id: value.arena_id,
+            settings: value.quickmatch_settings,
+        }
+    }
 }

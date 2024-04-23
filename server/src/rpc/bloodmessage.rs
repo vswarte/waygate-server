@@ -149,21 +149,21 @@ struct BloodMessage {
     play_region: i32,
 }
 
-impl Into<ResponseGetBloodMessageListParamsEntry> for BloodMessage {
-    fn into(self) -> ResponseGetBloodMessageListParamsEntry {
+impl From<BloodMessage> for ResponseGetBloodMessageListParamsEntry {
+    fn from(val: BloodMessage) -> Self {
         ResponseGetBloodMessageListParamsEntry {
-            player_id: self.player_id,
-            character_id: self.character_id,
+            player_id: val.player_id,
+            character_id: val.character_id,
             identifier: ObjectIdentifier {
-                object_id: self.bloodmessage_id,
-                secondary_id: self.session_id,
+                object_id: val.bloodmessage_id,
+                secondary_id: val.session_id,
             },
-            rating_good: self.rating_good,
-            rating_bad: self.rating_bad,
-            data: self.data,
+            rating_good: val.rating_good,
+            rating_bad: val.rating_bad,
+            data: val.data,
             area: OnlineArea {
-                area: self.area,
-                play_region: self.play_region,
+                area: val.area,
+                play_region: val.play_region,
             },
             group_passwords: vec![],
         }

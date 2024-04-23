@@ -15,26 +15,19 @@ pub(crate) mod matchingticket;
 
 use std::{error::Error, io::{self, Read, Write}};
 
+use byteorder::{ReadBytesExt, WriteBytesExt, LE};
 use fnrpc::{serialize, PayloadType, RequestParams, ResponseParams};
-use crate::util::read_as_type;
 
 use crate::client::ProtocolError;
 
 pub type HandlerResult = Result<ResponseParams, Box<dyn Error>>;
 
-pub fn get_payload_type(payload: &[u8]) -> Result<PayloadType, io::Error> {
-    let mut reader = std::io::Cursor::new(payload);
-
-    Ok(read_as_type::<u8>(&mut reader)?.into())
+pub fn get_payload_type<R: Read>(mut r: R) -> Result<PayloadType, io::Error> {
+    Ok(r.read_u8()?.into())
 }
 
-pub fn create_handling_context(
-    payload: &[u8],
-) -> Result<(ResponseContext, RequestParams), crate::client::ClientError> {
-    let mut reader = io::Cursor::new(payload);
-
-    let payload_type: PayloadType = read_as_type::<u8>(&mut reader)
-        .map_err(crate::client::ClientError::Io)?.into();
+pub fn create_handling_context<R: Read>(mut r: R) -> Result<(ResponseContext, RequestParams), crate::client::ClientError> {
+    let payload_type: PayloadType = r.read_u8()?.into();
 
     // TODO: newtype to remove runtime checking
     if payload_type != PayloadType::Request {
@@ -43,17 +36,13 @@ pub fn create_handling_context(
         ));
     }
 
-    let context = ResponseContext {
-        sequence: read_as_type::<u32>(&mut reader)
-            .map_err(crate::client::ClientError::Io)?,
-    };
+    let context = ResponseContext { sequence: r.read_u32::<LE>()? };
 
     let mut params_buffer = vec![];
-    reader.read_to_end(&mut params_buffer)
-        .map_err(crate::client::ClientError::Io)?;
+    r.read_to_end(&mut params_buffer)?;
 
     let params = fnrpc::deserialize::<RequestParams>(&params_buffer)
-        .map_err(crate::client::ClientError::Wire)?.into();
+        .map_err(crate::client::ClientError::Wire)?;
 
     Ok((context, params))
 }
@@ -65,55 +54,41 @@ pub struct ResponseContext {
 
 impl ResponseContext {
     pub fn create_response_session(&self, params: ResponseParams) -> Result<Vec<u8>, io::Error> {
-        let mut b = std::io::Cursor::new(vec![]);
+        let mut buffer = vec![];
 
-        // Response payload type
-        b.write_all(&u8::to_le_bytes(0x5))?;
-
-        // Sequence number
-        b.write_all(&u32::to_le_bytes(self.sequence))?;
-
-        // Status
-        b.write_all(&u8::to_le_bytes(0x1))?;
+        buffer.write_u8(5)?; // Response payload type
+        buffer.write_u32::<LE>(self.sequence)?;
+        buffer.write_u8(1)?; // Status code
 
         let param_buffer = serialize(params)
             .map_err(|_| io::Error::from(io::ErrorKind::InvalidData))?;
+        buffer.write_all(param_buffer.as_slice())?;
 
-        b.write_all(param_buffer.as_slice())?;
-
-        Ok(b.into_inner())
+        Ok(buffer)
     }
-
 
     /// Formats a response to be send to the client.
     pub fn create_response(&self, response: HandlerResult) -> Result<Vec<u8>, io::Error> {
-        let mut b = std::io::Cursor::new(vec![]);
+        let mut buffer = vec![];
 
-        // Response payload type
-        b.write_all(&u8::to_le_bytes(0x5))?;
-        // Sequence number
-        b.write_all(&u32::to_le_bytes(self.sequence))?;
+        buffer.write_u8(5)?; // Response payload type
+        buffer.write_u32::<LE>(self.sequence)?;
 
         match response {
             Err(e) => {
                 log::error!("Could not handle request: {e:?}");
 
-                // Status
-                b.write_all(&u8::to_le_bytes(0x0))?;
-                // Error code
-                b.write_all(&u32::to_le_bytes(0))?;
+                buffer.write_u8(0)?; // Status code
+                buffer.write_u32::<LE>(0)?; // Error code
             },
             Ok(params) => {
-                // Status
-                b.write_all(&u8::to_le_bytes(0x1))?;
-
+                buffer.write_u8(1)?; // Status code
                 let param_buffer = serialize(params)
                     .map_err(|_| io::Error::from(io::ErrorKind::InvalidData))?;
-
-                b.write_all(param_buffer.as_slice())?;
+                buffer.write_all(param_buffer.as_slice())?;
             },
         };
 
-        Ok(b.into_inner())
+        Ok(buffer)
     }
 }

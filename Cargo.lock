@@ -1901,6 +1901,7 @@ name = "waygate-server"
 version = "0.1.0"
 dependencies = [
  "async-trait",
+ "byteorder",
  "dotenvy",
  "env_logger",
  "fnrpc",

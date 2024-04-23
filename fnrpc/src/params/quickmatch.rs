@@ -5,9 +5,9 @@ use crate::params::shared::*;
 #[derive(Serialize, Deserialize, Debug)]
 pub struct RequestSearchQuickMatchParams {
     pub quickmatch_settings: i32,
-    pub unk2: u32,
+    pub unk1: u32,
     pub arena_id: i32,
-    pub unk4: u32,
+    pub unk2: u32,
     pub matching_parameters: MatchingParameters,
     pub character_id: u32,
 }
@@ -21,7 +21,7 @@ pub struct ResponseSearchQuickMatchParamsEntry {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ResponseSearchQuickMatchParams {
-    pub items: Vec<ResponseSearchQuickMatchParamsEntry>,
+    pub matches: Vec<ResponseSearchQuickMatchParamsEntry>,
     pub unk1: u16,
 }
 
@@ -30,7 +30,7 @@ pub struct RequestRegisterQuickMatchParams {
     pub quickmatch_settings: i32,
     pub arena_id: i32,
     pub matching_parameters: MatchingParameters,
-    pub unk2: u8,
+    pub unk1: u8,
     pub character_id: u32,
 }
 

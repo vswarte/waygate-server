@@ -2,19 +2,19 @@ use serde::Serialize;
 use crate::params::*;
 
 #[derive(Serialize, Debug)]
-pub struct PushJoinUnk0Payload {
+pub struct Unk0Params {
     pub unk1: u64,
 }
 
 #[derive(Serialize, Debug)]
-pub struct PushJoinUnk1Payload {
+pub struct Unk1Params {
     pub unk1: u32,
     pub unk2: u64,
     pub unk3: u32,
 }
 
 #[derive(Serialize, Debug)]
-pub struct PushInvaderJoiningParams {
+pub struct BreakInTargetParams {
     pub invader_player_id: i32,
     pub invader_steam_id: String,
     pub unk1: u32,
@@ -23,27 +23,27 @@ pub struct PushInvaderJoiningParams {
 }
 
 #[derive(Serialize, Debug)]
-pub struct PushJoiningAsInvaderParams {
+pub struct AllowBreakInTargetParams {
     pub host_player_id: i32,
     pub join_data: Vec<u8>,
     pub unk1: u32,
 }
 
 #[derive(Serialize, Debug)]
-pub struct PushJoinUnk4Payload {
+pub struct Unk4Params {
     pub unk1: u32,
     pub unk2: u32,
     pub unk3: String,
 }
 
 #[derive(Serialize, Debug)]
-pub struct PushPlayerJoiningParams {
-    pub summoned_player_id: u32,
+pub struct Unk6Params {
+    pub summoned_player_id: i32,
     pub sign_identifier: shared::ObjectIdentifier,
 }
 
 #[derive(Serialize, Debug)]
-pub struct PushJoiningPlayerParams {
+pub struct SummonSignParams {
     pub summoning_player_id: i32,
     pub steam_id: String,
     pub summoned_player_id: i32,
@@ -52,30 +52,30 @@ pub struct PushJoiningPlayerParams {
 }
 
 #[derive(Serialize, Debug)]
-pub struct PushJoinUnk7Payload {
+pub struct Unk7Params {
     pub unk1: u64,
     pub unk2: u32,
 }
 
 #[derive(Serialize, Debug)]
-pub struct PushJoinUnk8Payload {
+pub struct Unk8Params {
     pub unk1: u32,
     pub unk2: String,
     pub unk3: u32,
 }
 
 #[derive(Serialize, Debug)]
-pub struct PushJoiningAsBlueParams {
-    pub host_player_id: u32,
+pub struct JoiningAsBlueParams {
+    pub host_player_id: i32,
     pub host_player_steam_id: String,
     pub join_data: Vec<u8>,
     pub unk1: u32,
     pub unk2: u32,
-    pub play_region_id: u32,
+    pub play_region_id: i32,
 }
 
 #[derive(Serialize, Debug)]
-pub struct PushJoinUnkAPayload {
+pub struct UnkAParams {
     pub unk1: u32,
     pub unk2: u32,
     pub unk3: String,
@@ -83,7 +83,7 @@ pub struct PushJoinUnkAPayload {
 }
 
 #[derive(Serialize, Debug)]
-pub struct PushJoiningQuickMatchParams {
+pub struct JoiningQuickMatchParams {
     pub quickmatch_settings: i32,
     pub host_player_id: i32,
     pub host_steam_id: String,
@@ -91,7 +91,7 @@ pub struct PushJoiningQuickMatchParams {
 }
 
 #[derive(Serialize, Debug)]
-pub struct PushPlayerJoiningQuickMatchParams {
+pub struct PlayerJoiningQuickMatchParams {
     pub quickmatch_settings: i32,
     pub joining_player_id: i32,
     pub joining_player_steam_id: String,
@@ -102,54 +102,54 @@ pub struct PushPlayerJoiningQuickMatchParams {
 }
 
 #[derive(Serialize, Debug)]
-pub struct PushJoinUnkDPayload {
+pub struct UnkDParams {
     pub unk1: u32,
     pub unk2: u32,
     pub unk3: u32,
 }
 
 #[derive(Serialize, Debug)]
-pub struct PushJoinUnkEPayload {
+pub struct UnkEParams {
     pub unk1: u32,
     pub unk2: String,
     pub unk3: Vec<u8>,
 }
 
 #[derive(Serialize, Debug)]
-pub struct PushJoinUnkFPayload {
+pub struct UnkFParams {
     pub unk1: Vec<u8>,
 }
 
 #[derive(Serialize, Debug)]
 #[repr(u32)]
 pub enum JoinPayload {
-    Unk0(PushJoinUnk0Payload), // 0x0
-    Unk1(PushJoinUnk1Payload), // 0x1
-    InvaderJoining(PushInvaderJoiningParams), // 0x2
-    JoiningAsInvader(PushJoiningAsInvaderParams), // 0x3
-    Unk4(PushJoinUnk4Payload), // 0x4
-    PlayerJoining(PushPlayerJoiningParams), // 0x5
-    JoiningPlayer(PushJoiningPlayerParams), //0x6
-    Unk7(PushJoinUnk7Payload), // 0x7
-    Unk8(PushJoinUnk8Payload), // 0x8
-    JoiningAsBlue(PushJoiningAsBlueParams), // 0x9
-    UnkA(PushJoinUnkAPayload), // 0XA
-    PlayerJoiningQuickMatch(PushPlayerJoiningQuickMatchParams), // 0xB
-    JoiningQuickMatch(PushJoiningQuickMatchParams), // 0xC
-    UnkD(PushJoinUnkDPayload), // 0xD
-    UnkE(PushJoinUnkEPayload), // 0xE
-    UnkF(PushJoinUnkFPayload), // 0xF
+    Unk0(Unk0Params), // 0x0
+    Unk1(Unk1Params), // 0x1
+    BreakInTarget(BreakInTargetParams), // 0x2
+    AllowBreakInTarget(AllowBreakInTargetParams), // 0x3
+    Unk4(Unk4Params), // 0x4
+    SummonSign(SummonSignParams), // 0x5
+    Unk6(Unk6Params), //0x6
+    Unk7(Unk7Params), // 0x7
+    Unk8(Unk8Params), // 0x8
+    JoiningAsBlue(JoiningAsBlueParams), // 0x9
+    UnkA(UnkAParams), // 0XA
+    PlayerJoiningQuickMatch(PlayerJoiningQuickMatchParams), // 0xB
+    JoiningQuickMatch(JoiningQuickMatchParams), // 0xC
+    UnkD(UnkDParams), // 0xD
+    UnkE(UnkEParams), // 0xE
+    UnkF(UnkFParams), // 0xF
 }
 
 #[derive(Serialize, Debug)]
-pub struct PushJoinParams {
+pub struct JoinParams {
     pub identifier: shared::ObjectIdentifier,
     pub join_payload: JoinPayload,
 }
 
 #[derive(Serialize, Debug)]
 #[repr(u32)]
-pub enum PushNotifyParamsSection1 {
+pub enum NotifyParamsSection1 {
     Variant1 {
         unk1: u32,
         unk2: u32,
@@ -162,7 +162,7 @@ pub enum PushNotifyParamsSection1 {
 
 #[derive(Serialize, Debug)]
 #[repr(u32)]
-pub enum PushNotifyParamsSection2 {
+pub enum NotifyParamsSection2 {
     Variant1 {
         message: String,
         unk1: u64,
@@ -176,19 +176,18 @@ pub enum PushNotifyParamsSection2 {
     },
 }
 
-
 #[derive(Serialize, Debug)]
-pub struct PushNotifyParams {
+pub struct NotifyParams {
     pub identifier: shared::ObjectIdentifier,
     pub timestamp: u64,
 
-    pub section1: PushNotifyParamsSection1,
-    pub section2: PushNotifyParamsSection2,
+    pub section1: NotifyParamsSection1,
+    pub section2: NotifyParamsSection2,
 }
 
 #[derive(Serialize, Debug)]
 #[repr(u32)]
 pub enum PushParams {
-    Notify(PushNotifyParams),
-    Join(PushJoinParams),
+    Notify(NotifyParams),
+    Join(JoinParams),
 }
