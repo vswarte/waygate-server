@@ -1,4 +1,4 @@
-use std::time;
+use std::{sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard}, time};
 use rand::prelude::*;
 use sqlx::Row;
 
@@ -8,7 +8,7 @@ use crate::database::{self, DatabaseError};
 pub const SESSION_VALIDITY: u64 = 60 * 60;
 
 #[derive(Clone, Debug)]
-pub struct ClientSession {
+pub struct ClientSessionInner {
     pub cookie: String,
     pub external_id: String,
     pub player_id: i32,
@@ -17,8 +17,37 @@ pub struct ClientSession {
     pub valid_until: i64,
 }
 
+pub type ClientSession = Arc<RwLock<ClientSessionInner>>;
+
+pub trait ClientSessionContainer {
+    fn lock_read(&self) -> RwLockReadGuard<'_, ClientSessionInner>;
+    fn lock_write(&self) -> RwLockWriteGuard<'_, ClientSessionInner>;
+}
+
+impl ClientSessionContainer for ClientSession {
+    fn lock_read(&self) -> RwLockReadGuard<'_, ClientSessionInner> {
+        match self.read() {
+            Ok(s) => s,
+            Err(e) => {
+                self.clear_poison();
+                e.into_inner()
+            },
+        }
+    }
+
+    fn lock_write(&self) -> RwLockWriteGuard<'_, ClientSessionInner> {
+        match self.write() {
+            Ok(s) => s,
+            Err(e) => {
+                self.clear_poison();
+                e.into_inner()
+            },
+        }
+    }
+}
+
 /// Creates a new session for a given external_id
-pub async fn new_client_session(external_id: String) -> Result<ClientSession, DatabaseError> {
+pub async fn new_client_session(external_id: String) -> Result<ClientSessionInner, DatabaseError> {
     let player_id = acquire_player_id(&external_id).await?;
     let cookie = generate_session_cookie();
 
@@ -36,7 +65,7 @@ pub async fn new_client_session(external_id: String) -> Result<ClientSession, Da
         .await?
         .get("session_id");
 
-    Ok(ClientSession {
+    Ok(ClientSessionInner {
         cookie,
         external_id,
         player_id,
@@ -47,7 +76,7 @@ pub async fn new_client_session(external_id: String) -> Result<ClientSession, Da
 }
 
 /// Creates a client session from an already existing session 
-pub async fn get_client_session(external_id: String, session_id: i32, cookie: &str) -> Result<ClientSession, DatabaseError> {
+pub async fn get_client_session(external_id: String, session_id: i32, cookie: &str) -> Result<ClientSessionInner, DatabaseError> {
     let now = time::SystemTime::now().duration_since(time::UNIX_EPOCH).unwrap();
 
     let mut connection = database::acquire().await?;
@@ -61,7 +90,7 @@ pub async fn get_client_session(external_id: String, session_id: i32, cookie: &s
     let valid_for = time::Duration::from_secs(SESSION_VALIDITY);
     let valid_from = (now - valid_for).as_secs() as i64;
 
-    Ok(ClientSession {
+    Ok(ClientSessionInner {
         cookie: session.cookie,
         external_id,
         player_id: session.player_id,

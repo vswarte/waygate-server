@@ -14,7 +14,6 @@ pub struct BreakInPoolQuery {
     pub weapon_level: u16,
 }
 
-// TODO: give a wet shit about invasion areas
 impl BreakInPoolQuery {
     fn check_character_level(host: u16, invader: u16) -> bool {
         let lower = invader - (invader / 10);

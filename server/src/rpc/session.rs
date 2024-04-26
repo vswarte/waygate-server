@@ -1,4 +1,6 @@
 use std::error::Error;
+use std::sync::Arc;
+use std::sync::RwLock;
 
 use fnrpc::session::*;
 use fnrpc::shared::ObjectIdentifier;
@@ -7,12 +9,14 @@ use fnrpc::ResponseParams;
 use crate::database;
 use crate::rpc;
 use crate::session;
+use crate::session::ClientSession;
+use crate::session::ClientSessionContainer;
 
 // TODO: actually handle the request in some capacity
 pub async fn handle_create_session(
     external_id: String,
     _params: RequestCreateSessionParams,
-) -> Result<(session::ClientSession, ResponseParams), Box<dyn Error>> {
+) -> Result<(ClientSession, ResponseParams), Box<dyn Error>> {
     let session = session::new_client_session(external_id.clone()).await?;
 
     let player_id = session.player_id;
@@ -21,7 +25,7 @@ pub async fn handle_create_session(
     let valid_until = session.valid_until;
     let cookie = session.cookie.clone();
 
-    Ok((session, ResponseParams::CreateSession(ResponseCreateSessionParams {
+    Ok((Arc::new(RwLock::new(session)), ResponseParams::CreateSession(ResponseCreateSessionParams {
         player_id,
         steam_id: external_id,
         ip_address: String::from(""),
@@ -41,7 +45,7 @@ pub async fn handle_create_session(
 pub async fn handle_restore_session(
     external_id: String,
     params: RequestRestoreSessionParams,
-) -> Result<(session::ClientSession, ResponseParams), Box<dyn Error>> {
+) -> Result<(ClientSession, ResponseParams), Box<dyn Error>> {
     log::info!(
         "Player sent RestoreSession. external_id = {}.",
         external_id,
@@ -58,7 +62,7 @@ pub async fn handle_restore_session(
     let valid_until = session.valid_until;
     let cookie = session.cookie.clone();
 
-    Ok((session, ResponseParams::RestoreSession(ResponseRestoreSessionParams {
+    Ok((Arc::new(RwLock::new(session)), ResponseParams::RestoreSession(ResponseRestoreSessionParams {
         session_data: SessionData {
             identifier: ObjectIdentifier {
                 object_id: session_id,
@@ -73,13 +77,13 @@ pub async fn handle_restore_session(
 }
 
 pub async fn handle_delete_session(
-    session: session::ClientSession,
+    session: ClientSession,
 ) -> rpc::HandlerResult {
-    log::info!("Player sent DeleteSession. player = {}", session.player_id);
+    let player_id = session.lock_read().player_id;
 
     let mut connection = database::acquire().await?;
     sqlx::query("DELETE FROM bloodmessages WHERE player_id = $1")
-        .bind(session.player_id)
+        .bind(player_id)
         .fetch_all(&mut *connection)
         .await?;
 

@@ -7,11 +7,17 @@ use fnrpc::ResponseParams;
 use crate::database;
 use crate::rpc;
 use crate::session::ClientSession;
+use crate::session::ClientSessionContainer;
 
 pub async fn handle_create_ghostdata(
     session: ClientSession,
-    params: RequestCreateGhostDataParams,
+    request: RequestCreateGhostDataParams,
 ) -> rpc::HandlerResult {
+    let (player_id, session_id) = {
+        let lock = session.lock_read();
+        (lock.player_id, lock.session_id)
+    };
+
     let mut connection = database::acquire().await?;
     let ghostdata_id = sqlx::query("INSERT INTO ghostdata (
             player_id,
@@ -26,11 +32,11 @@ pub async fn handle_create_ghostdata(
             $4,
             $5
         ) RETURNING ghostdata_id")
-        .bind(session.player_id)
-        .bind(session.session_id)
-        .bind(params.replay_data)
-        .bind(params.area.area)
-        .bind(params.area.play_region)
+        .bind(player_id)
+        .bind(session_id)
+        .bind(request.replay_data)
+        .bind(request.area.area)
+        .bind(request.area.play_region)
         .fetch_one(&mut *connection)
         .await?
         .get("ghostdata_id");
@@ -38,15 +44,15 @@ pub async fn handle_create_ghostdata(
     Ok(ResponseParams::CreateBloodstain(
         ResponseCreateGhostDataParams {
             object_id: ghostdata_id,
-            secondary_id: session.session_id,
+            secondary_id: session_id,
         }
     ))
 }
 
 pub async fn handle_get_ghostdata_list(
-    params: RequestGetGhostDataListParams
+    request: RequestGetGhostDataListParams
 ) -> rpc::HandlerResult {
-    let play_regions = params.search_areas.iter()
+    let play_regions = request.search_areas.iter()
         .map(|a| a.play_region)
         .collect::<Vec<i32>>();
 

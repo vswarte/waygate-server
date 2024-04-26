@@ -16,11 +16,14 @@ use crate::pool::sign_pool;
 use crate::push;
 use crate::rpc;
 use crate::session::ClientSession;
+use crate::session::ClientSessionContainer;
 
 pub async fn handle_create_sign(
     session: ClientSession,
     request: RequestCreateSignParams,
 ) -> rpc::HandlerResult {
+    let session = session.lock_read();
+
     log::info!(
         "Player put down their sign. player = {}. area = {}. play_region = {}",
         session.player_id,
@@ -40,7 +43,7 @@ pub async fn handle_get_sign_list(
     session: ClientSession,
     request: RequestGetSignListParams,
 ) -> rpc::HandlerResult {
-    log::info!("Host requested signs list. host = {}", session.player_id);
+    log::info!("Host requested signs list. host = {}", session.lock_read().player_id);
 
     let mut pool_matches = sign_pool()?
         .match_entries::<SignPoolQuery>(&(&request).into());
@@ -79,7 +82,8 @@ pub async fn handle_summon_sign(
     session: ClientSession,
     request: RequestSummonSignParams,
 ) -> rpc::HandlerResult {
-    log::info!("Host tapped a summon sign. host = {}", session.player_id);
+    let player_id = session.lock_read().player_id;
+    log::info!("Host tapped a summon sign. host = {}", player_id);
 
     let poolkey: PoolKey = (&request.identifier).into();
     if !sign_pool()?.has(&poolkey) {
@@ -93,7 +97,7 @@ pub async fn handle_summon_sign(
             secondary_id: rand::thread_rng().gen::<i32>(),
         },
         join_payload: JoinPayload::SummonSign(fnrpc::push::SummonSignParams {
-            summoning_player_id: session.player_id,
+            summoning_player_id: player_id,
             steam_id: String::default(),
             summoned_player_id: poolkey.1,
             sign_identifier: (&poolkey).into(),
@@ -112,7 +116,7 @@ pub async fn handle_remove_sign(
     session: ClientSession,
     request: RequestRemoveSignParams,
 ) -> rpc::HandlerResult {
-    log::info!("Player sent RemoveSign. player = {}", session.player_id);
+    log::info!("Player sent RemoveSign. player = {}", session.lock_read().player_id);
 
     crate::pool::sign_pool()?
         .remove(&(&request.sign_identifier).into())?;
@@ -126,7 +130,7 @@ pub async fn handle_reject_sign(
 ) -> rpc::HandlerResult {
     log::info!(
         "Player sent RejectSign. player = {}. request = {:#?}",
-        session.player_id,
+        session.lock_read().player_id,
         request
     );
 
@@ -138,7 +142,7 @@ pub async fn handle_update_sign(
     session: ClientSession,
     request: RequestUpdateSignParams,
 ) -> rpc::HandlerResult {
-    log::info!("Player sent UpdateSign. player = {}", session.player_id);
+    log::info!("Player sent UpdateSign. player = {}", session.lock_read().player_id);
 
     let exists = crate::pool::sign_pool()?
         .has(&(&request.identifier).into());

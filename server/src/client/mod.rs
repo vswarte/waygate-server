@@ -5,16 +5,16 @@ pub(crate) mod connection;
 
 use std::io;
 use std::net::SocketAddr;
-use fnrpc::ResponseParams;
 use thiserror::Error;
-use tokio::io::AsyncReadExt;
 use tungstenite::Message;
 use futures_util::SinkExt;
 use fnrpc::{PayloadType, RequestParams};
 
 use crate::rpc;
 use crate::push;
+use crate::rpc::handler::dispatch_request;
 use crate::session;
+use crate::session::ClientSessionContainer;
 use crate::steam::SteamSession;
 
 pub const CLIENT_HELLO_TIMEOUT: u64 = 5;
@@ -316,7 +316,8 @@ impl Client<ClientStateReceivedSessionDetails> {
             .await.map_err(|e| ClientError::Transport(transport::TransportError::WriteFailed(e)))?;
 
         let (push_tx, push_rx) = tokio::sync::mpsc::channel(25);
-        push::add_client_channel(session.player_id, push_tx).await;
+        let player_id = session.lock_read().player_id.clone();
+        push::add_client_channel(player_id, push_tx).await;
 
         Ok(Client {
             steam_session: self.steam_session,
@@ -402,18 +403,21 @@ impl Client<ClientStateAuthenticated> {
         message: &[u8],
     ) -> Result<(), ClientError> {
         let (responder, request) = rpc::create_handling_context(message)?;
-        log::info!(
-            "Parsed message as type {} for session {}",
-            request.name(),
-            self.state.session.session_id,
-        );
 
         #[cfg(feature = "dump")]
         {
+            let session = self.state.session.lock_read();
+
+            log::info!(
+                "Parsed message as type {} for session {}",
+                request.name(),
+                session.session_id,
+            );
+
             std::fs::write(
                 format!(
                     "./dump/request-{}-{}-{}.bin",
-                    self.state.session.session_id,
+                    session.session_id,
                     responder.sequence,
                     request.name(),
                 ),
@@ -421,20 +425,14 @@ impl Client<ClientStateAuthenticated> {
             )?;
         }
 
-        let response: Result<ResponseParams, Box<dyn std::error::Error>> = match rpc::handler::spawn_handling_task(
+        let response = dispatch_request(
             self.state.session.clone(),
             request,
-        ) {
-            Some(h) => h.await,
-            None => {
-                log::warn!("Request does not have a handler");
-                Err(Box::new(ClientError::NoHandler))
-            },
-        };
+        ).await;
 
         let mut bytes = responder.create_response(response)?;
-
         let encrypted = self.state.crypto.session_encrypt(&mut bytes).await?;
+
         self.state.transport.sink.send(Message::Binary(encrypted))
             .await.map_err(|e| ClientError::Transport(transport::TransportError::WriteFailed(e)))?;
 

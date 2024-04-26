@@ -1,5 +1,5 @@
 struct RequestGetVisitorListParams {
-    u32 onlineAreaId;
+    u32 playRegion;
     u32 unk1;
     MatchingParameters matchingParameters;
     u32 unk2;
@@ -10,7 +10,7 @@ struct ResponseGetVisitorListParamsEntry {
     u32 playerId;
     String steamId;
     u32 unk1;
-    u32 onlineAreaId;
+    u32 playRegion;
     u32 unk3;
 };
 

@@ -7,6 +7,7 @@ use crate::pool::quickmatch::QuickmatchPoolQuery;
 use crate::pool::MatchResult;
 use crate::rpc;
 use crate::session::ClientSession;
+use crate::session::ClientSessionContainer;
 
 pub async fn handle_search_quick_match(
     request: RequestSearchQuickMatchParams,
@@ -28,13 +29,13 @@ pub async fn handle_register_quick_match(
     request: RequestRegisterQuickMatchParams,
 ) -> rpc::HandlerResult {
     let _key = quickmatch_pool()?
-        .insert(session.player_id, request.into())?;
+        .insert(session.lock_read().player_id, request.into())?;
 
     Ok(ResponseParams::RegisterQuickMatch)
 }
 
 pub async fn handle_unregister_quick_match(
-    session: ClientSession,
+    _session: ClientSession,
 ) -> rpc::HandlerResult {
     todo!();
     // repository::quickmatch::unregister_quickmatches_for_player(&session.player_id)
@@ -90,7 +91,7 @@ pub async fn handle_accept_quick_match(
     // let push_payload = PushParams::Join(PushJoinParams {
     //     identifier: shared::ObjectIdentifier {
     //         object_id: rand::thread_rng().gen::<i32>(),
-    //         secondary_id: rand::thread_rng().gen::<i32>(),
+    //         seconda rand::thread_rng().gen::<i32>(),
     //     },
     //     join_payload: JoinPayload::JoiningQuickMatch(PushJoiningQuickMatchParams {
     //         quickmatch_settings: quickmatch.quickmatch_settings,

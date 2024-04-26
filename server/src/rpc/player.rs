@@ -7,18 +7,18 @@ use fnrpc::ResponseParams;
 use crate::pool::breakin::BreakInPoolEntry;
 use crate::rpc;
 use crate::session::ClientSession;
+use crate::session::ClientSessionContainer;
 
 pub async fn handle_update_player_status(
     session: ClientSession,
-    params: RequestUpdatePlayerStatusParams
+    request: RequestUpdatePlayerStatusParams
 ) -> rpc::HandlerResult {
-    log::info!("Player sent UpdatePlayerStatus. player = {}", session.player_id);
+    log::info!("Player sent UpdatePlayerStatus. player = {}", session.lock_read().player_id);
 
-    debug::listen_debug_notifs(&params, &session).await;
+    debug::listen_debug_notifs(&request, session).await;
 
     Ok(ResponseParams::UpdatePlayerStatus)
 }
-
 
 impl From<(String, &RequestUpdatePlayerStatusParams)> for BreakInPoolEntry {
     fn from(value: (String, &RequestUpdatePlayerStatusParams)) -> Self {
@@ -32,21 +32,21 @@ impl From<(String, &RequestUpdatePlayerStatusParams)> for BreakInPoolEntry {
 
 pub async fn handle_use_item_log(
     _session: ClientSession,
-    _params: RequestUseItemLogParams,
+    _request: RequestUseItemLogParams,
 ) -> rpc::HandlerResult {
     Ok(ResponseParams::UseItemLog)
 }
 
 pub async fn handle_get_item_log(
     _session: ClientSession,
-    _params: RequestGetItemLogParams,
+    _request: RequestGetItemLogParams,
 ) -> rpc::HandlerResult {
     Ok(ResponseParams::UseItemLog)
 }
 
 pub async fn handle_kill_enemy_log(
     _session: ClientSession,
-    _params: RequestKillEnemyLogParams,
+    _request: RequestKillEnemyLogParams,
 ) -> rpc::HandlerResult {
     Ok(ResponseParams::KillEnemyLog)
 }
@@ -65,19 +65,21 @@ mod debug {
     };
     use rand::prelude::*;
 
-    use crate::{push::send_push, session::ClientSession};
+    use crate::{push::send_push, session::{ClientSession, ClientSessionContainer}};
 
-    pub async fn listen_debug_notifs(params: &RequestUpdatePlayerStatusParams, session: &ClientSession) {
+    pub async fn listen_debug_notifs(params: &RequestUpdatePlayerStatusParams, session: ClientSession) {
+        let player_id = session.lock_read().player_id;
+
         if params.character.group_passwords.iter().any(|e| e == "_summon") {
-            send_push(session.player_id, get_test_summon(session.player_id)).await.unwrap();
+            send_push(player_id, get_test_summon(player_id)).await.unwrap();
         }
 
         if params.character.group_passwords.iter().any(|e| e == "_buff") {
-            send_push(session.player_id, get_test_buff()).await.unwrap();
+            send_push(player_id, get_test_buff()).await.unwrap();
         }
 
         if params.character.group_passwords.iter().any(|e| e == "_msg") {
-            send_push(session.player_id, get_test_announcement()).await.unwrap();
+            send_push(player_id, get_test_announcement()).await.unwrap();
         }
     }
 

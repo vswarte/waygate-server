@@ -8,11 +8,17 @@ use fnrpc::shared::OnlineArea;
 use crate::database;
 use crate::rpc;
 use crate::session::ClientSession;
+use crate::session::ClientSessionContainer;
 
 pub async fn handle_create_bloodstain(
     session: ClientSession,
     params: RequestCreateBloodstainParams,
 ) -> rpc::HandlerResult {
+    let (player_id, session_id) = {
+        let lock = session.lock_read();
+        (lock.player_id, lock.session_id)
+    };
+
     let mut connection = database::acquire().await?;
     let bloodstain_id = sqlx::query("INSERT INTO bloodstains (
             player_id,
@@ -29,8 +35,8 @@ pub async fn handle_create_bloodstain(
             $5,
             $6
         ) RETURNING bloodstain_id")
-        .bind(session.player_id)
-        .bind(session.session_id)
+        .bind(player_id)
+        .bind(session_id)
         .bind(params.advertisement_data)
         .bind(params.replay_data)
         .bind(params.area.area)
@@ -42,7 +48,7 @@ pub async fn handle_create_bloodstain(
     Ok(ResponseParams::CreateBloodstain(
         ResponseCreateBloodstainParams {
             object_id: bloodstain_id,
-            secondary_id: session.session_id,
+            secondary_id: session_id,
         }
     ))
 }

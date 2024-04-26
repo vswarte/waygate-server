@@ -1,9 +1,9 @@
 struct RequestVisitParams {
     u32 unk1;
-    u32 onlineAreaId;
+    u32 playRegion;
     u32 unk2;
     u32 playerId;
-    Vector<char> jointData;
+    Vector<char> joinData;
 };
 
 struct ResponseVisitParams {

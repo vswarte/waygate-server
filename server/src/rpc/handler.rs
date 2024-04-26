@@ -1,102 +1,96 @@
-use std::pin::Pin;
-
-use futures::Future;
 use fnrpc::RequestParams;
 
-use crate::{rpc::*, session::ClientSession};
+use crate::{client::ClientError, rpc::*, session::ClientSession};
 
-pub type HandlerTask = Pin<Box<dyn Future<Output = HandlerResult> + Send>>;
-
-pub fn spawn_handling_task(
+pub async fn dispatch_request(
     session: ClientSession,
     request: RequestParams,
-) -> Option<HandlerTask> {
-    Some(match request {
-        RequestParams::DeleteSession
-            => Box::pin(session::handle_delete_session(session)),
+) -> HandlerResult {
+    Ok(match request {
+        RequestParams::DeleteSession => session::handle_delete_session(session).await?,
 
         // Client throws a steamworks error if this is returns an error
         RequestParams::RegisterUGC
-            => Box::pin(ugc::handle_register_ugc()),
+            => ugc::handle_register_ugc().await?,
 
         RequestParams::UpdateLoginPlayerCharacter
-            => Box::pin(character::handle_update_login_player_character()),
+            => character::handle_update_login_player_character().await?,
 
         RequestParams::UpdatePlayerStatus(p)
-            => Box::pin(player::handle_update_player_status(session, *p)),
+            => player::handle_update_player_status(session, *p).await?,
 
         RequestParams::GetAnnounceMessageList(_)
-            => Box::pin(announcement::handle_get_announce_message_list()),
+            => announcement::handle_get_announce_message_list().await?,
 
         RequestParams::CreateMatchingTicket(p)
-            => Box::pin(matchingticket::handle_create_matching_ticket(session, *p)),
+            => matchingticket::handle_create_matching_ticket(session, *p).await?,
 
         RequestParams::CreateBloodstain(p)
-            => Box::pin(bloodstain::handle_create_bloodstain(session, *p)),
+            => bloodstain::handle_create_bloodstain(session, *p).await?,
         RequestParams::GetBloodstainList(p)
-            => Box::pin(bloodstain::handle_get_bloodstain_list(*p)),
+            => bloodstain::handle_get_bloodstain_list(*p).await?,
         RequestParams::GetDeadingGhost(p)
-            => Box::pin(bloodstain::handle_get_deading_ghost(*p)),
+            => bloodstain::handle_get_deading_ghost(*p).await?,
 
         RequestParams::CreateGhostData(p)
-            => Box::pin(ghostdata::handle_create_ghostdata(session, *p)),
+            => ghostdata::handle_create_ghostdata(session, *p).await?,
         RequestParams::GetGhostDataList(p)
-            => Box::pin(ghostdata::handle_get_ghostdata_list(*p)),
+            => ghostdata::handle_get_ghostdata_list(*p).await?,
 
         RequestParams::CreateBloodMessage(p)
-            => Box::pin(bloodmessage::handle_create_blood_message(session, *p)),
+            => bloodmessage::handle_create_blood_message(session, *p).await?,
         RequestParams::GetBloodMessageList(p)
-            => Box::pin(bloodmessage::handle_get_blood_message_list(*p)),
+            => bloodmessage::handle_get_blood_message_list(*p).await?,
         RequestParams::EvaluateBloodMessage(p)
-            => Box::pin(bloodmessage::handle_evaluate_blood_message(*p)),
+            => bloodmessage::handle_evaluate_blood_message(*p).await?,
         RequestParams::ReentryBloodMessage(p)
-            => Box::pin(bloodmessage::handle_reentry_blood_message(*p)),
+            => bloodmessage::handle_reentry_blood_message(*p).await?,
         RequestParams::RemoveBloodMessage(p)
-            => Box::pin(bloodmessage::handle_remove_blood_message(session, *p)),
+            => bloodmessage::handle_remove_blood_message(session, *p).await?,
 
         RequestParams::CreateSign(p)
-            => Box::pin(sign::handle_create_sign(session, *p)),
+            => sign::handle_create_sign(session, *p).await?,
         RequestParams::GetSignList(p)
-            => Box::pin(sign::handle_get_sign_list(session, *p)),
+            => sign::handle_get_sign_list(session, *p).await?,
         RequestParams::SummonSign(p)
-            => Box::pin(sign::handle_summon_sign(session, *p)),
+            => sign::handle_summon_sign(session, *p).await?,
         RequestParams::RejectSign(p)
-            => Box::pin(sign::handle_reject_sign(session, *p)),
+            => sign::handle_reject_sign(session, *p).await?,
         RequestParams::RemoveSign(p)
-            => Box::pin(sign::handle_remove_sign(session, *p)),
+            => sign::handle_remove_sign(session, *p).await?,
         RequestParams::UpdateSign(p)
-            => Box::pin(sign::handle_update_sign(session,*p)),
+            => sign::handle_update_sign(session,*p).await?,
 
         RequestParams::SearchQuickMatch(p)
-            => Box::pin(quickmatch::handle_search_quick_match(*p)),
+            => quickmatch::handle_search_quick_match(*p).await?,
         RequestParams::RegisterQuickMatch(p)
-            => Box::pin(quickmatch::handle_register_quick_match(session, *p)),
+            => quickmatch::handle_register_quick_match(session, *p).await?,
         RequestParams::UnregisterQuickMatch
-            => Box::pin(quickmatch::handle_unregister_quick_match(session)),
+            => quickmatch::handle_unregister_quick_match(session).await?,
         RequestParams::UpdateQuickMatch
-            => Box::pin(quickmatch::handle_update_quick_match()),
+            => quickmatch::handle_update_quick_match().await?,
         RequestParams::JoinQuickMatch(p)
-            => Box::pin(quickmatch::handle_join_quick_match(session, *p)),
+            => quickmatch::handle_join_quick_match(session, *p).await?,
         RequestParams::AcceptQuickMatch(p)
-            => Box::pin(quickmatch::handle_accept_quick_match(session, *p)),
+            => quickmatch::handle_accept_quick_match(session, *p).await?,
 
         RequestParams::GetBreakInTargetList(p)
-            => Box::pin(breakin::handle_get_break_in_target_list(*p)),
+            => breakin::handle_get_break_in_target_list(*p).await?,
         RequestParams::BreakInTarget(p)
-            => Box::pin(breakin::handle_break_in_target(session, *p)),
+            => breakin::handle_break_in_target(session, *p).await?,
         RequestParams::AllowBreakInTarget(p)
-            => Box::pin(breakin::handle_allow_break_in_target(session, *p)), 
+            => breakin::handle_allow_break_in_target(session, *p).await?, 
 
         RequestParams::GetItemLog(p)
-            => Box::pin(player::handle_get_item_log(session, *p)), 
+            => player::handle_get_item_log(session, *p).await?, 
         RequestParams::UseItemLog(p)
-            => Box::pin(player::handle_use_item_log(session, *p)), 
+            => player::handle_use_item_log(session, *p).await?, 
         RequestParams::KillEnemyLog(p)
-            => Box::pin(player::handle_kill_enemy_log(session, *p)), 
+            => player::handle_kill_enemy_log(session, *p).await?, 
 
         RequestParams::GrGetPlayerEquipments(p)
-            => Box::pin(player_equipments::handle_gr_get_player_equipments(*p)), 
+            => player_equipments::handle_gr_get_player_equipments(*p).await?, 
 
-        _ => return None,
+        _ => return Err(Box::new(ClientError::NoHandler)),
     })
 }

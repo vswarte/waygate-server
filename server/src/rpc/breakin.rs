@@ -16,6 +16,7 @@ use crate::pool::MatchResult;
 use crate::push;
 use crate::rpc;
 use crate::session::ClientSession;
+use crate::session::ClientSessionContainer;
 
 impl From<RequestGetBreakInTargetListParams> for BreakInPoolQuery {
     fn from(value: RequestGetBreakInTargetListParams) -> Self {
@@ -44,14 +45,19 @@ pub async fn handle_break_in_target(
     session: ClientSession,
     request: RequestBreakInTargetParams,
 ) -> rpc::HandlerResult {
+    let (player_id, external_id) = {
+        let lock = session.lock_read();
+        (lock.player_id, lock.external_id.clone())
+    };
+
     let push_payload = PushParams::Join(JoinParams {
         identifier: ObjectIdentifier {
             object_id: rand::thread_rng().gen::<i32>(),
             secondary_id: rand::thread_rng().gen::<i32>(),
         },
         join_payload: JoinPayload::BreakInTarget(BreakInTargetParams {
-            invader_player_id: session.player_id,
-            invader_steam_id: session.external_id,
+            invader_player_id: player_id,
+            invader_steam_id: external_id,
             unk1: 0x0,
             unk2: 0x0,
             play_region: 6100000,
