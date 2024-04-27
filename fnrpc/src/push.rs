@@ -37,7 +37,7 @@ pub struct Unk4Params {
 }
 
 #[derive(Serialize, Debug)]
-pub struct Unk6Params {
+pub struct Unk5Params {
     pub summoned_player_id: i32,
     pub sign_identifier: shared::ObjectIdentifier,
 }
@@ -128,8 +128,8 @@ pub enum JoinPayload {
     BreakInTarget(BreakInTargetParams), // 0x2
     AllowBreakInTarget(AllowBreakInTargetParams), // 0x3
     Unk4(Unk4Params), // 0x4
-    SummonSign(SummonSignParams), // 0x5
-    Unk6(Unk6Params), //0x6
+    Unk5(Unk5Params), // 0x5
+    SummonSign(SummonSignParams), //0x6
     Unk7(Unk7Params), // 0x7
     Unk8(Unk8Params), // 0x8
     JoiningAsBlue(JoiningAsBlueParams), // 0x9
