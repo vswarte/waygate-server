@@ -65,7 +65,7 @@ pub struct Unk8Params {
 }
 
 #[derive(Serialize, Debug)]
-pub struct JoiningAsBlueParams {
+pub struct VisitParams {
     pub host_player_id: i32,
     pub host_player_steam_id: String,
     pub join_data: Vec<u8>,
@@ -132,7 +132,7 @@ pub enum JoinPayload {
     SummonSign(SummonSignParams), //0x6
     Unk7(Unk7Params), // 0x7
     Unk8(Unk8Params), // 0x8
-    JoiningAsBlue(JoiningAsBlueParams), // 0x9
+    Visit(VisitParams), // 0x9
     UnkA(UnkAParams), // 0XA
     PlayerJoiningQuickMatch(PlayerJoiningQuickMatchParams), // 0xB
     JoiningQuickMatch(JoiningQuickMatchParams), // 0xC

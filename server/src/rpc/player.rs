@@ -61,30 +61,42 @@ mod debug {
     };
     use rand::prelude::*;
 
-    use crate::{push::send_push, session::{ClientSession, ClientSessionContainer}};
+    use crate::{pool::{self, breakin::BreakInPoolEntry}, push::send_push, session::{ClientSession, ClientSessionContainer}};
 
     pub async fn listen_debug_notifs(params: &RequestUpdatePlayerStatusParams, session: ClientSession) {
-        let player_id = session.lock_read().player_id;
+        {
+            let player_id = session.lock_read().player_id;
 
-        if params.character.group_passwords.iter().any(|e| e == "_summon") {
-            let sign: Option<ObjectIdentifier> = session.lock_read().sign.as_ref()
-                .map(|s| s.into());
+            if params.character.group_passwords.iter().any(|e| e == "_summon") {
+                let sign: Option<ObjectIdentifier> = session.lock_read().sign.as_ref()
+                    .map(|s| s.into());
 
-            if let Some(sign) = sign {
-                send_push(player_id, get_test_summon(sign)).await.unwrap();
+                if let Some(sign) = sign {
+                    send_push(player_id, get_test_summon(sign)).await.unwrap();
+                }
+            }
+
+            if params.character.group_passwords.iter().any(|e| e == "_buff") {
+                send_push(player_id, get_test_buff()).await.unwrap();
+            }
+
+            if params.character.group_passwords.iter().any(|e| e == "_msg") {
+                send_push(player_id, get_test_announcement()).await.unwrap();
             }
         }
 
-        if params.character.group_passwords.iter().any(|e| e == "_buff") {
-            send_push(player_id, get_test_buff()).await.unwrap();
-        }
+        let mut session = session.lock_write();
+        if params.character.group_passwords.iter().any(|e| e == "_invade") && session.breakin.is_none() {
+            // send_push(player_id, get_test_invasion()).await.unwrap();
+            let key = pool::breakin().unwrap()
+                .insert(session.player_id, BreakInPoolEntry {
+                    character_level: 96,
+                    weapon_level: 20,
+                    steam_id: session.external_id.clone(),
+                })
+                .unwrap();
 
-        if params.character.group_passwords.iter().any(|e| e == "_msg") {
-            send_push(player_id, get_test_announcement()).await.unwrap();
-        }
-
-        if params.character.group_passwords.iter().any(|e| e == "_invade") {
-            send_push(player_id, get_test_invasion()).await.unwrap();
+            session.breakin = Some(key);
         }
     }
 

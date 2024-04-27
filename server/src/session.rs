@@ -17,6 +17,7 @@ pub struct ClientSessionInner {
     pub valid_until: i64,
 
     pub sign: Option<PoolKey>,
+    pub breakin: Option<PoolKey>,
 }
 
 pub type ClientSession = Arc<RwLock<ClientSessionInner>>;
