@@ -77,6 +77,7 @@ pub async fn new_client_session(external_id: String) -> Result<ClientSessionInne
         valid_until,
 
         sign: None,
+        breakin: None,
     })
 }
 
@@ -105,6 +106,7 @@ pub async fn get_client_session(external_id: String, session_id: i32, cookie: &s
         valid_until: session.valid_until,
 
         sign: None,
+        breakin: None,
     })
 }
 
