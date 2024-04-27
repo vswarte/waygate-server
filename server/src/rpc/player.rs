@@ -55,11 +55,7 @@ mod debug {
     use fnrpc::{
         player::RequestUpdatePlayerStatusParams,
         push::{
-            JoinPayload,
-            SummonSignParams,
-            NotifyParamsSection1,
-            NotifyParamsSection2,
-            PushParams,
+            AllowBreakInTargetParams, BreakInTargetParams, JoinParams, JoinPayload, NotifyParamsSection1, NotifyParamsSection2, PushParams, SummonSignParams
         },
         shared::ObjectIdentifier
     };
@@ -71,7 +67,12 @@ mod debug {
         let player_id = session.lock_read().player_id;
 
         if params.character.group_passwords.iter().any(|e| e == "_summon") {
-            send_push(player_id, get_test_summon(player_id)).await.unwrap();
+            let sign: Option<ObjectIdentifier> = session.lock_read().sign.as_ref()
+                .map(|s| s.into());
+
+            if let Some(sign) = sign {
+                send_push(player_id, get_test_summon(sign)).await.unwrap();
+            }
         }
 
         if params.character.group_passwords.iter().any(|e| e == "_buff") {
@@ -81,23 +82,59 @@ mod debug {
         if params.character.group_passwords.iter().any(|e| e == "_msg") {
             send_push(player_id, get_test_announcement()).await.unwrap();
         }
+
+        if params.character.group_passwords.iter().any(|e| e == "_invade") {
+            send_push(player_id, get_test_invasion()).await.unwrap();
+        }
     }
 
+    /// Sends a message your way that you are being invaded
+    fn get_test_invasion_offer() -> PushParams {
+        PushParams::Join(JoinParams {
+            identifier: ObjectIdentifier {
+                object_id: rand::thread_rng().gen::<i32>(),
+                secondary_id: rand::thread_rng().gen::<i32>(),
+            },
+            join_payload: JoinPayload::BreakInTarget(BreakInTargetParams {
+                invader_player_id: 0x10123,
+                invader_steam_id: "1100001000056c0".to_string(),
+                unk1: 0x0,
+                unk2: 0x0,
+                play_region: 6100000,
+            }),
+        })
+    }
+
+    /// Sends a message your way that you going to be invading
+    fn get_test_invasion() -> PushParams {
+        PushParams::Join(JoinParams {
+            identifier: ObjectIdentifier {
+                object_id: rand::thread_rng().gen::<i32>(),
+                secondary_id: rand::thread_rng().gen::<i32>(),
+            },
+            join_payload: JoinPayload::AllowBreakInTarget(AllowBreakInTargetParams {
+                host_player_id: 0x10123,
+                unk1: 0x0,
+                join_data: vec![
+                    0x38, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x1F, 
+                    0x52, 0xB8, 0x6E, 0x41, 0x73, 0xE8, 0x3F, 0x42, 0x0A, 0xD7, 0x45, 0x42, 0x1A, 0x5D, 0xF1, 0xBE, 
+                    0x02, 0x00, 0x00, 0x00, 0xFD, 0xFF, 0xFF, 0xFF, 0x03, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 
+                    0x08, 0x00, 0x00, 0x00, 0x55, 0xE7, 0x7E, 0xAC, 0x00, 0x00, 0x86, 0x01, 
+                ],
+            }),
+        })
+    }
+
+
     /// Sends a message your way that you were summoned
-    fn get_test_summon(recipient_id: i32) -> PushParams {
+    fn get_test_summon(sign: ObjectIdentifier) -> PushParams {
         let push_id_1 = { thread_rng().gen::<i32>() };
         let push_id_2 = { thread_rng().gen::<i32>() };
 
-        let player_id = { thread_rng().gen::<i32>() };
-        let session_id = { thread_rng().gen::<i32>() };
-        let sign_id = { thread_rng().gen::<i32>() };
+        // let player_id = { thread_rng().gen::<i32>() };
+        let player_id = 0x10123;
 
-        log::info!(
-            "Sending test join. player_id = {}. session_id = {}. sign_id = {}.",
-            player_id,
-            session_id,
-            sign_id,
-        );
+        log::info!("Sending test join. player_id = {}. identifier = {:?}", player_id, sign);
 
         PushParams::Join(fnrpc::push::JoinParams {
             identifier: fnrpc::shared::ObjectIdentifier {
@@ -106,13 +143,15 @@ mod debug {
             },
             join_payload: JoinPayload::SummonSign(SummonSignParams {
                 summoning_player_id: player_id,
-                steam_id: String::from("1100001000056c0"),
-                summoned_player_id: recipient_id,
-                sign_identifier: ObjectIdentifier {
-                    object_id: sign_id,
-                    secondary_id: session_id,
-                },
-                join_data: Vec::new(),
+                steam_id: String::new(),
+                summoned_player_id: sign.secondary_id,
+                sign_identifier: sign,
+                join_data: Vec::from([
+                    0x38, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x1F, 
+                    0x52, 0xB8, 0x6E, 0x41, 0x73, 0xE8, 0x3F, 0x42, 0x0A, 0xD7, 0x45, 0x42, 0x1A, 0x5D, 0xF1, 0xBE, 
+                    0x02, 0x00, 0x00, 0x00, 0xFD, 0xFF, 0xFF, 0xFF, 0x03, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 
+                    0x08, 0x00, 0x00, 0x00, 0x55, 0xE7, 0x7E, 0xAC, 0x00, 0x00, 0x86, 0x01, 
+                ]),
             }),
         })
     }

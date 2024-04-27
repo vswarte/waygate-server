@@ -12,14 +12,12 @@ use crate::session::ClientSessionContainer;
 pub async fn handle_search_quick_match(
     request: RequestSearchQuickMatchParams,
 ) -> rpc::HandlerResult {
-    let matches = quickmatch_pool()?
-        .match_entries::<QuickmatchPoolQuery>(&request.into())
-        .iter()
-        .map(|m| m.into())
-        .collect();
-
     Ok(ResponseParams::SearchQuickMatch(ResponseSearchQuickMatchParams {
-        matches,
+        matches: quickmatch_pool()?
+            .match_entries::<QuickmatchPoolQuery>(&request.into())
+            .iter()
+            .map(|m| m.into())
+            .collect(),
         unk1: 0x0,
     }))
 }

@@ -5,12 +5,13 @@ use crate::rpc;
 use crate::session::ClientSession;
 use crate::session::ClientSessionContainer;
 
+// The numbers... They mean something.
 pub async fn handle_create_matching_ticket(
     session: ClientSession,
     request: RequestCreateMatchingTicketParams,
 ) -> rpc::HandlerResult {
     log::info!("Player sent CreateMatchingTicket. player = {}", session.lock_read().player_id);
-    log::info!("Last 10 numbers: {:?}", &request.unk1[0..10]);
+    log::info!("Last 10 numbers: {:?}", &request.unk1);
 
     Ok(ResponseParams::CreateMatchingTicket)
 }

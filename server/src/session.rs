@@ -2,7 +2,7 @@ use std::{sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard}, time};
 use rand::prelude::*;
 use sqlx::Row;
 
-use crate::database::{self, DatabaseError};
+use crate::{database::{self, DatabaseError}, pool::key::PoolKey};
 
 // Sessions are valid for an hour
 pub const SESSION_VALIDITY: u64 = 60 * 60;
@@ -15,6 +15,8 @@ pub struct ClientSessionInner {
     pub session_id: i32,
     pub valid_from: i64,
     pub valid_until: i64,
+
+    pub sign: Option<PoolKey>,
 }
 
 pub type ClientSession = Arc<RwLock<ClientSessionInner>>;
@@ -72,6 +74,8 @@ pub async fn new_client_session(external_id: String) -> Result<ClientSessionInne
         session_id,
         valid_from,
         valid_until,
+
+        sign: None,
     })
 }
 
@@ -80,10 +84,11 @@ pub async fn get_client_session(external_id: String, session_id: i32, cookie: &s
     let now = time::SystemTime::now().duration_since(time::UNIX_EPOCH).unwrap();
 
     let mut connection = database::acquire().await?;
-    let session = sqlx::query_as::<_, Session>("SELECT * FROM sessions WHERE session_id = $1 AND cookie = $2 AND valid_until > $3")
+    // let session = sqlx::query_as::<_, Session>("SELECT * FROM sessions WHERE session_id = $1 AND cookie = $2 AND valid_until > $3")
+    let session = sqlx::query_as::<_, Session>("SELECT * FROM sessions WHERE session_id = $1 AND cookie = $2")
         .bind(session_id)
         .bind(cookie)
-        .bind(now.as_secs() as i64)
+        // .bind(now.as_secs() as i64)
         .fetch_one(&mut *connection)
         .await?;
 
@@ -97,6 +102,8 @@ pub async fn get_client_session(external_id: String, session_id: i32, cookie: &s
         session_id: session.session_id,
         valid_from,
         valid_until: session.valid_until,
+
+        sign: None,
     })
 }
 

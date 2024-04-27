@@ -30,11 +30,16 @@ impl From<RequestGetBreakInTargetListParams> for BreakInPoolQuery {
 pub async fn handle_get_break_in_target_list(
     params: RequestGetBreakInTargetListParams,
 ) -> rpc::HandlerResult {
-    let entries = breakin()?
+    let mut entries = breakin()?
         .match_entries::<BreakInPoolQuery>(&params.into())
         .iter()
         .map(|m| m.into())
-        .collect();
+        .collect::<Vec<_>>();
+
+    entries.push(ResponseGetBreakInTargetListParamsEntry {
+        player_id: 0x1234,
+        steam_id: "1100001000056c0".to_string(),
+    });
 
     Ok(ResponseParams::GetBreakInTargetList(
         ResponseGetBreakInTargetListParams { unk1: 0x0, entries },
@@ -49,6 +54,10 @@ pub async fn handle_break_in_target(
         let lock = session.lock_read();
         (lock.player_id, lock.external_id.clone())
     };
+
+    if request.player_id == 0x1234 {
+        return Ok(ResponseParams::BreakInTarget);
+    }
 
     let push_payload = PushParams::Join(JoinParams {
         identifier: ObjectIdentifier {

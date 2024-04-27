@@ -22,7 +22,7 @@ pub async fn handle_create_sign(
     session: ClientSession,
     request: RequestCreateSignParams,
 ) -> rpc::HandlerResult {
-    let session = session.lock_read();
+    let mut session = session.lock_write();
 
     log::info!(
         "Player put down their sign. player = {}. area = {}. play_region = {}",
@@ -34,8 +34,11 @@ pub async fn handle_create_sign(
     let key = crate::pool::sign_pool()?
         .insert(session.player_id, request.into())?;
 
+    let identifier: ObjectIdentifier = (&key).into();
+    session.sign = Some(key);
+
     Ok(ResponseParams::CreateSign(ResponseCreateSignParams {
-        identifier: (&key).into(),
+        identifier,
     }))
 }
 

@@ -1,6 +1,6 @@
 enum JoinType : u32 {
-    InvaderJoining = 0x2,
-    JoiningAsInvader = 0x3,
+    BreakInTarget = 0x2,
+    AllowBreakInTarget = 0x3,
 
     PlayerJoining = 0x5,
     JoiningPlayer = 0x6,
