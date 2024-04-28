@@ -370,7 +370,7 @@ impl Client<ClientStateAuthenticated> {
     ) -> Result<(), ClientError> {
         let decrypted = self.state.crypto.session_decrypt(message).await?;
 
-        let payload_type = rpc::get_payload_type(decrypted.as_slice()).unwrap();
+        let payload_type = rpc::get_payload_type(decrypted.as_slice())?;
 
         match payload_type {
             PayloadType::Heartbeat

@@ -1,12 +1,29 @@
-use std::{error::Error, sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard}, time};
+use std::{sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard}, time};
 use fnrpc::player::RequestUpdatePlayerStatusParams;
 use rand::prelude::*;
 use sqlx::Row;
+use thiserror::Error;
 
-use crate::{database::{self, DatabaseError}, pool::{self, breakin::BreakInPoolEntry, key::PoolKey}};
+use crate::{database::{self, DatabaseError}, pool::{self, breakin::BreakInPoolEntry, key::PoolKey, PoolError}};
 
 // Sessions are valid for an hour
 pub const SESSION_VALIDITY: u64 = 60 * 60;
+
+// TODO: these errors meaningless without some more context
+#[derive(Debug, Error)]
+pub enum SessionError {
+    #[error("Missing CharacterData")]
+    MissingCharacterData,
+
+    #[error("Pool error {0:?}")]
+    Pool(#[from] PoolError),
+
+    #[error("Missing breakin entry")]
+    MissingBreakinEntry,
+
+    #[error("Database error {0:?}")]
+    Database(#[from] DatabaseError),
+}
 
 #[derive(Clone, Debug)]
 pub struct ClientSessionInner {
@@ -26,11 +43,11 @@ pub struct ClientSessionInner {
 }
 
 impl ClientSessionInner {
-    pub fn update_invadeability(&mut self) -> Result<(), Box<dyn Error>> {
+    pub fn update_invadeability(&mut self) -> Result<(), SessionError> {
         if self.invadeable && self.breakin.is_none() {
-            let matching = self.matching.as_ref().unwrap();
+            let matching = self.matching.as_ref()
+                .ok_or(SessionError::MissingCharacterData)?;
 
-            // Add token to fucking pool help me
             let key = pool::breakin()?
                 .insert(self.player_id, BreakInPoolEntry {
                     character_level: matching.level,
@@ -39,12 +56,13 @@ impl ClientSessionInner {
                 })?;
 
             self.breakin = Some(key);
-            log::info!("Added to breakin pool");
+            log::info!("Added player to breakin pool. player_id = {}", self.player_id);
         } else if !self.invadeable && self.breakin.is_some() {
-            let key = self.breakin.take().unwrap();
+            let key = self.breakin.take()
+                .ok_or(SessionError::MissingBreakinEntry)?;
 
             pool::breakin()?.remove(&key)?;
-            log::info!("Removed from breakin pool");
+            log::info!("Removed player from breakin pool. player_id = {}", self.player_id);
         }
 
         Ok(())
@@ -102,7 +120,7 @@ impl ClientSessionContainer for ClientSession {
 }
 
 /// Creates a new session for a given external_id
-pub async fn new_client_session(external_id: String) -> Result<ClientSessionInner, DatabaseError> {
+pub async fn new_client_session(external_id: String) -> Result<ClientSessionInner, SessionError> {
     let player_id = acquire_player_id(&external_id).await?;
     let cookie = generate_session_cookie();
 
@@ -117,7 +135,8 @@ pub async fn new_client_session(external_id: String) -> Result<ClientSessionInne
         .bind(&cookie)
         .bind(valid_until)
         .fetch_one(&mut *connection)
-        .await?
+        .await
+        .map_err(DatabaseError::from)?
         .get("session_id");
 
     Ok(ClientSessionInner {
@@ -138,7 +157,7 @@ pub async fn new_client_session(external_id: String) -> Result<ClientSessionInne
 }
 
 /// Creates a client session from an already existing session 
-pub async fn get_client_session(external_id: String, session_id: i32, cookie: &str) -> Result<ClientSessionInner, DatabaseError> {
+pub async fn get_client_session(external_id: String, session_id: i32, cookie: &str) -> Result<ClientSessionInner, SessionError> {
     let now = time::SystemTime::now().duration_since(time::UNIX_EPOCH).unwrap();
 
     let mut connection = database::acquire().await?;
@@ -148,7 +167,8 @@ pub async fn get_client_session(external_id: String, session_id: i32, cookie: &s
         .bind(cookie)
         // .bind(now.as_secs() as i64)
         .fetch_one(&mut *connection)
-        .await?;
+        .await
+        .map_err(DatabaseError::from)?;
 
     let valid_for = time::Duration::from_secs(SESSION_VALIDITY);
     let valid_from = (now - valid_for).as_secs() as i64;
