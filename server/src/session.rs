@@ -4,7 +4,7 @@ use rand::prelude::*;
 use sqlx::Row;
 use thiserror::Error;
 
-use crate::{database::{self, DatabaseError}, pool::{self, breakin::BreakInPoolEntry, key::PoolKey, PoolError}};
+use crate::{database::{self, DatabaseError}, pool::{breakin::BreakInPoolEntry, breakin_pool, key::PoolKey, PoolError}};
 
 // Sessions are valid for an hour
 pub const SESSION_VALIDITY: u64 = 60 * 60;
@@ -48,7 +48,7 @@ impl ClientSessionInner {
             let matching = self.matching.as_ref()
                 .ok_or(SessionError::MissingCharacterData)?;
 
-            let key = pool::breakin()?
+            let key = breakin_pool()?
                 .insert(self.player_id, BreakInPoolEntry {
                     character_level: matching.level,
                     weapon_level: matching.max_reinforce_level,
@@ -61,7 +61,7 @@ impl ClientSessionInner {
             let key = self.breakin.take()
                 .ok_or(SessionError::MissingBreakinEntry)?;
 
-            pool::breakin()?.remove(&key)?;
+            breakin_pool()?.remove(&key)?;
             log::info!("Removed player from breakin pool. player_id = {}", self.player_id);
         }
 

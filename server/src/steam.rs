@@ -57,14 +57,14 @@ pub fn begin_session(
         .map(steamworks::SteamId::from_raw)
         .map_err(|_| SteamError::InvalidSteamID)?;
 
-    // let ticket = hex_to_bytes(ticket)
-    //     .ok_or(SteamError::InvalidTicket)?;
-    //
-    // log::info!("Starting steam session for {:?}", steam_id);
-    //
-    // STEAM_SERVER.get()
-    //     .expect("Could not get steam API instace")
-    //     .begin_authentication_session(steam_id, ticket.as_slice())?;
+    let ticket = hex_to_bytes(ticket)
+        .ok_or(SteamError::InvalidTicket)?;
+
+    log::info!("Starting steam session for {:?}", steam_id);
+
+    STEAM_SERVER.get()
+        .expect("Could not get steam API instace")
+        .begin_authentication_session(steam_id, ticket.as_slice())?;
 
     Ok(SteamSession(steam_id))
 }
@@ -73,9 +73,9 @@ impl Drop for SteamSession {
     fn drop(&mut self) {
         log::info!("Ending steam session for {:?}", self);
 
-        // STEAM_SERVER.get()
-        //     .expect("Could not get steam API instance")
-        //     .end_authentication_session(self.0);
+        STEAM_SERVER.get()
+            .expect("Could not get steam API instance")
+            .end_authentication_session(self.0);
     }
 }
 

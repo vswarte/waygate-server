@@ -9,9 +9,9 @@ use fnrpc::push::PushParams;
 use fnrpc::shared::ObjectIdentifier;
 use fnrpc::ResponseParams;
 
-use crate::pool::breakin;
 use crate::pool::breakin::BreakInPoolEntry;
 use crate::pool::breakin::BreakInPoolQuery;
+use crate::pool::breakin_pool;
 use crate::pool::MatchResult;
 use crate::push;
 use crate::rpc;
@@ -30,7 +30,7 @@ impl From<RequestGetBreakInTargetListParams> for BreakInPoolQuery {
 pub async fn handle_get_break_in_target_list(
     params: RequestGetBreakInTargetListParams,
 ) -> rpc::HandlerResult {
-    let entries = breakin()?
+    let entries = breakin_pool()?
         .match_entries::<BreakInPoolQuery>(&params.into())
         .iter()
         .map(|m| m.into())

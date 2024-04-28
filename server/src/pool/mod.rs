@@ -51,7 +51,7 @@ pub fn sign_pool() -> Result<&'static Pool<SignPoolEntry>, PoolError> {
     SIGN_POOL.get().ok_or(PoolError::Uninitialized)
 }
 
-pub fn breakin() -> Result<&'static Pool<BreakInPoolEntry>, PoolError> {
+pub fn breakin_pool() -> Result<&'static Pool<BreakInPoolEntry>, PoolError> {
     BREAKIN_POOL.get().ok_or(PoolError::Uninitialized)
 }
 
