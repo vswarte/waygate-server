@@ -43,7 +43,7 @@ pub async fn handle_unregister_quick_match(
 }
 
 pub async fn handle_update_quick_match() -> rpc::HandlerResult {
-    // TODO: Set new params if received, error if otherwise as this'll prompt a 
+    // TODO: Set new params if received, error if otherwise as this'll prompt a
     // recreate.
     Ok(ResponseParams::UpdateQuickMatch)
 }

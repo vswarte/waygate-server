@@ -31,9 +31,21 @@ impl From<(String, &RequestUpdatePlayerStatusParams)> for BreakInPoolEntry {
 }
 
 pub async fn handle_use_item_log(
-    _session: ClientSession,
-    _request: RequestUseItemLogParams,
+    session: ClientSession,
+    request: RequestUseItemLogParams,
 ) -> rpc::HandlerResult {
+    println!("Player sent UseItemLog {:?}", request.used_items);
+
+    let tongue = request.used_items.iter()
+        .find(|i| i.item_id == 108)
+        .map(|i| i.times_used % 2 == 1);
+
+    if tongue.is_some_and(|x| x) {
+        let mut session = session.lock_write();
+        session.invadeable = !session.invadeable;
+        println!("Player invadability state toggled");
+    }
+
     Ok(ResponseParams::UseItemLog)
 }
 

@@ -16,6 +16,7 @@ pub struct ClientSessionInner {
     pub valid_from: i64,
     pub valid_until: i64,
 
+    pub invadeable: bool,
     pub sign: Option<PoolKey>,
     pub breakin: Option<PoolKey>,
 }
@@ -76,6 +77,7 @@ pub async fn new_client_session(external_id: String) -> Result<ClientSessionInne
         valid_from,
         valid_until,
 
+        invadeable: false,
         sign: None,
         breakin: None,
     })
@@ -105,6 +107,7 @@ pub async fn get_client_session(external_id: String, session_id: i32, cookie: &s
         valid_from,
         valid_until: session.valid_until,
 
+        invadeable: false,
         sign: None,
         breakin: None,
     })
