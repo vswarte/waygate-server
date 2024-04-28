@@ -83,15 +83,7 @@ pub struct UnkAParams {
 }
 
 #[derive(Serialize, Debug)]
-pub struct JoiningQuickMatchParams {
-    pub quickmatch_settings: i32,
-    pub host_player_id: i32,
-    pub host_steam_id: String,
-    pub join_data: Vec<u8>,
-}
-
-#[derive(Serialize, Debug)]
-pub struct PlayerJoiningQuickMatchParams {
+pub struct JoinQuickMatchParams {
     pub quickmatch_settings: i32,
     pub joining_player_id: i32,
     pub joining_player_steam_id: String,
@@ -99,6 +91,14 @@ pub struct PlayerJoiningQuickMatchParams {
     pub arena_id: i32,
     pub unk3: u8,
     pub password: String,
+}
+
+#[derive(Serialize, Debug)]
+pub struct AcceptQuickMatchParams {
+    pub quickmatch_settings: i32,
+    pub host_player_id: i32,
+    pub host_steam_id: String,
+    pub join_data: Vec<u8>,
 }
 
 #[derive(Serialize, Debug)]
@@ -134,8 +134,8 @@ pub enum JoinPayload {
     Unk8(Unk8Params), // 0x8
     Visit(VisitParams), // 0x9
     UnkA(UnkAParams), // 0XA
-    PlayerJoiningQuickMatch(PlayerJoiningQuickMatchParams), // 0xB
-    JoiningQuickMatch(JoiningQuickMatchParams), // 0xC
+    JoinQuickMatch(JoinQuickMatchParams), // 0xB
+    AcceptQuickMatch(AcceptQuickMatchParams), // 0xC
     UnkD(UnkDParams), // 0xD
     UnkE(UnkEParams), // 0xE
     UnkF(UnkFParams), // 0xF

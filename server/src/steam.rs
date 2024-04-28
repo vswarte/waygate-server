@@ -74,7 +74,7 @@ impl Drop for SteamSession {
         log::info!("Ending steam session for {:?}", self);
 
         STEAM_SERVER.get()
-            .expect("Could not get steam API instace")
+            .expect("Could not get steam API instance")
             .end_authentication_session(self.0);
     }
 }

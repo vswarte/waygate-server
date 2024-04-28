@@ -141,6 +141,13 @@ impl<TEntry: Clone> Pool<TEntry> {
                 p.into_inner()
             })
     }
+
+    pub fn by_topic_id(&self, topic: i32) -> Option<TEntry> {
+        self.lock_read()
+            .iter()
+            .find(|(k, _)| k.1 == topic)
+            .map(|(_ ,v)| v.clone())
+    }
 }
 
 pub trait PoolQuery<TEntry> {

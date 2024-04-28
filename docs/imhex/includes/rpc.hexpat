@@ -238,6 +238,10 @@ struct Payload {
             RequestGRGetPlayerEquipmentsParams params;
         else if (paramsType == ParamsType::GRUploadPlayerEquipments)
             RequestGRUploadPlayerEquipmentsParams params;
+        else if (paramsType == ParamsType::JoinMultiplay)
+            RequestJoinMultiplayParams params;
+        else if (paramsType == ParamsType::JoinMultiplayLog)
+            RequestJoinMultiplayLogParams params;
 
     } else if (
         header.payloadType == PayloadType::Response &&

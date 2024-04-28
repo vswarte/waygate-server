@@ -17,9 +17,10 @@ pub struct ClientSessionInner {
     pub valid_from: i64,
     pub valid_until: i64,
 
-    pub invadeable: bool,
     pub sign: Option<PoolKey>,
+    pub quickmatch: Option<PoolKey>,
 
+    pub invadeable: bool,
     pub matching: Option<CharacterMatchingData>,
     pub breakin: Option<PoolKey>,
 }
@@ -47,6 +48,12 @@ impl ClientSessionInner {
         }
 
         Ok(())
+    }
+}
+
+impl Drop for ClientSessionInner {
+    fn drop(&mut self) {
+        log::info!("Dropping last client session ref");
     }
 }
 
@@ -121,8 +128,10 @@ pub async fn new_client_session(external_id: String) -> Result<ClientSessionInne
         valid_from,
         valid_until,
 
-        invadeable: false,
         sign: None,
+        quickmatch: None,
+
+        invadeable: false,
         matching: None,
         breakin: None,
     })
@@ -152,8 +161,10 @@ pub async fn get_client_session(external_id: String, session_id: i32, cookie: &s
         valid_from,
         valid_until: session.valid_until,
 
-        invadeable: false,
         sign: None,
+        quickmatch: None,
+
+        invadeable: false,
         matching: None,
         breakin: None,
     })

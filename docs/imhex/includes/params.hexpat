@@ -71,3 +71,6 @@
 
 // Unk
 #include "params/CreateMatchingTicket.hexpat"
+
+// Multiplay
+#include "params/JoinMultiplay.hexpat"

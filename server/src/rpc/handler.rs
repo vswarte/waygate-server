@@ -68,7 +68,7 @@ pub async fn dispatch_request(
         RequestParams::UnregisterQuickMatch
             => quickmatch::handle_unregister_quick_match(session).await?,
         RequestParams::UpdateQuickMatch
-            => quickmatch::handle_update_quick_match().await?,
+            => quickmatch::handle_update_quick_match(session).await?,
         RequestParams::JoinQuickMatch(p)
             => quickmatch::handle_join_quick_match(session, *p).await?,
         RequestParams::AcceptQuickMatch(p)
