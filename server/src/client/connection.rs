@@ -28,6 +28,7 @@ pub async fn handle(
                 }
 
                 if header.as_str() == "x-steam-session-ticket" {
+                    log::info!("Setting session ticket. {:?}", value.to_str());
                     session_ticket.set(String::from(value.to_str().unwrap())).unwrap();
                 }
             }

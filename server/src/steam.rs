@@ -57,7 +57,6 @@ pub fn begin_session(
         .map(steamworks::SteamId::from_raw)
         .map_err(|_| SteamError::InvalidSteamID)?;
 
-    log::info!("Wtf: {:?}", ticket);
     let ticket = hex_to_bytes(ticket)
         .ok_or(SteamError::InvalidTicket)?;
 
