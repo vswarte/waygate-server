@@ -12,6 +12,7 @@ use crate::pool::quickmatch_pool;
 use crate::pool::quickmatch::QuickmatchPoolEntry;
 use crate::pool::quickmatch::QuickmatchPoolQuery;
 use crate::pool::MatchResult;
+use crate::pool::PoolError;
 use crate::push;
 use crate::rpc;
 use crate::session::ClientSession;
@@ -54,8 +55,9 @@ pub async fn handle_unregister_quick_match(
 pub async fn handle_update_quick_match(
     session: ClientSession,
 ) -> rpc::HandlerResult {
-    // TODO/CURSED: This just check for existence to force recreate on missing lobby
-    let _existing = session.lock_write().quickmatch.as_ref().unwrap();
+    // Current we just check if the quickmatch is known in-memory at all.
+    let _existing = session.lock_write().quickmatch.as_ref()
+        .ok_or(PoolError::NotFound)?;
 
     Ok(ResponseParams::UpdateQuickMatch)
 }
