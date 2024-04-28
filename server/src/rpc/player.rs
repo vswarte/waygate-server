@@ -17,12 +17,12 @@ pub async fn handle_update_player_status(
 
     {
         let mut session = session.lock_write();
+        log::info!("Why: {:?}", session.invadeable);
         session.invadeable = session.invadeable && request.character.online_activity == 0x1;
+        log::info!("What: {:?}", session.invadeable);
         session.matching = Some((&request).into());
 
         session.update_invadeability()?;
-
-        println!("{:#?}", session.matching);
     }
 
     debug::listen_debug_notifs(&request, session).await;
