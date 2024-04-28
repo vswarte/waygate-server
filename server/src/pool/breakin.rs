@@ -3,19 +3,19 @@ use crate::pool::matching::weapon;
 
 #[derive(Clone, Debug)]
 pub struct BreakInPoolEntry {
-    pub character_level: u16,
-    pub weapon_level: u16,
+    pub character_level: u32,
+    pub weapon_level: u32,
     pub steam_id: String,
 }
 
 #[derive(Debug)]
 pub struct BreakInPoolQuery {
-    pub character_level: u16,
-    pub weapon_level: u16,
+    pub character_level: u32,
+    pub weapon_level: u32,
 }
 
 impl BreakInPoolQuery {
-    fn check_character_level(host: u16, invader: u16) -> bool {
+    fn check_character_level(host: u32, invader: u32) -> bool {
         let lower = invader - (invader / 10);
         let upper = invader + (invader / 10) + 20;
 
@@ -26,7 +26,7 @@ impl BreakInPoolQuery {
         }
     }
 
-    fn check_weapon_level(host: u16, invader: u16) -> bool {
+    fn check_weapon_level(host: u32, invader: u32) -> bool {
         if let Some(entry) = weapon::get_level_table_entry(host) {
             entry.regular_range.contains(&invader)
         } else {

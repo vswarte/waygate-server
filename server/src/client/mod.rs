@@ -316,7 +316,7 @@ impl Client<ClientStateReceivedSessionDetails> {
             .await.map_err(|e| ClientError::Transport(transport::TransportError::WriteFailed(e)))?;
 
         let (push_tx, push_rx) = tokio::sync::mpsc::channel(25);
-        let player_id = session.lock_read().player_id.clone();
+        let player_id = session.lock_read().player_id;
         push::add_client_channel(player_id, push_tx).await;
 
         Ok(Client {
@@ -403,27 +403,6 @@ impl Client<ClientStateAuthenticated> {
         message: &[u8],
     ) -> Result<(), ClientError> {
         let (responder, request) = rpc::create_handling_context(message)?;
-
-        #[cfg(feature = "dump")]
-        {
-            let session = self.state.session.lock_read();
-
-            log::info!(
-                "Parsed message as type {} for session {}",
-                request.name(),
-                session.session_id,
-            );
-
-            std::fs::write(
-                format!(
-                    "./dump/request-{}-{}-{}.bin",
-                    session.session_id,
-                    responder.sequence,
-                    request.name(),
-                ),
-                message,
-            )?;
-        }
 
         let response = dispatch_request(
             self.state.session.clone(),

@@ -110,8 +110,8 @@ impl From<RequestRegisterQuickMatchParams> for QuickmatchPoolEntry {
     fn from(val: RequestRegisterQuickMatchParams) -> Self {
         QuickmatchPoolEntry {
             external_id: String::new(),
-            character_level: val.matching_parameters.soul_level,
-            weapon_level: val.matching_parameters.max_reinforce,
+            character_level: val.matching_parameters.soul_level as u32,
+            weapon_level: val.matching_parameters.max_reinforce as u32,
             arena_id: val.arena_id,
             password: val.matching_parameters.password.clone(),
             settings: val.quickmatch_settings,
@@ -133,8 +133,8 @@ impl From<&MatchResult<QuickmatchPoolEntry>> for ResponseSearchQuickMatchParamsE
 impl From<RequestSearchQuickMatchParams> for QuickmatchPoolQuery {
     fn from(value: RequestSearchQuickMatchParams) -> Self {
         Self {
-            character_level: value.matching_parameters.soul_level,
-            weapon_level: value.matching_parameters.max_reinforce,
+            character_level: value.matching_parameters.soul_level as u32,
+            weapon_level: value.matching_parameters.max_reinforce as u32,
             password: value.matching_parameters.password.clone(),
             arena_id: value.arena_id,
             settings: value.quickmatch_settings,

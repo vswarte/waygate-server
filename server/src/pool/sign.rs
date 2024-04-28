@@ -6,8 +6,8 @@ use super::matching::area::MatchingArea;
 #[derive(Clone, Debug)]
 pub struct SignPoolEntry {
     pub external_id: String,
-    pub character_level: u16,
-    pub weapon_level: u16,
+    pub character_level: u32,
+    pub weapon_level: u32,
     pub area: MatchingArea,
     pub password: String,
     pub group_passwords: Vec<String>,
@@ -16,21 +16,21 @@ pub struct SignPoolEntry {
 
 #[derive(Debug)]
 pub struct SignPoolQuery {
-    pub character_level: u16,
-    pub weapon_level: u16,
+    pub character_level: u32,
+    pub weapon_level: u32,
     pub areas: Vec<MatchingArea>,
     pub password: String,
 }
 
 impl SignPoolQuery {
-    fn check_character_level(host: u16, finger: u16) -> bool {
+    fn check_character_level(host: u32, finger: u32) -> bool {
         let lower = host - (host / 10);
         let upper = host + (host / 10) + 10;
 
         finger >= lower && finger <= upper
     }
 
-    fn check_weapon_level(host: u16, finger: u16) -> bool {
+    fn check_weapon_level(host: u32, finger: u32) -> bool {
         if let Some(entry) = weapon::get_level_table_entry(host) {
             entry.regular_range.contains(&finger)
         } else {

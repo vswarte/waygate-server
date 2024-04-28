@@ -2,13 +2,13 @@ use std::ops::Range;
 
 #[allow(unused)]
 pub struct WeaponLevelTableEntry {
-    regular: u16,
-    special: u16,
-    pub regular_range: Range<u16>,
-    special_range: Range<u16>,
+    regular: u32,
+    special: u32,
+    pub regular_range: Range<u32>,
+    special_range: Range<u32>,
 }
 
-pub fn get_level_table_entry(level: u16) -> Option<&'static WeaponLevelTableEntry> {
+pub fn get_level_table_entry(level: u32) -> Option<&'static WeaponLevelTableEntry> {
     WEAPON_LEVEL_TABLE.iter().find(|e| e.regular == level)
 }
 

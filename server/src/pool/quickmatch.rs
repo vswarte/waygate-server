@@ -4,8 +4,8 @@ use crate::pool::matching::weapon;
 #[derive(Clone, Debug)]
 pub struct QuickmatchPoolEntry {
     pub external_id: String,
-    pub character_level: u16,
-    pub weapon_level: u16,
+    pub character_level: u32,
+    pub weapon_level: u32,
     pub arena_id: i32,
     pub password: String,
     pub settings: i32,
@@ -14,21 +14,21 @@ pub struct QuickmatchPoolEntry {
 #[derive(Debug)]
 pub struct QuickmatchPoolQuery {
     pub arena_id: i32,
-    pub character_level: u16,
-    pub weapon_level: u16,
+    pub character_level: u32,
+    pub weapon_level: u32,
     pub password: String,
     pub settings: i32,
 }
 
 impl QuickmatchPoolQuery {
-    fn check_character_level(host: u16, joiner: u16) -> bool {
+    fn check_character_level(host: u32, joiner: u32) -> bool {
         let lower = host - (host / 10);
         let upper = host + (host / 10) + 10;
 
         joiner >= lower && joiner <= upper
     }
 
-    fn check_weapon_level(host: u16, joiner: u16) -> bool {
+    fn check_weapon_level(host: u32, joiner: u32) -> bool {
         if let Some(entry) = weapon::get_level_table_entry(host) {
             entry.regular_range.contains(&joiner)
         } else {

@@ -1,8 +1,9 @@
-use std::{sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard}, time};
+use std::{error::Error, sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard}, time};
+use fnrpc::player::RequestUpdatePlayerStatusParams;
 use rand::prelude::*;
 use sqlx::Row;
 
-use crate::{database::{self, DatabaseError}, pool::key::PoolKey};
+use crate::{database::{self, DatabaseError}, pool::{self, breakin::BreakInPoolEntry, key::PoolKey}};
 
 // Sessions are valid for an hour
 pub const SESSION_VALIDITY: u64 = 60 * 60;
@@ -18,7 +19,49 @@ pub struct ClientSessionInner {
 
     pub invadeable: bool,
     pub sign: Option<PoolKey>,
+
+    pub matching: Option<CharacterMatchingData>,
     pub breakin: Option<PoolKey>,
+}
+
+impl ClientSessionInner {
+    pub fn update_invadeability(&mut self) -> Result<(), Box<dyn Error>> {
+        if self.invadeable && self.breakin.is_none() {
+            let matching = self.matching.as_ref().unwrap();
+
+            // Add token to fucking pool help me
+            let key = pool::breakin()?
+                .insert(self.player_id, BreakInPoolEntry {
+                    character_level: matching.level,
+                    weapon_level: matching.max_reinforce_level,
+                    steam_id: self.external_id.clone(),
+                })?;
+
+            self.breakin = Some(key);
+            log::info!("Added to breakin pool");
+        } else if let Some(key) = self.breakin.take() {
+            pool::breakin()?
+                .remove(&key)?;
+            log::info!("Removed from breakin pool");
+        }
+
+        Ok(())
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct CharacterMatchingData {
+    pub level: u32,
+    pub max_reinforce_level: u32,
+}
+
+impl From<&RequestUpdatePlayerStatusParams> for CharacterMatchingData {
+    fn from(value: &RequestUpdatePlayerStatusParams) -> Self {
+        Self {
+            level: value.character.level,
+            max_reinforce_level: value.character.max_reinforce_level,
+        }
+    }
 }
 
 pub type ClientSession = Arc<RwLock<ClientSessionInner>>;
@@ -79,6 +122,7 @@ pub async fn new_client_session(external_id: String) -> Result<ClientSessionInne
 
         invadeable: false,
         sign: None,
+        matching: None,
         breakin: None,
     })
 }
@@ -109,6 +153,7 @@ pub async fn get_client_session(external_id: String, session_id: i32, cookie: &s
 
         invadeable: false,
         sign: None,
+        matching: None,
         breakin: None,
     })
 }

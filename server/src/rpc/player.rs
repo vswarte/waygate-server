@@ -15,6 +15,16 @@ pub async fn handle_update_player_status(
 ) -> rpc::HandlerResult {
     log::info!("Player sent UpdatePlayerStatus. player = {}", session.lock_read().player_id);
 
+    {
+        let mut session = session.lock_write();
+        session.invadeable = session.invadeable && request.character.online_activity == 0x1;
+        session.matching = Some((&request).into());
+
+        session.update_invadeability()?;
+
+        println!("{:#?}", session.matching);
+    }
+
     debug::listen_debug_notifs(&request, session).await;
 
     Ok(ResponseParams::UpdatePlayerStatus)
@@ -23,8 +33,8 @@ pub async fn handle_update_player_status(
 impl From<(String, &RequestUpdatePlayerStatusParams)> for BreakInPoolEntry {
     fn from(value: (String, &RequestUpdatePlayerStatusParams)) -> Self {
         Self {
-            character_level: value.1.character.level as u16,
-            weapon_level: value.1.character.max_reinforce_level as u16,
+            character_level: value.1.character.level,
+            weapon_level: value.1.character.max_reinforce_level,
             steam_id: value.0.to_string(),
         }
     }
@@ -43,6 +53,8 @@ pub async fn handle_use_item_log(
     if tongue.is_some_and(|x| x) {
         let mut session = session.lock_write();
         session.invadeable = !session.invadeable;
+        session.update_invadeability()?;
+
         println!("Player invadability state toggled");
     }
 
@@ -73,7 +85,7 @@ mod debug {
     };
     use rand::prelude::*;
 
-    use crate::{pool::{self, breakin::BreakInPoolEntry}, push::send_push, session::{ClientSession, ClientSessionContainer}};
+    use crate::{push::send_push, session::{ClientSession, ClientSessionContainer}};
 
     pub async fn listen_debug_notifs(params: &RequestUpdatePlayerStatusParams, session: ClientSession) {
         {
@@ -97,19 +109,19 @@ mod debug {
             }
         }
 
-        let mut session = session.lock_write();
-        if params.character.group_passwords.iter().any(|e| e == "_invade") && session.breakin.is_none() {
-            // send_push(player_id, get_test_invasion()).await.unwrap();
-            let key = pool::breakin().unwrap()
-                .insert(session.player_id, BreakInPoolEntry {
-                    character_level: 96,
-                    weapon_level: 20,
-                    steam_id: session.external_id.clone(),
-                })
-                .unwrap();
-
-            session.breakin = Some(key);
-        }
+        // let mut session = session.lock_write();
+        // if params.character.group_passwords.iter().any(|e| e == "_invade") && session.breakin.is_none() {
+        //     // send_push(player_id, get_test_invasion()).await.unwrap();
+        //     let key = pool::breakin().unwrap()
+        //         .insert(session.player_id, BreakInPoolEntry {
+        //             character_level: 96,
+        //             weapon_level: 20,
+        //             steam_id: session.external_id.clone(),
+        //         })
+        //         .unwrap();
+        //
+        //     session.breakin = Some(key);
+        // }
     }
 
     /// Sends a message your way that you are being invaded

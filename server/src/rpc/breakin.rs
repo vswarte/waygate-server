@@ -21,8 +21,8 @@ use crate::session::ClientSessionContainer;
 impl From<RequestGetBreakInTargetListParams> for BreakInPoolQuery {
     fn from(value: RequestGetBreakInTargetListParams) -> Self {
         BreakInPoolQuery {
-            character_level: value.matching_parameters.soul_level,
-            weapon_level: value.matching_parameters.max_reinforce,
+            character_level: value.matching_parameters.soul_level as u32,
+            weapon_level: value.matching_parameters.max_reinforce as u32,
         }
     }
 }
@@ -30,7 +30,7 @@ impl From<RequestGetBreakInTargetListParams> for BreakInPoolQuery {
 pub async fn handle_get_break_in_target_list(
     params: RequestGetBreakInTargetListParams,
 ) -> rpc::HandlerResult {
-    let mut entries = breakin()?
+    let entries = breakin()?
         .match_entries::<BreakInPoolQuery>(&params.into())
         .iter()
         .map(|m| m.into())

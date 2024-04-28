@@ -161,8 +161,8 @@ impl From<RequestCreateSignParams> for SignPoolEntry {
     fn from(val: RequestCreateSignParams) -> Self {
         SignPoolEntry {
             external_id: String::new(),
-            character_level: val.matching_parameters.soul_level,
-            weapon_level: val.matching_parameters.max_reinforce,
+            character_level: val.matching_parameters.soul_level as u32,
+            weapon_level: val.matching_parameters.max_reinforce as u32,
             area: MatchingArea::new(val.area.area as u32, val.area.play_region as u32),
             password: val.matching_parameters.password.clone(),
             group_passwords: val.group_passwords.clone(),
@@ -189,8 +189,8 @@ impl From<&MatchResult<SignPoolEntry>> for ResponseGetSignListParamsEntry {
 impl From<&RequestGetSignListParams> for SignPoolQuery {
     fn from(value: &RequestGetSignListParams) -> Self {
         Self {
-            character_level: value.matching_parameters.soul_level,
-            weapon_level: value.matching_parameters.max_reinforce,
+            character_level: value.matching_parameters.soul_level as u32,
+            weapon_level: value.matching_parameters.max_reinforce as u32,
             areas: value.search_areas.iter().map(|e| e.into()).collect(),
             password: value.matching_parameters.password.clone(),
         }
