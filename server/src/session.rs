@@ -39,9 +39,10 @@ impl ClientSessionInner {
 
             self.breakin = Some(key);
             log::info!("Added to breakin pool");
-        } else if let Some(key) = self.breakin.take() {
-            pool::breakin()?
-                .remove(&key)?;
+        } else if !self.invadeable && self.breakin.is_some() {
+            let key = self.breakin.take().unwrap();
+
+            pool::breakin()?.remove(&key)?;
             log::info!("Removed from breakin pool");
         }
 
