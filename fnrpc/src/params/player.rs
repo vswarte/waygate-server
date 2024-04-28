@@ -23,7 +23,6 @@ pub struct CharacterData {
     pub level: u32,
     pub character_name: String,
 
-    // TODO: fact check this
     pub online_activity: u8,
 
     pub runes_owned: u32,
@@ -233,4 +232,3 @@ pub struct RequestJoinMultiplayParams {
     pub unk5: u32,
     pub unk6: u32,
 }
-

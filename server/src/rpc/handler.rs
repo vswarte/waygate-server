@@ -88,6 +88,9 @@ pub async fn dispatch_request(
         RequestParams::KillEnemyLog(p)
             => player::handle_kill_enemy_log(session, *p).await?, 
 
+        RequestParams::JoinMultiplay(p)
+            => player::handle_join_multiplay(session, *p).await?, 
+
         RequestParams::GrGetPlayerEquipments(p)
             => player_equipments::handle_gr_get_player_equipments(*p).await?, 
 

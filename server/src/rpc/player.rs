@@ -58,10 +58,11 @@ pub async fn handle_use_item_log(
     Ok(ResponseParams::UseItemLog)
 }
 
-pub async fn handle_join_muliplay(
+pub async fn handle_join_multiplay(
     _session: ClientSession,
     _request: RequestJoinMultiplayParams,
 ) -> rpc::HandlerResult {
+    log::info!("Player sent JoinMultiplay. player_id = {}", _session.lock_read().player_id);
     Ok(ResponseParams::JoinMultiplay)
 }
 
