@@ -22,6 +22,7 @@ pub struct QuickmatchPoolQuery {
 
 impl QuickmatchPoolQuery {
     fn check_character_level(host: u32, joiner: u32) -> bool {
+        log::debug!("check_character_level: host = {}, joiner = {}", host, joiner);
         let lower = host - (host / 10);
         let upper = host + (host / 10) + 10;
 
@@ -29,6 +30,7 @@ impl QuickmatchPoolQuery {
     }
 
     fn check_weapon_level(host: u32, joiner: u32) -> bool {
+        log::debug!("check_weapon_level: host = {}, joiner = {}", host, joiner);
         if let Some(entry) = weapon::get_level_table_entry(host) {
             entry.regular_range.contains(&joiner)
         } else {

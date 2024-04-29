@@ -35,10 +35,15 @@ pub async fn handle_register_quick_match(
     session: ClientSession,
     request: RequestRegisterQuickMatchParams,
 ) -> rpc::HandlerResult {
-    let key = quickmatch_pool()?
-        .insert(session.lock_read().player_id, request.into())?;
+    let mut session = session.lock_write();
 
-    session.lock_write().quickmatch = Some(key);
+    let mut entry: QuickmatchPoolEntry = request.into();
+    entry.external_id.clone_from(&session.external_id);
+
+    let key = quickmatch_pool()?
+        .insert(session.player_id, entry)?;
+
+    session.quickmatch = Some(key);
     Ok(ResponseParams::RegisterQuickMatch)
 }
 
