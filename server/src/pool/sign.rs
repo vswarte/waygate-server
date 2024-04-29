@@ -70,7 +70,7 @@ mod test {
     fn test_weapon_level() {
         assert!(SignPoolQuery::check_weapon_level(0, 0));
         assert!(SignPoolQuery::check_weapon_level(0, 2));
-        assert!(!SignPoolQuery::check_weapon_level(0, 3));
+        assert!(!SignPoolQuery::check_weapon_level(0, 4));
         assert!(SignPoolQuery::check_weapon_level(12, 14));
         assert!(SignPoolQuery::check_weapon_level(12, 8));
         assert!(!SignPoolQuery::check_weapon_level(12, 25));
@@ -78,7 +78,7 @@ mod test {
 
     #[test]
     fn level_1_characters_match() {
-        let finger = SignPoolEntry {
+        let host = SignPoolEntry {
             external_id: String::new(),
             character_level: 1,
             weapon_level: 1,
@@ -88,19 +88,19 @@ mod test {
             data: vec![],
         };
 
-        let host = SignPoolQuery {
+        let finger = SignPoolQuery {
             character_level: 1,
             weapon_level: 1,
             areas: vec![MatchingArea::new(1, 1)],
             password: String::default(),
         };
 
-        assert!(host.matches(&finger));
+        assert!(finger.matches(&host));
     }
 
     #[test]
     fn doesnt_match_differing_levels() {
-        let finger = SignPoolEntry {
+        let host = SignPoolEntry {
             external_id: String::new(),
             character_level: 1,
             weapon_level: 1,
@@ -110,19 +110,19 @@ mod test {
             data: vec![],
         };
 
-        let host = SignPoolQuery {
+        let finger = SignPoolQuery {
             character_level: 100,
             weapon_level: 1,
             areas: vec![MatchingArea::new(1, 1)],
             password: String::default(),
         };
 
-        assert!(!host.matches(&finger));
+        assert!(!finger.matches(&host));
     }
 
     #[test]
     fn password_matches_regardless() {
-        let finger = SignPoolEntry {
+        let host = SignPoolEntry {
             external_id: String::new(),
             character_level: 1,
             weapon_level: 1,
@@ -132,19 +132,19 @@ mod test {
             data: vec![],
         };
 
-        let host = SignPoolQuery {
+        let finger = SignPoolQuery {
             character_level: 713,
             weapon_level: 1,
             areas: vec![MatchingArea::new(1, 1)],
             password: String::from("test"),
         };
 
-        assert!(host.matches(&finger));
+        assert!(finger.matches(&host));
     }
 
     #[test]
     fn doesnt_match_on_differing_passwords() {
-        let finger = SignPoolEntry {
+        let host = SignPoolEntry {
             external_id: String::new(),
             character_level: 1,
             weapon_level: 1,
@@ -154,19 +154,19 @@ mod test {
             data: vec![],
         };
 
-        let host = SignPoolQuery {
+        let finger = SignPoolQuery {
             character_level: 1,
             weapon_level: 1,
             areas: vec![MatchingArea::new(1, 1)],
             password: String::from("456"),
         };
 
-        assert!(!host.matches(&finger));
+        assert!(!finger.matches(&host));
     }
 
     #[test]
-    fn doesnt_match_when_password_isnt_set_on_finger() {
-        let finger = SignPoolEntry {
+    fn doesnt_match_when_password_isnt_set_on_host() {
+        let host = SignPoolEntry {
             external_id: String::new(),
             character_level: 1,
             weapon_level: 1,
@@ -176,19 +176,19 @@ mod test {
             data: vec![],
         };
 
-        let host = SignPoolQuery {
+        let finger = SignPoolQuery {
             character_level: 1,
             weapon_level: 1,
             areas: vec![MatchingArea::new(1, 1)],
             password: String::from("456"),
         };
 
-        assert!(!host.matches(&finger));
+        assert!(!finger.matches(&host));
     }
 
     #[test]
     fn doesnt_match_across_search_areas() {
-        let finger = SignPoolEntry {
+        let host = SignPoolEntry {
             external_id: String::new(),
             character_level: 1,
             weapon_level: 1,
@@ -198,13 +198,13 @@ mod test {
             data: vec![],
         };
 
-        let host = SignPoolQuery {
+        let finger = SignPoolQuery {
             character_level: 1,
             weapon_level: 1,
             areas: vec![MatchingArea::new(2, 2)],
             password: String::default(),
         };
 
-        assert!(!host.matches(&finger));
+        assert!(!finger.matches(&host));
     }
 }

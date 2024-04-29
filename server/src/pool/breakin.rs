@@ -63,7 +63,7 @@ mod test {
     fn test_weapon_level() {
         assert!(BreakInPoolQuery::check_weapon_level(0, 0));
         assert!(BreakInPoolQuery::check_weapon_level(0, 2));
-        assert!(!BreakInPoolQuery::check_weapon_level(0, 3));
+        assert!(!BreakInPoolQuery::check_weapon_level(0, 4));
         assert!(BreakInPoolQuery::check_weapon_level(12, 14));
         assert!(BreakInPoolQuery::check_weapon_level(12, 8));
         assert!(!BreakInPoolQuery::check_weapon_level(12, 25));

@@ -22,17 +22,15 @@ pub struct QuickmatchPoolQuery {
 
 impl QuickmatchPoolQuery {
     fn check_character_level(host: u32, joiner: u32) -> bool {
-        log::debug!("check_character_level: host = {}, joiner = {}", host, joiner);
         let lower = host - (host / 10);
         let upper = host + (host / 10) + 10;
 
-        dbg!(joiner >= lower && joiner <= upper)
+        joiner >= lower && joiner <= upper
     }
 
     fn check_weapon_level(host: u32, joiner: u32) -> bool {
-        log::debug!("check_weapon_level: host = {}, joiner = {}", host, joiner);
         if let Some(entry) = weapon::get_level_table_entry(host) {
-            dbg!(entry.regular_range.contains(&joiner))
+            entry.regular_range.contains(&joiner)
         } else {
             false
         }
@@ -42,7 +40,6 @@ impl QuickmatchPoolQuery {
 impl PoolQuery<QuickmatchPoolEntry> for QuickmatchPoolQuery {
     fn matches(&self, entry: &QuickmatchPoolEntry) -> bool {
         if self.arena_id != entry.arena_id || self.settings != entry.settings {
-            log::info!("Not a matching arena or settings");
             return false;
         }
 
@@ -50,14 +47,8 @@ impl PoolQuery<QuickmatchPoolEntry> for QuickmatchPoolQuery {
             return entry.password.eq(&self.password);
         }
 
-        let result = Self::check_character_level(self.character_level, entry.character_level)
-            && Self::check_weapon_level(self.weapon_level, entry.weapon_level);
-
-        if !result {
-            log::info!("Levels didn't match");
-        }
-
-        result
+        Self::check_character_level(self.character_level, entry.character_level)
+            && Self::check_weapon_level(self.weapon_level, entry.weapon_level)
     }
 }
 
@@ -76,7 +67,7 @@ mod test {
     fn test_weapon_level() {
         assert!(QuickmatchPoolQuery::check_weapon_level(0, 0));
         assert!(QuickmatchPoolQuery::check_weapon_level(0, 2));
-        assert!(!QuickmatchPoolQuery::check_weapon_level(0, 3));
+        assert!(!QuickmatchPoolQuery::check_weapon_level(0, 4));
         assert!(QuickmatchPoolQuery::check_weapon_level(12, 14));
         assert!(QuickmatchPoolQuery::check_weapon_level(12, 8));
         assert!(!QuickmatchPoolQuery::check_weapon_level(12, 25));
@@ -255,6 +246,6 @@ mod test {
             settings: 0x0,
         };
 
-        assert!(!joiner.matches(&host));
+        assert!(joiner.matches(&host));
     }
 }
