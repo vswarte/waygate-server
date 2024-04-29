@@ -37,9 +37,12 @@ pub async fn handle_register_quick_match(
 ) -> rpc::HandlerResult {
     let mut session = session.lock_write();
 
-    let mut entry: QuickmatchPoolEntry = request.into();
-    entry.external_id.clone_from(&session.external_id);
+    let entry: QuickmatchPoolEntry = QuickmatchPoolEntry::from_request(
+        request,
+        session.external_id.clone(),
+    );
 
+    log::info!("QuickmatchPoolEntry: {:#?}", entry);
     let key = quickmatch_pool()?
         .insert(session.player_id, entry)?;
 
@@ -131,17 +134,16 @@ pub async fn handle_accept_quick_match(
     Ok(ResponseParams::JoinQuickMatch)
 }
 
-impl From<RequestRegisterQuickMatchParams> for QuickmatchPoolEntry {
-    fn from(val: RequestRegisterQuickMatchParams) -> Self {
+impl QuickmatchPoolEntry {
+    fn from_request(val: RequestRegisterQuickMatchParams, external_id: String) -> Self {
         QuickmatchPoolEntry {
-            external_id: String::new(),
+            external_id,
             character_level: val.matching_parameters.soul_level as u32,
             weapon_level: val.matching_parameters.max_reinforce as u32,
             arena_id: val.arena_id,
             password: val.matching_parameters.password.clone(),
             settings: val.quickmatch_settings,
         }
-
     }
 }
 
