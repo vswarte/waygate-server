@@ -6,6 +6,8 @@ pub async fn dispatch_request(
     session: ClientSession,
     request: RequestParams,
 ) -> HandlerResult {
+    log::debug!("Player sent request. request_type = {}", request.name());
+
     Ok(match request {
         RequestParams::DeleteSession => session::handle_delete_session(session).await?,
 

@@ -57,7 +57,3 @@ path = "../fnrpc"
 
 [dependencies.steamworks]
 git = "https://github.com/vswarte/steamworks-rs"
-
-[features]
-dump = []
-debug-features = []

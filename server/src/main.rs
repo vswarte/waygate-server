@@ -20,9 +20,6 @@ async fn main () -> Result<(), io::Error> {
     steam::init().expect("Could not initialize steam");
     pool::init_pools().expect("Could not initialize pools");
 
-    #[cfg(feature = "dump")]
-    std::fs::create_dir_all("./dump/")?;
-
     let bind = env::args()
         .nth(1)
         .unwrap_or("0.0.0.0:10901".to_string());

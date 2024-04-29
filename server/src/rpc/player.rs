@@ -74,7 +74,7 @@ pub async fn handle_join_multiplay(
 pub async fn handle_join_muliplay_log(
     _session: ClientSession,
 ) -> rpc::HandlerResult {
-    Ok(ResponseParams::JoinMultiplay)
+    Ok(ResponseParams::JoinMultiplayLog)
 }
 
 pub async fn handle_get_item_log(
