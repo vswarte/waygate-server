@@ -35,6 +35,8 @@ pub async fn handle_register_quick_match(
     session: ClientSession,
     request: RequestRegisterQuickMatchParams,
 ) -> rpc::HandlerResult {
+    log::info!("RequestRegisterQuickMatchParams: {:#?}", request);
+
     let mut session = session.lock_write();
 
     let entry: QuickmatchPoolEntry = QuickmatchPoolEntry::from_request(
@@ -74,6 +76,8 @@ pub async fn handle_join_quick_match(
     session: ClientSession,
     request: RequestJoinQuickMatchParams,
 ) -> rpc::HandlerResult {
+    log::info!("RequestJoinQuickMatchParams: {:#?}", request);
+
     let quickmatch = pool::quickmatch_pool()?
         .by_topic_id(request.host_player_id)
         .ok_or(std::io::Error::from(std::io::ErrorKind::Other))?;
@@ -108,6 +112,8 @@ pub async fn handle_accept_quick_match(
     session: ClientSession,
     request: RequestAcceptQuickMatchParams,
 ) -> rpc::HandlerResult {
+    log::info!("RequestAcceptQuickMatchParams: {:#?}", request);
+
     let (host_player_id, host_steam_id) = {
         let session = session.lock_read();
         (session.player_id, session.external_id.clone())
