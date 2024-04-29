@@ -88,6 +88,8 @@ pub async fn handle_join_quick_match(
         (session.player_id, session.external_id.clone())
     };
 
+    log::info!("Joining player ID: {joining_player_id:?}");
+
     let push_payload = PushParams::Join(JoinParams {
         identifier: shared::ObjectIdentifier {
             object_id: rand::thread_rng().gen::<i32>(),
