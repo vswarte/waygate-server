@@ -36,3 +36,8 @@ pub struct RequestBreakInTargetParams {
     pub player_id: i32,
     pub unk3: u32,
 }
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct RequestRejectBreakInTargetParams {
+
+}

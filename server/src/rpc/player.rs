@@ -45,10 +45,15 @@ pub async fn handle_use_item_log(
 ) -> rpc::HandlerResult {
     log::info!("Player sent UseItemLog {:?}", request.used_items);
 
+    // TODO: move this hack somewhere else?
+    // Sniff out tongue usage and toggle state. I truly cannot find any other
+    // reliable way of checking if this effect is in effect. I checked all
+    // networking, endlessly diffed PlayerUpdateStatus and reversed the
+    // majority of CreateMatchingTicket (which is getting sent at too low of a
+    // frequency anyway for realtime features like this).
     let tongue = request.used_items.iter()
         .find(|i| i.item_id == 108)
         .map(|i| i.times_used % 2 == 1);
-
     if tongue.is_some_and(|x| x) {
         let mut session = session.lock_write();
         session.invadeable = !session.invadeable;

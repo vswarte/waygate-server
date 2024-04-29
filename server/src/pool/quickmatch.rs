@@ -41,7 +41,7 @@ impl PoolQuery<QuickmatchPoolEntry> for QuickmatchPoolQuery {
     fn matches(&self, entry: &QuickmatchPoolEntry) -> bool {
         if self.arena_id != entry.arena_id || self.settings != entry.settings {
             false
-        } else if !entry.password.is_empty() || !self.password.is_empty() {
+        } else if !entry.password.is_empty() && !self.password.is_empty() {
             entry.password == self.password
         } else {
             Self::check_character_level(self.character_level, entry.character_level)

@@ -7,7 +7,7 @@ use thiserror::Error;
 use crate::{database::{self, DatabaseError}, pool::{breakin::BreakInPoolEntry, breakin_pool, key::PoolKey, PoolError}};
 
 // Sessions are valid for an hour
-pub const SESSION_VALIDITY: u64 = 60 * 60;
+pub const SESSION_VALIDITY: u64 = 60 * 60 * 7;
 
 // TODO: these errors meaningless without some more context
 #[derive(Debug, Error)]
