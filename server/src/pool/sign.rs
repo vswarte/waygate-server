@@ -43,8 +43,9 @@ impl PoolQuery<SignPoolEntry> for SignPoolQuery {
     fn matches(&self, entry: &SignPoolEntry) -> bool {
         if !self.areas.contains(&entry.area) {
             false
-        } else if !entry.password.is_empty() || !self.password.is_empty() {
-            entry.password == self.password
+        } else if !entry.password.is_empty() && !self.password.is_empty()
+            && entry.password.eq(&self.password) {
+                true
         } else {
             Self::check_character_level(self.character_level, entry.character_level)
                 && Self::check_weapon_level(self.weapon_level, entry.weapon_level)
