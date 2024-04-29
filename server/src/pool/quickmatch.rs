@@ -26,13 +26,13 @@ impl QuickmatchPoolQuery {
         let lower = host - (host / 10);
         let upper = host + (host / 10) + 10;
 
-        joiner >= lower && joiner <= upper
+        dbg!(joiner >= lower && joiner <= upper)
     }
 
     fn check_weapon_level(host: u32, joiner: u32) -> bool {
         log::debug!("check_weapon_level: host = {}, joiner = {}", host, joiner);
         if let Some(entry) = weapon::get_level_table_entry(host) {
-            entry.regular_range.contains(&joiner)
+            dbg!(entry.regular_range.contains(&joiner))
         } else {
             false
         }
@@ -46,10 +46,8 @@ impl PoolQuery<QuickmatchPoolEntry> for QuickmatchPoolQuery {
             return false;
         }
 
-        if !entry.password.is_empty() && !self.password.is_empty()
-            && entry.password.eq(&self.password) {
-            log::info!("Not a matching password");
-            return true;
+        if !entry.password.is_empty() || !self.password.is_empty() {
+            return entry.password.eq(&self.password);
         }
 
         let result = Self::check_character_level(self.character_level, entry.character_level)
@@ -86,7 +84,7 @@ mod test {
 
     #[test]
     fn level_1_characters_match() {
-        let joiner = QuickmatchPoolEntry {
+        let host = QuickmatchPoolEntry {
             external_id: String::new(),
             character_level: 1,
             weapon_level: 1,
@@ -95,7 +93,7 @@ mod test {
             settings: 0x0,
         };
 
-        let host = QuickmatchPoolQuery {
+        let joiner = QuickmatchPoolQuery {
             character_level: 1,
             weapon_level: 1,
             password: String::default(),
@@ -103,12 +101,12 @@ mod test {
             settings: 0x0,
         };
 
-        assert!(host.matches(&joiner));
+        assert!(joiner.matches(&host));
     }
 
     #[test]
     fn doesnt_match_differing_levels() {
-        let joiner = QuickmatchPoolEntry {
+        let host = QuickmatchPoolEntry {
             external_id: String::new(),
             character_level: 1,
             weapon_level: 1,
@@ -117,7 +115,7 @@ mod test {
             settings: 0x0,
         };
 
-        let host = QuickmatchPoolQuery {
+        let joiner = QuickmatchPoolQuery {
             character_level: 100,
             weapon_level: 1,
             password: String::default(),
@@ -125,12 +123,12 @@ mod test {
             settings: 0x0,
         };
 
-        assert!(!host.matches(&joiner));
+        assert!(!joiner.matches(&host));
     }
 
     #[test]
     fn password_matches_regardless() {
-        let joiner = QuickmatchPoolEntry {
+        let host = QuickmatchPoolEntry {
             external_id: String::new(),
             character_level: 1,
             weapon_level: 1,
@@ -139,7 +137,7 @@ mod test {
             settings: 0x0,
         };
 
-        let host = QuickmatchPoolQuery {
+        let joiner = QuickmatchPoolQuery {
             character_level: 713,
             weapon_level: 1,
             password: String::from("test"),
@@ -147,12 +145,12 @@ mod test {
             settings: 0x0,
         };
 
-        assert!(host.matches(&joiner));
+        assert!(joiner.matches(&host));
     }
 
     #[test]
     fn doesnt_match_on_differing_passwords() {
-        let joiner = QuickmatchPoolEntry {
+        let host = QuickmatchPoolEntry {
             external_id: String::new(),
             character_level: 1,
             weapon_level: 1,
@@ -161,7 +159,7 @@ mod test {
             settings: 0x0,
         };
 
-        let host = QuickmatchPoolQuery {
+        let joiner = QuickmatchPoolQuery {
             character_level: 1,
             weapon_level: 1,
             password: String::from("456"),
@@ -169,12 +167,12 @@ mod test {
             settings: 0x0,
         };
 
-        assert!(!host.matches(&joiner));
+        assert!(!joiner.matches(&host));
     }
 
     #[test]
     fn doesnt_match_when_password_isnt_set_on_joiner() {
-        let joiner = QuickmatchPoolEntry {
+        let host = QuickmatchPoolEntry {
             external_id: String::new(),
             character_level: 1,
             weapon_level: 1,
@@ -183,7 +181,7 @@ mod test {
             settings: 0x0,
         };
 
-        let host = QuickmatchPoolQuery {
+        let joiner = QuickmatchPoolQuery {
             character_level: 1,
             weapon_level: 1,
             password: String::from("456"),
@@ -191,12 +189,12 @@ mod test {
             settings: 0x0,
         };
 
-        assert!(!host.matches(&joiner));
+        assert!(!joiner.matches(&host));
     }
 
     #[test]
     fn doesnt_match_mismatching_arena_ids() {
-        let joiner = QuickmatchPoolEntry {
+        let host = QuickmatchPoolEntry {
             external_id: String::new(),
             character_level: 1,
             weapon_level: 1,
@@ -205,7 +203,7 @@ mod test {
             settings: 0x0,
         };
 
-        let host = QuickmatchPoolQuery {
+        let joiner = QuickmatchPoolQuery {
             character_level: 1,
             weapon_level: 1,
             password: String::default(),
@@ -213,12 +211,12 @@ mod test {
             settings: 0x0,
         };
 
-        assert!(!host.matches(&joiner));
+        assert!(!joiner.matches(&host));
     }
 
     #[test]
     fn doesnt_match_mismatching_settings() {
-        let joiner = QuickmatchPoolEntry {
+        let host = QuickmatchPoolEntry {
             external_id: String::new(),
             character_level: 1,
             weapon_level: 1,
@@ -227,7 +225,7 @@ mod test {
             settings: 0x0,
         };
 
-        let host = QuickmatchPoolQuery {
+        let joiner = QuickmatchPoolQuery {
             character_level: 1,
             weapon_level: 1,
             password: String::default(),
@@ -235,6 +233,28 @@ mod test {
             settings: 0x1,
         };
 
-        assert!(!host.matches(&joiner));
+        assert!(!joiner.matches(&host));
+    }
+
+    #[test]
+    fn test_clayamore_group() {
+        let host = QuickmatchPoolEntry {
+            external_id: String::new(),
+            character_level: 130,
+            weapon_level: 25,
+            password: String::default(),
+            arena_id: 0x0,
+            settings: 0x0,
+        };
+
+        let joiner = QuickmatchPoolQuery {
+            character_level: 137,
+            weapon_level: 25,
+            password: String::default(),
+            arena_id: 0x0,
+            settings: 0x0,
+        };
+
+        assert!(!joiner.matches(&host));
     }
 }
