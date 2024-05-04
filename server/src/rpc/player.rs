@@ -18,7 +18,8 @@ pub async fn handle_update_player_status(
 
     {
         let mut session = session.lock_write();
-        session.invadeable = session.invadeable && request.character.online_activity == 0x1;
+        // session.invadeable = session.invadeable && request.character.online_activity == 0x1;
+        session.invadeable = request.character.online_activity == 0x1;
         session.matching = Some((&request).into());
 
         session.update_invadeability()?;
@@ -45,27 +46,27 @@ pub async fn handle_use_item_log(
 ) -> rpc::HandlerResult {
     log::info!("Player sent UseItemLog {:?}", request.used_items);
 
-    // TODO: move this hack somewhere else?
-    // Sniff out tongue usage and toggle state. I truly cannot find any other
-    // reliable way of checking if this effect is in effect. I checked all
-    // networking, endlessly diffed PlayerUpdateStatus and reversed the
-    // majority of CreateMatchingTicket (which is getting sent at too low of a
-    // frequency anyway for realtime features like this).
-    let tongue_toggled = request.used_items.iter()
-        .find(|i| i.item_id == 108)
-        .map(|i| i.times_used % 2 == 1);
-    if tongue_toggled.is_some_and(|state_changed| state_changed) {
-        let mut session = session.lock_write();
-        session.invadeable = !session.invadeable;
-        session.update_invadeability()?;
-    }
+    // // TODO: move this hack somewhere else?
+    // // Sniff out tongue usage and toggle state. I truly cannot find any other
+    // // reliable way of checking if this effect is in effect. I checked all
+    // // networking, endlessly diffed PlayerUpdateStatus and reversed the
+    // // majority of CreateMatchingTicket (which is getting sent at too low of a
+    // // frequency anyway for realtime features like this).
+    // let tongue_toggled = request.used_items.iter()
+    //     .find(|i| i.item_id == 108)
+    //     .map(|i| i.times_used % 2 == 1);
+    // if tongue_toggled.is_some_and(|state_changed| state_changed) {
+    //     let mut session = session.lock_write();
+    //     session.invadeable = !session.invadeable;
+    //     session.update_invadeability()?;
+    // }
 
     Ok(ResponseParams::UseItemLog)
 }
 
 pub async fn handle_join_multiplay(
-    session: ClientSession,
-    request: RequestJoinMultiplayParams,
+    _session: ClientSession,
+    _request: RequestJoinMultiplayParams,
 ) -> rpc::HandlerResult {
     // log::info!(
     //     "Player sent JoinMultiplay. player_id = {}. request = {}",
@@ -76,11 +77,11 @@ pub async fn handle_join_multiplay(
     Ok(ResponseParams::JoinMultiplay)
 }
 
-pub async fn handle_join_muliplay_log(
-    _session: ClientSession,
-) -> rpc::HandlerResult {
-    Ok(ResponseParams::JoinMultiplayLog)
-}
+// pub async fn handle_join_muliplay_log(
+//     _session: ClientSession,
+// ) -> rpc::HandlerResult {
+//     Ok(ResponseParams::JoinMultiplayLog)
+// }
 
 pub async fn handle_get_item_log(
     _session: ClientSession,

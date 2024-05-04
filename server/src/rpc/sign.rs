@@ -1,5 +1,4 @@
 use fnrpc::push::JoinParams;
-use fnrpc::push::Unk5Params;
 use rand::prelude::*;
 use fnrpc::push::JoinPayload;
 use fnrpc::push::PushParams;
