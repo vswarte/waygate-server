@@ -24,13 +24,6 @@ pub async fn handle_create_sign(
 ) -> rpc::HandlerResult {
     let mut session = session.lock_write();
 
-    log::info!(
-        "Player put down their sign. player = {}. area = {}. play_region = {}",
-        session.player_id,
-        request.area.area,
-        request.area.play_region,
-    );
-
     let key = crate::pool::sign_pool()?
         .insert(session.player_id, request.into())?;
 

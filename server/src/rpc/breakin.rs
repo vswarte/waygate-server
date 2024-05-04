@@ -1,6 +1,8 @@
 use fnrpc::push::AllowBreakInTargetParams;
 use fnrpc::push::BreakInTargetParams;
 use fnrpc::push::JoinPayload;
+use fnrpc::push::RejectBreakInTargetParams;
+use fnrpc::push::Unk1Params;
 use fnrpc::push::Unk4Params;
 use rand::prelude::*;
 
@@ -31,6 +33,7 @@ impl From<RequestGetBreakInTargetListParams> for BreakInPoolQuery {
 pub async fn handle_get_break_in_target_list(
     params: RequestGetBreakInTargetListParams,
 ) -> rpc::HandlerResult {
+    let play_region = params.play_region;
     let entries = breakin_pool()?
         .match_entries::<BreakInPoolQuery>(&params.into())
         .iter()
@@ -38,7 +41,10 @@ pub async fn handle_get_break_in_target_list(
         .collect::<Vec<_>>();
 
     Ok(ResponseParams::GetBreakInTargetList(
-        ResponseGetBreakInTargetListParams { unk1: 0x0, entries },
+        ResponseGetBreakInTargetListParams {
+            play_region,
+            entries,
+        },
     ))
 }
 
@@ -99,8 +105,6 @@ pub async fn handle_reject_break_in_target(
     session: ClientSession,
     request: RequestRejectBreakInTargetParams,
 ) -> rpc::HandlerResult {
-    log::info!("RejectBreakInTarget. param = {:#?}", request);
-
     let (player_id, steam_id) = {
         let lock = session.lock_read();
         (lock.player_id, lock.external_id.clone())
@@ -111,10 +115,10 @@ pub async fn handle_reject_break_in_target(
             object_id: rand::thread_rng().gen::<i32>(),
             secondary_id: rand::thread_rng().gen::<i32>(),
         },
-        join_payload: JoinPayload::Unk4(Unk4Params {
-            unk1: player_id,
-            unk2: request.play_region,
-            unk3: steam_id,
+        join_payload: JoinPayload::RejectBreakInTarget(RejectBreakInTargetParams {
+            host_player_id: player_id,
+            unk4: -90,
+            host_steam_id: steam_id,
         }),
     });
 
@@ -133,4 +137,3 @@ impl From<&MatchResult<BreakInPoolEntry>> for ResponseGetBreakInTargetListParams
         }
     }
 }
-

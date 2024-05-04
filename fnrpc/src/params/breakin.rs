@@ -4,10 +4,10 @@ use crate::params::shared::*;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct RequestGetBreakInTargetListParams {
+    pub unk0: u32,
     pub play_region: u32,
-    pub unk2: u32,
     pub matching_parameters: MatchingParameters,
-    pub unk3: u32,
+    pub unk48: u32,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -18,7 +18,7 @@ pub struct ResponseGetBreakInTargetListParamsEntry {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ResponseGetBreakInTargetListParams {
-    pub unk1: u32,
+    pub play_region: u32,
     pub entries: Vec<ResponseGetBreakInTargetListParamsEntry>,
 }
 

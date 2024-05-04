@@ -9,9 +9,9 @@ pub struct Unk0Params {
 }
 
 #[derive(Serialize, Debug)]
-pub struct Unk1Params {
-    pub unk1: u32,
-    pub unk2: u64,
+pub struct EvaluateBloodMessageParams {
+    pub unk1: i32,
+    pub sign_identifier: ObjectIdentifier,
     pub unk3: u32,
 }
 
@@ -32,10 +32,10 @@ pub struct AllowBreakInTargetParams {
 }
 
 #[derive(Serialize, Debug)]
-pub struct Unk4Params {
-    pub unk1: i32,
-    pub unk2: u32,
-    pub unk3: String,
+pub struct RejectBreakInTargetParams {
+    pub host_player_id: i32,
+    pub unk4: i32,
+    pub host_steam_id: String,
 }
 
 #[derive(Serialize, Debug)]
@@ -77,7 +77,7 @@ pub struct VisitParams {
 }
 
 #[derive(Serialize, Debug)]
-pub struct UnkAParams {
+pub struct RejectVisitParams {
     pub unk1: u32,
     pub unk2: u32,
     pub unk3: String,
@@ -126,16 +126,16 @@ pub struct UnkFParams {
 #[repr(u32)]
 pub enum JoinPayload {
     Unk0(Unk0Params), // 0x0
-    Unk1(Unk1Params), // 0x1
+    EvaluateBloodMessage(EvaluateBloodMessageParams), // 0x1
     BreakInTarget(BreakInTargetParams), // 0x2
     AllowBreakInTarget(AllowBreakInTargetParams), // 0x3
-    Unk4(Unk4Params), // 0x4
+    RejectBreakInTarget(RejectBreakInTargetParams), // 0x4
     Unk5(Unk5Params), // 0x5
     SummonSign(SummonSignParams), //0x6
     RejectSign(RejectSignParams), // 0x7
     Unk8(Unk8Params), // 0x8
     Visit(VisitParams), // 0x9
-    UnkA(UnkAParams), // 0XA
+    RejectVisit(RejectVisitParams), // 0XA
     JoinQuickMatch(JoinQuickMatchParams), // 0xB
     AcceptQuickMatch(AcceptQuickMatchParams), // 0xC
     UnkD(UnkDParams), // 0xD
