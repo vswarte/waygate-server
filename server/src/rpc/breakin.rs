@@ -1,6 +1,7 @@
 use fnrpc::push::AllowBreakInTargetParams;
 use fnrpc::push::BreakInTargetParams;
 use fnrpc::push::JoinPayload;
+use fnrpc::push::Unk4Params;
 use rand::prelude::*;
 
 use fnrpc::breakin::*;
@@ -92,6 +93,33 @@ pub async fn handle_allow_break_in_target(
             .await
             .map(|_| ResponseParams::AllowBreakInTarget)?
     )
+}
+
+pub async fn handle_reject_break_in_target(
+    _session: ClientSession,
+    request: RequestRejectBreakInTargetParams,
+) -> rpc::HandlerResult {
+    log::info!("RejectBreakInTarget. param = {:#?}", request);
+
+    // let push_payload = PushParams::Join(JoinParams {
+    //     identifier: ObjectIdentifier {
+    //         object_id: rand::thread_rng().gen::<i32>(),
+    //         secondary_id: rand::thread_rng().gen::<i32>(),
+    //     },
+    //     join_payload: JoinPayload::Unk4(Unk4Params {
+    //         unk1: todo!(),
+    //         unk2: todo!(),
+    //         unk3: todo!(),
+    //     }),
+    // });
+
+    // Ok(
+    //     push::send_push(request.player_id, push_payload)
+    //         .await
+    //         .map(|_| ResponseParams::AllowBreakInTarget)?
+    // )
+
+    Ok(ResponseParams::RejectBreakInTarget)
 }
 
 impl From<&MatchResult<BreakInPoolEntry>> for ResponseGetBreakInTargetListParamsEntry {

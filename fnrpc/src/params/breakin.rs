@@ -31,13 +31,16 @@ pub struct RequestAllowBreakInTargetParams {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct RequestBreakInTargetParams {
-    pub unk1: u32,
-    pub unk2: u32,
+    pub unk0: u32,
+    pub unk4: u32,
     pub player_id: i32,
-    pub unk3: u32,
+    pub unkc: u32,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct RequestRejectBreakInTargetParams {
-
+    pub invading_player_id: i32,
+    pub unk4: i32,
+    pub play_region: u32,
+    pub unkc: u32,
 }

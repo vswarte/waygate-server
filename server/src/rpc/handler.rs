@@ -82,6 +82,8 @@ pub async fn dispatch_request(
             => breakin::handle_break_in_target(session, *p).await?,
         RequestParams::AllowBreakInTarget(p)
             => breakin::handle_allow_break_in_target(session, *p).await?, 
+        RequestParams::RejectBreakInTarget(p)
+            => breakin::handle_reject_break_in_target(session, *p).await?, 
 
         RequestParams::GetItemLog(p)
             => player::handle_get_item_log(session, *p).await?, 
