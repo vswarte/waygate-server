@@ -41,7 +41,7 @@ impl From<(String, &RequestUpdatePlayerStatusParams)> for BreakInPoolEntry {
 }
 
 pub async fn handle_use_item_log(
-    session: ClientSession,
+    _session: ClientSession,
     request: RequestUseItemLogParams,
 ) -> rpc::HandlerResult {
     log::info!("Player sent UseItemLog {:?}", request.used_items);
