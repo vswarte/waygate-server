@@ -51,10 +51,10 @@ pub async fn handle_use_item_log(
     // networking, endlessly diffed PlayerUpdateStatus and reversed the
     // majority of CreateMatchingTicket (which is getting sent at too low of a
     // frequency anyway for realtime features like this).
-    let tongue = request.used_items.iter()
+    let tongue_toggled = request.used_items.iter()
         .find(|i| i.item_id == 108)
         .map(|i| i.times_used % 2 == 1);
-    if tongue.is_some_and(|x| x) {
+    if tongue_toggled.is_some_and(|state_changed| state_changed) {
         let mut session = session.lock_write();
         session.invadeable = !session.invadeable;
         session.update_invadeability()?;
@@ -64,10 +64,15 @@ pub async fn handle_use_item_log(
 }
 
 pub async fn handle_join_multiplay(
-    _session: ClientSession,
-    _request: RequestJoinMultiplayParams,
+    session: ClientSession,
+    request: RequestJoinMultiplayParams,
 ) -> rpc::HandlerResult {
-    log::info!("Player sent JoinMultiplay. player_id = {}", _session.lock_read().player_id);
+    // log::info!(
+    //     "Player sent JoinMultiplay. player_id = {}. request = {}",
+    //     session.lock_read().player_id,
+    //     request,
+    // );
+
     Ok(ResponseParams::JoinMultiplay)
 }
 

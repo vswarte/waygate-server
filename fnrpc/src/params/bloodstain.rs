@@ -66,6 +66,7 @@ mod tests {
         assert_eq!(String::from("group2"), deserialized.group_passwords[1]);
         assert_eq!(String::from("group3"), deserialized.group_passwords[2]);
         assert_eq!(String::from("group4"), deserialized.group_passwords[3]);
+        assert_eq!(String::from("group5"), deserialized.group_passwords[4]);
     }
 
     #[test]
@@ -99,5 +100,6 @@ mod tests {
         assert_eq!(String::from("group2"), deserialized.group_passwords[1]);
         assert_eq!(String::from("group3"), deserialized.group_passwords[2]);
         assert_eq!(String::from("group4"), deserialized.group_passwords[3]);
+        assert_eq!(String::from("group5"), deserialized.group_passwords[4]);
     }
 }

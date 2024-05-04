@@ -43,16 +43,18 @@ pub struct ResponseGetSignListParams {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct RequestGetMatchAreaSignListParams {
-    pub search_areas: Vec<OnlineArea>,
-    pub group_passwords: Vec<String>,
+    pub unk1: u32,
+    pub unk2: u32,
+    pub match_area: u32,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ResponseGetMatchAreaSignListParamsEntry {
     pub player_id: i32,
+    // TODO: make ObjectIdentifier
     pub unk0: i32,
     pub sign_id: i32,
-    pub unk1: i32,
+    pub match_area: i32,
     pub unk2: i32,
     pub unk3: i32,
     pub data: Vec<u8>,

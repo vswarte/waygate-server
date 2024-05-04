@@ -1,7 +1,7 @@
 struct RequestGetMatchAreaSignListParams {
     u32 unk1;
     u32 unk2;
-    u32 unk3;
+    u32 matchAreaId;
     u32 unk4;
     u32 unk5;
     u32 unk6;
@@ -16,7 +16,7 @@ struct RequestGetMatchAreaSignListParams {
 struct ResponseGetMatchAreaSignListParamsEntry {
     u32 playerId;
     ObjectIdentifier identifier;
-    u32 unk1;
+    u32 matchAreaId;
     u32 unk2;
     u32 unk3;
     Vector<char> data;

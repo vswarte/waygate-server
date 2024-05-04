@@ -1,4 +1,5 @@
 use fnrpc::push::JoinParams;
+use fnrpc::push::Unk5Params;
 use rand::prelude::*;
 use fnrpc::push::JoinPayload;
 use fnrpc::push::PushParams;
@@ -81,6 +82,7 @@ pub enum SummonError {
     SignMissing,
 }
 
+// Host tapped the sign
 pub async fn handle_summon_sign(
     session: ClientSession,
     request: RequestSummonSignParams,
@@ -137,8 +139,26 @@ pub async fn handle_reject_sign(
         request
     );
 
+    let summoned_player_id = session.lock_read().player_id;
+
     // TODO: notify summoner of rejected summon
-    Ok(ResponseParams::RejectSign)
+    // Inform the summonee that they're being summoned
+    let push_payload = PushParams::Join(JoinParams {
+        identifier: ObjectIdentifier {
+            object_id: rand::thread_rng().gen::<i32>(),
+            secondary_id: rand::thread_rng().gen::<i32>(),
+        },
+        join_payload: JoinPayload::Unk5(fnrpc::push::Unk5Params {
+            summoned_player_id,
+            sign_identifier: request.sign_identifier,
+        }),
+    });
+
+    Ok(
+        push::send_push(request.summoning_player_id, push_payload)
+            .await
+            .map(|_| ResponseParams::RejectSign)?
+    )
 }
 
 pub async fn handle_update_sign(
