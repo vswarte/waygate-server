@@ -1,6 +1,8 @@
 use serde::Serialize;
 use crate::params::*;
 
+use self::shared::ObjectIdentifier;
+
 #[derive(Serialize, Debug)]
 pub struct Unk0Params {
     pub unk1: u64,
@@ -39,7 +41,7 @@ pub struct Unk4Params {
 #[derive(Serialize, Debug)]
 pub struct Unk5Params {
     pub summoned_player_id: i32,
-    pub sign_identifier: shared::ObjectIdentifier,
+    pub sign_identifier: ObjectIdentifier,
 }
 
 #[derive(Serialize, Debug)]
@@ -47,14 +49,14 @@ pub struct SummonSignParams {
     pub summoning_player_id: i32,
     pub steam_id: String,
     pub summoned_player_id: i32,
-    pub sign_identifier: shared::ObjectIdentifier,
+    pub sign_identifier: ObjectIdentifier,
     pub join_data: Vec<u8>,
 }
 
 #[derive(Serialize, Debug)]
 pub struct Unk7Params {
-    pub unk1: u64,
-    pub unk2: u32,
+    pub unk1: ObjectIdentifier,
+    pub unk2: i32,
 }
 
 #[derive(Serialize, Debug)]
@@ -143,7 +145,7 @@ pub enum JoinPayload {
 
 #[derive(Serialize, Debug)]
 pub struct JoinParams {
-    pub identifier: shared::ObjectIdentifier,
+    pub identifier: ObjectIdentifier,
     pub join_payload: JoinPayload,
 }
 
@@ -178,7 +180,7 @@ pub enum NotifyParamsSection2 {
 
 #[derive(Serialize, Debug)]
 pub struct NotifyParams {
-    pub identifier: shared::ObjectIdentifier,
+    pub identifier: ObjectIdentifier,
     pub timestamp: u64,
 
     pub section1: NotifyParamsSection1,

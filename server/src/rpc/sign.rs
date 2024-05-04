@@ -148,9 +148,9 @@ pub async fn handle_reject_sign(
             object_id: rand::thread_rng().gen::<i32>(),
             secondary_id: rand::thread_rng().gen::<i32>(),
         },
-        join_payload: JoinPayload::Unk5(fnrpc::push::Unk5Params {
-            summoned_player_id,
-            sign_identifier: request.sign_identifier,
+        join_payload: JoinPayload::Unk7(fnrpc::push::Unk7Params {
+            unk1: request.sign_identifier,
+            unk2: summoned_player_id,
         }),
     });
 
