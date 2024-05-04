@@ -129,28 +129,24 @@ pub async fn handle_remove_sign(
     Ok(ResponseParams::RemoveSign)
 }
 
+// Happens when summonee is dying while the sign is just tapped
 pub async fn handle_reject_sign(
     session: ClientSession,
     request: RequestRejectSignParams,
 ) -> rpc::HandlerResult {
-    log::info!(
-        "Player sent RejectSign. player = {}. request = {:#?}",
-        session.lock_read().player_id,
-        request
-    );
+    log::info!("Player sent RejectSign.");
 
     let summoned_player_id = session.lock_read().player_id;
 
-    // TODO: notify summoner of rejected summon
-    // Inform the summonee that they're being summoned
+    // Inform the host that the summon is not coming
     let push_payload = PushParams::Join(JoinParams {
         identifier: ObjectIdentifier {
             object_id: rand::thread_rng().gen::<i32>(),
             secondary_id: rand::thread_rng().gen::<i32>(),
         },
-        join_payload: JoinPayload::Unk7(fnrpc::push::Unk7Params {
-            unk1: request.sign_identifier,
-            unk2: summoned_player_id,
+        join_payload: JoinPayload::RejectSign(fnrpc::push::RejectSignParams {
+            sign_identifier: request.sign_identifier,
+            summoned_player_id,
         }),
     });
 

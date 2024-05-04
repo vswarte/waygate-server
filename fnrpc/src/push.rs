@@ -54,9 +54,9 @@ pub struct SummonSignParams {
 }
 
 #[derive(Serialize, Debug)]
-pub struct Unk7Params {
-    pub unk1: ObjectIdentifier,
-    pub unk2: i32,
+pub struct RejectSignParams {
+    pub sign_identifier: ObjectIdentifier,
+    pub summoned_player_id: i32,
 }
 
 #[derive(Serialize, Debug)]
@@ -132,7 +132,7 @@ pub enum JoinPayload {
     Unk4(Unk4Params), // 0x4
     Unk5(Unk5Params), // 0x5
     SummonSign(SummonSignParams), //0x6
-    Unk7(Unk7Params), // 0x7
+    RejectSign(RejectSignParams), // 0x7
     Unk8(Unk8Params), // 0x8
     Visit(VisitParams), // 0x9
     UnkA(UnkAParams), // 0XA
