@@ -115,8 +115,9 @@ pub async fn handle_reject_break_in_target(
         },
         join_payload: JoinPayload::RejectBreakInTarget(RejectBreakInTargetParams {
             host_player_id: player_id,
-            unk4: -90,
+            unk1: -90,
             host_steam_id: steam_id,
+            unk2: 0,
         }),
     });
 

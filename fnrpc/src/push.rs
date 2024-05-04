@@ -34,8 +34,9 @@ pub struct AllowBreakInTargetParams {
 #[derive(Serialize, Debug)]
 pub struct RejectBreakInTargetParams {
     pub host_player_id: i32,
-    pub unk4: i32,
+    pub unk1: i32,
     pub host_steam_id: String,
+    pub unk2: u32,
 }
 
 #[derive(Serialize, Debug)]
