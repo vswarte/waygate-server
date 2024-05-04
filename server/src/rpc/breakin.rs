@@ -96,30 +96,33 @@ pub async fn handle_allow_break_in_target(
 }
 
 pub async fn handle_reject_break_in_target(
-    _session: ClientSession,
+    session: ClientSession,
     request: RequestRejectBreakInTargetParams,
 ) -> rpc::HandlerResult {
     log::info!("RejectBreakInTarget. param = {:#?}", request);
 
-    // let push_payload = PushParams::Join(JoinParams {
-    //     identifier: ObjectIdentifier {
-    //         object_id: rand::thread_rng().gen::<i32>(),
-    //         secondary_id: rand::thread_rng().gen::<i32>(),
-    //     },
-    //     join_payload: JoinPayload::Unk4(Unk4Params {
-    //         unk1: todo!(),
-    //         unk2: todo!(),
-    //         unk3: todo!(),
-    //     }),
-    // });
+    let (player_id, steam_id) = {
+        let lock = session.lock_read();
+        (lock.player_id, lock.external_id.clone())
+    };
 
-    // Ok(
-    //     push::send_push(request.player_id, push_payload)
-    //         .await
-    //         .map(|_| ResponseParams::AllowBreakInTarget)?
-    // )
+    let push_payload = PushParams::Join(JoinParams {
+        identifier: ObjectIdentifier {
+            object_id: rand::thread_rng().gen::<i32>(),
+            secondary_id: rand::thread_rng().gen::<i32>(),
+        },
+        join_payload: JoinPayload::Unk4(Unk4Params {
+            unk1: player_id,
+            unk2: request.play_region,
+            unk3: steam_id,
+        }),
+    });
 
-    Ok(ResponseParams::RejectBreakInTarget)
+    Ok(
+        push::send_push(request.invading_player_id, push_payload)
+            .await
+            .map(|_| ResponseParams::RejectBreakInTarget)?
+    )
 }
 
 impl From<&MatchResult<BreakInPoolEntry>> for ResponseGetBreakInTargetListParamsEntry {

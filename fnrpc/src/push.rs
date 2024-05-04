@@ -33,7 +33,7 @@ pub struct AllowBreakInTargetParams {
 
 #[derive(Serialize, Debug)]
 pub struct Unk4Params {
-    pub unk1: u32,
+    pub unk1: i32,
     pub unk2: u32,
     pub unk3: String,
 }
