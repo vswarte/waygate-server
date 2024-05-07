@@ -75,6 +75,8 @@ pub async fn dispatch_request(
             => quickmatch::handle_join_quick_match(session, *p).await?,
         RequestParams::AcceptQuickMatch(p)
             => quickmatch::handle_accept_quick_match(session, *p).await?,
+        RequestParams::QuickMatchResultLog
+            => quickmatch::handle_quick_match_result_log(session).await?,
 
         RequestParams::GetBreakInTargetList(p)
             => breakin::handle_get_break_in_target_list(*p).await?,
