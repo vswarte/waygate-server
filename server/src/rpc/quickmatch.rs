@@ -158,6 +158,14 @@ pub async fn handle_send_quick_match_start(
     Ok(ResponseParams::SendQuickMatchStart)
 }
 
+pub async fn handle_send_quick_match_result(
+    _session: ClientSession,
+) -> rpc::HandlerResult {
+    log::info!("Got quickmatch result log");
+
+    Ok(ResponseParams::SendQuickMatchResult)
+}
+
 impl QuickmatchPoolEntry {
     fn from_request(val: RequestRegisterQuickMatchParams, external_id: String) -> Self {
         QuickmatchPoolEntry {
