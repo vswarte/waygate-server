@@ -169,7 +169,7 @@ impl From<BloodMessage> for ResponseGetBloodMessageListParamsEntry {
             rating_good: val.rating_good,
             rating_bad: val.rating_bad,
             data: val.data,
-            area: OnlineArea {
+            area: PlayRegionArea {
                 area: val.area,
                 play_region: val.play_region,
             },

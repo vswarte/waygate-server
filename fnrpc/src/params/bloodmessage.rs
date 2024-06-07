@@ -4,7 +4,7 @@ use crate::params::shared::*;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct RequestCreateBloodMessageParams {
-    pub area: OnlineArea,
+    pub area: PlayRegionArea,
     pub character_id: i32,
     pub data: Vec<u8>,
     pub unk: i32,
@@ -15,7 +15,7 @@ pub type ResponseCreateBloodMessageParams = ObjectIdentifier;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct RequestGetBloodMessageListParams {
-    pub search_areas: Vec<OnlineArea>,
+    pub search_areas: Vec<PlayRegionArea>,
     pub group_passwords: Vec<String>,
 }
 
@@ -27,7 +27,7 @@ pub struct ResponseGetBloodMessageListParamsEntry {
     pub rating_good: i32,
     pub rating_bad: i32,
     pub data: Vec<u8>,
-    pub area: OnlineArea,
+    pub area: PlayRegionArea,
     pub group_passwords: Vec<String>,
 }
 

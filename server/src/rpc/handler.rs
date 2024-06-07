@@ -62,6 +62,10 @@ pub async fn dispatch_request(
             => sign::handle_remove_sign(session, *p).await?,
         RequestParams::UpdateSign(p)
             => sign::handle_update_sign(session,*p).await?,
+        RequestParams::GetMatchAreaSignList(p)
+            => sign::handle_get_match_area_sign_list(session, *p).await?,
+        RequestParams::CreateMatchAreaSign(p)
+            => sign::handle_create_match_area_sign(session, *p).await?,
 
         RequestParams::SearchQuickMatch(p)
             => quickmatch::handle_search_quick_match(*p).await?,
@@ -81,7 +85,6 @@ pub async fn dispatch_request(
             => quickmatch::handle_send_quick_match_start(session).await?,
         RequestParams::SendQuickMatchResult
             => quickmatch::handle_send_quick_match_result(session).await?,
-
 
         RequestParams::GetBreakInTargetList(p)
             => breakin::handle_get_break_in_target_list(*p).await?,

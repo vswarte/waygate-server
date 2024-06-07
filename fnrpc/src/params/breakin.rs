@@ -40,7 +40,7 @@ pub struct RequestBreakInTargetParams {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct RequestRejectBreakInTargetParams {
     pub invading_player_id: i32,
-    pub unk4: i32,
+    pub reason: i32,
     pub play_region: u32,
     pub unkc: u32,
 }

@@ -4,7 +4,7 @@ use crate::params::shared::*;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct RequestCreateSignParams {
-    pub area: OnlineArea,
+    pub area: PlayRegionArea,
     pub matching_parameters: MatchingParameters,
     pub unk0: u32, // Could be sign type although this is also embedded in the sign data itself
     pub data: Vec<u8>,
@@ -19,7 +19,7 @@ pub struct ResponseCreateSignParams {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct RequestGetSignListParams {
     pub known_signs: Vec<ObjectIdentifier>,
-    pub search_areas: Vec<OnlineArea>,
+    pub search_areas: Vec<PlayRegionArea>,
     pub matching_parameters: MatchingParameters,
     // TODO: rest
 }
@@ -28,7 +28,7 @@ pub struct RequestGetSignListParams {
 pub struct ResponseGetSignListParamsEntry {
     pub player_id: i32,
     pub identifier: ObjectIdentifier,
-    pub area: OnlineArea,
+    pub area: PlayRegionArea,
     pub data: Vec<u8>,
     pub steam_id: String,
     pub unk_string: String,
@@ -41,33 +41,6 @@ pub struct ResponseGetSignListParams {
     pub entries: Vec<ResponseGetSignListParamsEntry>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-pub struct RequestGetMatchAreaSignListParams {
-    pub unk1: u32,
-    pub unk2: u32,
-    pub match_area: u32,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct ResponseGetMatchAreaSignListParamsEntry {
-    pub player_id: i32,
-    // TODO: make ObjectIdentifier
-    pub unk0: i32,
-    pub sign_id: i32,
-    pub match_area: i32,
-    pub unk2: i32,
-    pub unk3: i32,
-    pub data: Vec<u8>,
-    pub steam_id: String,
-    pub unk_string: String,
-    pub group_passwords: Vec<String>,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct ResponseGetMatchAreaSignListParams {
-    pub unk0: i32,
-    pub entries: Vec<ResponseGetMatchAreaSignListParamsEntry>,
-}
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct RequestSummonSignParams {
@@ -92,4 +65,53 @@ pub struct RequestRemoveSignParams {
 pub struct RequestUpdateSignParams {
     pub identifier: ObjectIdentifier,
     pub unk0: u32,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct RequestGetMatchAreaSignListParams {
+    pub known_signs: Vec<ObjectIdentifier>,
+    pub unk1: u32,
+    pub match_area: i32,
+    pub unk2: u32,
+    pub unk3: u8,
+    pub matching_parameters: MatchingParameters,
+    pub unk4: u8,
+    pub unk5: u8,
+    pub unk6: u8,
+    pub group_passwords: Vec<String>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct ResponseGetMatchAreaSignListParamsEntry {
+    pub player_id: i32,
+    // TODO: make ObjectIdentifier
+    pub identifier: ObjectIdentifier,
+    pub match_area: i32,
+    pub unk1: i32,
+    pub unk2: i32,
+    pub data: Vec<u8>,
+    pub steam_id: String,
+    pub unk_string: String,
+    pub group_passwords: Vec<String>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct ResponseGetMatchAreaSignListParams {
+    pub known_signs: Vec<ObjectIdentifier>,
+    pub entries: Vec<ResponseGetMatchAreaSignListParamsEntry>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct RequestCreateMatchAreaSignParams {
+    pub match_area: i32,
+    pub unk1: i32,
+    pub unk2: i32,
+    pub matching_parameters: MatchingParameters,
+    pub unk3: i32,
+    pub data: Vec<u8>,
+    pub group_passwords: Vec<String>,
+}
+#[derive(Serialize, Deserialize, Debug)]
+pub struct ResponseCreateMatchAreaSignParams {
+    pub identifier: ObjectIdentifier,
 }

@@ -53,7 +53,7 @@ pub async fn handle_get_sign_list(
                 None
             }
         })
-        .collect::<Vec<PoolKey>>();
+    .collect::<Vec<PoolKey>>();
 
     pool_matches.retain(|e| !already_received.contains(&e.0));
 
@@ -62,9 +62,9 @@ pub async fn handle_get_sign_list(
             .map(|e| (&e).into())
             .collect(),
 
-        entries: pool_matches.iter()
-            .map(|e| e.into())
-            .collect(),
+            entries: pool_matches.iter()
+                .map(|e| e.into())
+                .collect(),
     }))
 }
 
@@ -104,8 +104,8 @@ pub async fn handle_summon_sign(
 
     Ok(
         push::send_push(poolkey.1, push_payload)
-            .await
-            .map(|_| ResponseParams::SummonSign)?
+        .await
+        .map(|_| ResponseParams::SummonSign)?
     )
 }
 
@@ -144,8 +144,8 @@ pub async fn handle_reject_sign(
 
     Ok(
         push::send_push(request.summoning_player_id, push_payload)
-            .await
-            .map(|_| ResponseParams::RejectSign)?
+        .await
+        .map(|_| ResponseParams::RejectSign)?
     )
 }
 
@@ -171,12 +171,25 @@ impl From<RequestCreateSignParams> for SignPoolEntry {
             external_id: String::new(),
             character_level: val.matching_parameters.soul_level as u32,
             weapon_level: val.matching_parameters.max_reinforce as u32,
-            area: MatchingArea::new(val.area.area as u32, val.area.play_region as u32),
+            area: (&val.area).into(),
             password: val.matching_parameters.password.clone(),
             group_passwords: val.group_passwords.clone(),
             data: val.data,
         }
+    }
+}
 
+impl From<RequestCreateMatchAreaSignParams> for SignPoolEntry {
+    fn from(val: RequestCreateMatchAreaSignParams) -> Self {
+        SignPoolEntry {
+            external_id: String::new(),
+            character_level: val.matching_parameters.soul_level as u32,
+            weapon_level: val.matching_parameters.max_reinforce as u32,
+            area: MatchingArea::Puddle(val.match_area),
+            password: val.matching_parameters.password.clone(),
+            group_passwords: val.group_passwords.clone(),
+            data: val.data,
+        }
     }
 }
 
@@ -187,7 +200,7 @@ impl From<&MatchResult<SignPoolEntry>> for ResponseGetSignListParamsEntry {
             identifier: (&val.0).into(),
             area: (&val.1.area).into(),
             data: val.1.data.clone(),
-            steam_id: String::default(),
+            steam_id: val.1.external_id.clone(),
             unk_string: String::default(),
             group_passwords: val.1.group_passwords.clone(),
         }
@@ -203,4 +216,87 @@ impl From<&RequestGetSignListParams> for SignPoolQuery {
             password: value.matching_parameters.password.clone(),
         }
     }
+}
+
+impl From<&RequestGetMatchAreaSignListParams> for SignPoolQuery {
+    fn from(value: &RequestGetMatchAreaSignListParams) -> Self {
+        Self {
+            character_level: value.matching_parameters.soul_level as u32,
+            weapon_level: value.matching_parameters.max_reinforce as u32,
+            areas: vec![MatchingArea::Puddle(value.match_area)],
+            password: value.matching_parameters.password.clone(),
+        }
+    }
+}
+
+impl From<&MatchResult<SignPoolEntry>> for ResponseGetMatchAreaSignListParamsEntry {
+    fn from(val: &MatchResult<SignPoolEntry>) -> Self {
+        ResponseGetMatchAreaSignListParamsEntry {
+            player_id: val.0.1,
+            identifier: (&val.0).into(),
+            data: val.1.data.clone(),
+            steam_id: val.1.external_id.clone(),
+            match_area: if let MatchingArea::Puddle(match_area) = val.1.area {
+                match_area
+            } else {
+                unimplemented!();
+            },
+            unk1: 5,
+            unk2: 0,
+            unk_string: String::default(),
+            group_passwords: val.1.group_passwords.clone(),
+        }
+    }
+}
+
+pub async fn handle_create_match_area_sign(
+    session: ClientSession,
+    request: RequestCreateMatchAreaSignParams,
+) -> rpc::HandlerResult {
+    log::info!("CreateMatchAreaSign: {request:?}");
+
+    let mut session = session.lock_write();
+
+    let key = crate::pool::sign_pool()?
+        .insert(session.player_id, request.into())?;
+
+    let identifier: ObjectIdentifier = (&key).into();
+    session.sign = Some(key);
+
+    Ok(ResponseParams::CreateMatchAreaSign(ResponseCreateMatchAreaSignParams {
+        identifier,
+    }))
+}
+
+pub async fn handle_get_match_area_sign_list(
+    session: ClientSession,
+    request: RequestGetMatchAreaSignListParams,
+) -> rpc::HandlerResult {
+    log::info!("GetMatchAreaSignList: {request:?}");
+
+    let mut pool_matches = sign_pool()?
+        .match_entries::<SignPoolQuery>(&(&request).into());
+
+    let already_received = pool_matches
+        .iter()
+        .filter_map(|e| {
+            if request.known_signs.contains(&(&e.0).into()) {
+                Some(e.0.clone())
+            } else {
+                None
+            }
+        })
+        .collect::<Vec<PoolKey>>();
+
+    pool_matches.retain(|e| !already_received.contains(&e.0));
+
+    Ok(ResponseParams::GetMatchAreaSignList(ResponseGetMatchAreaSignListParams {
+        known_signs: already_received.into_iter()
+            .map(|e| (&e).into())
+            .collect(),
+
+        entries: pool_matches.iter()
+            .map(|e| e.into())
+            .collect(),
+    }))
 }

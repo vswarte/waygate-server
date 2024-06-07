@@ -82,7 +82,7 @@ struct GhostData {
 impl From<GhostData> for ResponseGetGhostDataListParamsEntry {
     fn from(val: GhostData) -> Self {
         ResponseGetGhostDataListParamsEntry {
-            area: OnlineArea {
+            area: PlayRegionArea {
                 area: val.area,
                 play_region: val.play_region,
             },

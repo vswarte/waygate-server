@@ -2,12 +2,12 @@ use std::fmt;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Clone)]
-pub struct OnlineArea {
+pub struct PlayRegionArea {
     pub play_region: i32,
     pub area: i32,
 }
 
-impl fmt::Debug for OnlineArea {
+impl fmt::Debug for PlayRegionArea {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_tuple("OnlineArea")
             .field(&self.area)
@@ -19,11 +19,6 @@ impl fmt::Debug for OnlineArea {
 #[derive(Serialize, Deserialize, PartialEq)]
 pub struct ObjectIdentifier {
     pub object_id: i32,
-
-    // This seems to be either the player ID or the session ID but in the case
-    // of push messages it seems to be random?
-    // TODO: fact-check this (reference with all dumped buffers since it might
-    // cause caching bugs on the client if handled poorly).
     pub secondary_id: i32,
 }
 

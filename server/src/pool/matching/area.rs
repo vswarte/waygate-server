@@ -1,31 +1,31 @@
-use fnrpc::shared::OnlineArea;
+use fnrpc::shared::PlayRegionArea;
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct MatchingArea {
-    area: u32,
-    play_region: u32,
+pub enum MatchingArea {
+    PlayRegion {
+        area: i32,
+        play_region: i32,
+    },
+    Puddle(i32),
 }
 
-impl MatchingArea {
-    pub const fn new(area: u32, play_region: u32) -> Self {
-        Self { area, play_region }
-    }
-}
-
-impl From<&OnlineArea> for MatchingArea {
-    fn from(value: &OnlineArea) -> Self {
-        Self {
-            area: value.area as u32,
-            play_region: value.play_region as u32,
+impl From<&PlayRegionArea> for MatchingArea {
+    fn from(value: &PlayRegionArea) -> Self {
+        Self::PlayRegion {
+            area: value.area,
+            play_region: value.play_region,
         }
     }
 }
 
-impl From<&MatchingArea> for OnlineArea {
+impl From<&MatchingArea> for PlayRegionArea {
     fn from(val: &MatchingArea) -> Self {
-        OnlineArea {
-            area: val.area as i32,
-            play_region: val.play_region as i32,
+        match val {
+            MatchingArea::PlayRegion { area, play_region } => PlayRegionArea {
+                area: area.to_owned(),
+                play_region: play_region.to_owned(),
+            },
+            MatchingArea::Puddle(_) => unimplemented!("Tried converting puddle area to play region?"),
         }
     }
 }

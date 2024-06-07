@@ -3,7 +3,7 @@ use sqlx::Row;
 use fnrpc::ResponseParams;
 use fnrpc::bloodstain::*;
 use fnrpc::shared::ObjectIdentifier;
-use fnrpc::shared::OnlineArea;
+use fnrpc::shared::PlayRegionArea;
 
 use crate::database;
 use crate::rpc;
@@ -109,7 +109,7 @@ struct Bloodstain {
 impl From<Bloodstain> for ResponseGetBloodstainListParamsEntry {
     fn from(val: Bloodstain) -> Self {
         ResponseGetBloodstainListParamsEntry {
-            area: OnlineArea {
+            area: PlayRegionArea {
                 area: val.area,
                 play_region: val.play_region,
             },

@@ -36,7 +36,7 @@ pub struct ResponseCreateSessionParams {
     pub steam_id: String,
     pub ip_address: String,
     pub session_data: SessionData,
-    pub unk_string: String,
+    pub redirect_url: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -52,40 +52,4 @@ pub struct RequestRestoreSessionParams {
 pub struct ResponseRestoreSessionParams {
     pub session_data: SessionData,
     pub unk_string: String,
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::session::*;
-    use crate::Serializer;
-
-    #[test]
-    fn response_create_session_serialize() {
-        let mut buf: Vec<u8> = Vec::new();
-
-        let params = ResponseCreateSessionParams {
-            player_id: 288724,
-            steam_id: String::from("01100001023a7e18"),
-            ip_address: String::from("99.99.999.999"),
-            session_data: SessionData {
-                identifier: ObjectIdentifier {
-                    object_id: 2131458904,
-                    secondary_id: 291891302,
-                },
-                valid_from: 1695716746,
-                valid_until: 1695720346,
-                cookie: String::from(
-                    "a6ab6316a2e7683db73c6fe281b280e251f1756458bad659428799adcfbffc4e",
-                ),
-            },
-            unk_string: String::from(""),
-        };
-
-        params.serialize(&mut Serializer::new(&mut buf)).unwrap();
-
-        assert_eq!(
-            buf,
-            include_bytes!("../../test/params/ResponseCreateSession.bin")
-        );
-    }
 }

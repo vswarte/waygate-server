@@ -16,6 +16,7 @@ mod session;
 async fn main () -> Result<(), io::Error> {
     dotenvy::dotenv().expect("Could not init env vars");
     env_logger::init();
+
     database::init().await.expect("Could not initialize database");
     steam::init().expect("Could not initialize steam");
     pool::init_pools().expect("Could not initialize pools");

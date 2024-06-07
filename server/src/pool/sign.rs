@@ -1,7 +1,5 @@
-use super::PoolQuery;
+use super::{matching::area::MatchingArea, PoolQuery};
 use crate::pool::matching::weapon;
-
-use super::matching::area::MatchingArea;
 
 #[derive(Clone, Debug)]
 pub struct SignPoolEntry {
@@ -82,7 +80,7 @@ mod test {
             external_id: String::new(),
             character_level: 1,
             weapon_level: 1,
-            area: MatchingArea::new(1, 1),
+            area: MatchingArea::PlayRegion { area: 1, play_region: 1},
             password: String::default(),
             group_passwords: vec![],
             data: vec![],
@@ -91,7 +89,7 @@ mod test {
         let finger = SignPoolQuery {
             character_level: 1,
             weapon_level: 1,
-            areas: vec![MatchingArea::new(1, 1)],
+            areas: vec![MatchingArea::PlayRegion { area: 1, play_region: 1}],
             password: String::default(),
         };
 
@@ -104,7 +102,7 @@ mod test {
             external_id: String::new(),
             character_level: 1,
             weapon_level: 1,
-            area: MatchingArea::new(1, 1),
+            area: MatchingArea::PlayRegion { area: 1, play_region: 1},
             password: String::default(),
             group_passwords: vec![],
             data: vec![],
@@ -113,7 +111,7 @@ mod test {
         let finger = SignPoolQuery {
             character_level: 100,
             weapon_level: 1,
-            areas: vec![MatchingArea::new(1, 1)],
+            areas: vec![MatchingArea::PlayRegion { area: 1, play_region: 1}],
             password: String::default(),
         };
 
@@ -126,7 +124,7 @@ mod test {
             external_id: String::new(),
             character_level: 1,
             weapon_level: 1,
-            area: MatchingArea::new(1, 1),
+            area: MatchingArea::PlayRegion { area: 1, play_region: 1},
             password: String::from("test"),
             group_passwords: vec![],
             data: vec![],
@@ -135,7 +133,7 @@ mod test {
         let finger = SignPoolQuery {
             character_level: 713,
             weapon_level: 1,
-            areas: vec![MatchingArea::new(1, 1)],
+            areas: vec![MatchingArea::PlayRegion { area: 1, play_region: 1}],
             password: String::from("test"),
         };
 
@@ -148,7 +146,7 @@ mod test {
             external_id: String::new(),
             character_level: 1,
             weapon_level: 1,
-            area: MatchingArea::new(1, 1),
+            area: MatchingArea::PlayRegion { area: 1, play_region: 1},
             password: String::from("123"),
             group_passwords: vec![],
             data: vec![],
@@ -157,7 +155,7 @@ mod test {
         let finger = SignPoolQuery {
             character_level: 1,
             weapon_level: 1,
-            areas: vec![MatchingArea::new(1, 1)],
+            areas: vec![MatchingArea::PlayRegion { area: 1, play_region: 1}],
             password: String::from("456"),
         };
 
@@ -170,7 +168,7 @@ mod test {
             external_id: String::new(),
             character_level: 1,
             weapon_level: 1,
-            area: MatchingArea::new(1, 1),
+            area: MatchingArea::PlayRegion { area: 1, play_region: 1},
             password: String::default(),
             group_passwords: vec![],
             data: vec![],
@@ -179,7 +177,7 @@ mod test {
         let finger = SignPoolQuery {
             character_level: 1,
             weapon_level: 1,
-            areas: vec![MatchingArea::new(1, 1)],
+            areas: vec![MatchingArea::PlayRegion { area: 1, play_region: 1}],
             password: String::from("456"),
         };
 
@@ -192,7 +190,7 @@ mod test {
             external_id: String::new(),
             character_level: 1,
             weapon_level: 1,
-            area: MatchingArea::new(1, 1),
+            area: MatchingArea::PlayRegion { area: 1, play_region: 1},
             password: String::default(),
             group_passwords: vec![],
             data: vec![],
@@ -201,7 +199,7 @@ mod test {
         let finger = SignPoolQuery {
             character_level: 1,
             weapon_level: 1,
-            areas: vec![MatchingArea::new(2, 2)],
+            areas: vec![MatchingArea::PlayRegion { area: 1, play_region: 1}],
             password: String::default(),
         };
 
