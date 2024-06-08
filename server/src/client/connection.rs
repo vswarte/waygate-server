@@ -16,6 +16,7 @@ pub async fn handle(
     // Acquire the steam ID and session ticket from the opening request
     let steam_id: Arc<OnceLock<String>> = Default::default();
     let session_ticket: Arc<OnceLock<String>> = Default::default();
+    let client_version: Arc<OnceLock<String>> = Default::default();
 
     let header_callback = {
         let steam_id = steam_id.clone();
@@ -28,8 +29,11 @@ pub async fn handle(
                 }
 
                 if header.as_str() == "x-steam-session-ticket" {
-                    log::info!("Setting session ticket. {:?}", value.to_str());
                     session_ticket.set(String::from(value.to_str().unwrap())).unwrap();
+                }
+
+                if header.as_str() == "x-waygate-client-version" {
+                    log::info!("Waygate client version. {:?}", value.to_str());
                 }
             }
 

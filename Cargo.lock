@@ -1898,7 +1898,7 @@ checksum = "b8dad83b4f25e74f184f64c43b150b91efe7647395b42289f38e50566d82855b"
 
 [[package]]
 name = "waygate-server"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "async-trait",
  "byteorder",
