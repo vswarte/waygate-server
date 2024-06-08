@@ -1,19 +1,16 @@
 use std::fmt;
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct PlayRegionArea {
     pub play_region: i32,
     pub area: i32,
 }
 
-impl fmt::Debug for PlayRegionArea {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_tuple("OnlineArea")
-            .field(&self.area)
-            .field(&self.play_region)
-            .finish()
-    }
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct PuddleArea {
+    pub match_area: i32,
+    pub area: i32,
 }
 
 #[derive(Serialize, Deserialize, PartialEq)]

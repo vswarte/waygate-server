@@ -22,7 +22,7 @@ pub async fn handle_search_quick_match(
     request: RequestSearchQuickMatchParams,
 ) -> rpc::HandlerResult {
     Ok(ResponseParams::SearchQuickMatch(ResponseSearchQuickMatchParams {
-        matches: quickmatch_pool()?
+        matches: quickmatch_pool()
             .match_entries::<QuickmatchPoolQuery>(&request.into())
             .iter()
             .map(|m| m.into())
@@ -45,7 +45,7 @@ pub async fn handle_register_quick_match(
     );
 
     log::info!("QuickmatchPoolEntry: {:#?}", entry);
-    let key = quickmatch_pool()?
+    let key = quickmatch_pool()
         .insert(session.player_id, entry)?;
 
     session.quickmatch = Some(key);
@@ -55,9 +55,7 @@ pub async fn handle_register_quick_match(
 pub async fn handle_unregister_quick_match(
     session: ClientSession,
 ) -> rpc::HandlerResult {
-    if let Some(key) = session.lock_write().quickmatch.take() {
-        quickmatch_pool()?.remove(&key)?;
-    }
+    let _ = session.lock_write().quickmatch.take();
 
     Ok(ResponseParams::UnregisterQuickMatch)
 }
@@ -78,7 +76,7 @@ pub async fn handle_join_quick_match(
 ) -> rpc::HandlerResult {
     log::info!("RequestJoinQuickMatchParams: {:#?}", request);
 
-    let quickmatch = pool::quickmatch_pool()?
+    let quickmatch = pool::quickmatch_pool()
         .by_topic_id(request.host_player_id)
         .ok_or(std::io::Error::from(std::io::ErrorKind::Other))?;
 
@@ -121,7 +119,7 @@ pub async fn handle_accept_quick_match(
         (session.player_id, session.external_id.clone())
     };
 
-    let quickmatch = pool::quickmatch_pool()?
+    let quickmatch = pool::quickmatch_pool()
         .by_topic_id(host_player_id)
         .ok_or(std::io::Error::from(std::io::ErrorKind::Other))?;
 

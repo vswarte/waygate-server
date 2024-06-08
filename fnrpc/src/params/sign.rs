@@ -71,24 +71,21 @@ pub struct RequestUpdateSignParams {
 pub struct RequestGetMatchAreaSignListParams {
     pub known_signs: Vec<ObjectIdentifier>,
     pub unk1: u32,
-    pub match_area: i32,
-    pub unk2: u32,
-    pub unk3: u8,
+    pub area: PuddleArea,
+    pub unk2: u8,
     pub matching_parameters: MatchingParameters,
+    pub unk3: u8,
     pub unk4: u8,
     pub unk5: u8,
-    pub unk6: u8,
     pub group_passwords: Vec<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ResponseGetMatchAreaSignListParamsEntry {
     pub player_id: i32,
-    // TODO: make ObjectIdentifier
     pub identifier: ObjectIdentifier,
-    pub match_area: i32,
+    pub area: PuddleArea,
     pub unk1: i32,
-    pub unk2: i32,
     pub data: Vec<u8>,
     pub steam_id: String,
     pub unk_string: String,
@@ -103,14 +100,14 @@ pub struct ResponseGetMatchAreaSignListParams {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct RequestCreateMatchAreaSignParams {
-    pub match_area: i32,
+    pub area: PuddleArea,
     pub unk1: i32,
-    pub unk2: i32,
     pub matching_parameters: MatchingParameters,
-    pub unk3: i32,
+    pub unk2: i32,
     pub data: Vec<u8>,
     pub group_passwords: Vec<String>,
 }
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ResponseCreateMatchAreaSignParams {
     pub identifier: ObjectIdentifier,

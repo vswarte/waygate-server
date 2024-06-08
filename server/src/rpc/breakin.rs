@@ -32,7 +32,7 @@ pub async fn handle_get_break_in_target_list(
     params: RequestGetBreakInTargetListParams,
 ) -> rpc::HandlerResult {
     let play_region = params.play_region;
-    let entries = breakin_pool()?
+    let entries = breakin_pool()
         .match_entries::<BreakInPoolQuery>(&params.into())
         .iter()
         .map(|m| m.into())

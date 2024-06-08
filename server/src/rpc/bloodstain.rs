@@ -77,6 +77,8 @@ pub async fn handle_get_bloodstain_list(
 pub async fn handle_get_deading_ghost(
     params: RequestGetDeadingGhostParams,
 ) -> rpc::HandlerResult {
+    log::info!("GetDeadingGhost: {:?}", params);
+
     let mut connection = database::acquire().await?;
     let bloodstain = sqlx::query_as::<_, Bloodstain>("SELECT * FROM bloodstains WHERE bloodstain_id = $1")
         .bind(params.identifier.object_id)

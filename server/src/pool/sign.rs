@@ -1,7 +1,7 @@
 use super::{matching::area::MatchingArea, PoolQuery};
 use crate::pool::matching::weapon;
 
-#[derive(Clone, Debug)]
+#[derive(Debug, Default)]
 pub struct SignPoolEntry {
     pub external_id: String,
     pub character_level: u32,
@@ -39,7 +39,7 @@ impl SignPoolQuery {
 
 impl PoolQuery<SignPoolEntry> for SignPoolQuery {
     fn matches(&self, entry: &SignPoolEntry) -> bool {
-        if !self.areas.contains(&entry.area) {
+        if self.areas.iter().find(|c| c.matches(&entry.area)).is_none() {
             return false;
         }
 

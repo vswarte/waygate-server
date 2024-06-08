@@ -4,7 +4,7 @@ use rand::prelude::*;
 use sqlx::Row;
 use thiserror::Error;
 
-use crate::{database::{self, DatabaseError}, pool::{breakin::BreakInPoolEntry, breakin_pool, key::PoolKey, PoolError}};
+use crate::{database::{self, DatabaseError}, pool::{breakin::BreakInPoolEntry, breakin_pool, quickmatch::QuickmatchPoolEntry, sign::SignPoolEntry, PoolError, PoolKeyGuard}};
 
 // Sessions are valid for an hour
 pub const SESSION_VALIDITY: u64 = 60 * 60 * 7;
@@ -25,7 +25,7 @@ pub enum SessionError {
     Database(#[from] DatabaseError),
 }
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct ClientSessionInner {
     pub cookie: String,
     pub external_id: String,
@@ -34,12 +34,12 @@ pub struct ClientSessionInner {
     pub valid_from: i64,
     pub valid_until: i64,
 
-    pub sign: Option<PoolKey>,
-    pub quickmatch: Option<PoolKey>,
-
     pub invadeable: bool,
     pub matching: Option<CharacterMatchingData>,
-    pub breakin: Option<PoolKey>,
+
+    pub sign: Vec<PoolKeyGuard<SignPoolEntry>>,
+    pub quickmatch: Option<PoolKeyGuard<QuickmatchPoolEntry>>,
+    pub breakin: Option<PoolKeyGuard<BreakInPoolEntry>>,
 }
 
 impl ClientSessionInner {
@@ -48,7 +48,7 @@ impl ClientSessionInner {
             let matching = self.matching.as_ref()
                 .ok_or(SessionError::MissingCharacterData)?;
 
-            let key = breakin_pool()?
+            let key = breakin_pool()
                 .insert(self.player_id, BreakInPoolEntry {
                     character_level: matching.level,
                     weapon_level: matching.max_reinforce_level,
@@ -58,20 +58,13 @@ impl ClientSessionInner {
             self.breakin = Some(key);
             log::info!("Added player to breakin pool. player_id = {}", self.player_id);
         } else if !self.invadeable && self.breakin.is_some() {
-            let key = self.breakin.take()
+            let _ = self.breakin.take()
                 .ok_or(SessionError::MissingBreakinEntry)?;
 
-            breakin_pool()?.remove(&key)?;
             log::info!("Removed player from breakin pool. player_id = {}", self.player_id);
         }
 
         Ok(())
-    }
-}
-
-impl Drop for ClientSessionInner {
-    fn drop(&mut self) {
-        log::info!("Dropping last client session ref");
     }
 }
 
@@ -147,7 +140,7 @@ pub async fn new_client_session(external_id: String) -> Result<ClientSessionInne
         valid_from,
         valid_until,
 
-        sign: None,
+        sign: vec![],
         quickmatch: None,
 
         invadeable: false,
@@ -181,7 +174,7 @@ pub async fn get_client_session(external_id: String, session_id: i32, cookie: &s
         valid_from,
         valid_until: session.valid_until,
 
-        sign: None,
+        sign: vec![],
         quickmatch: None,
 
         invadeable: false,

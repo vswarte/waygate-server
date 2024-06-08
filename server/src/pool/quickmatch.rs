@@ -1,7 +1,7 @@
 use super::PoolQuery;
 use crate::pool::matching::weapon;
 
-#[derive(Clone, Debug)]
+#[derive(Debug, Default)]
 pub struct QuickmatchPoolEntry {
     pub external_id: String,
     pub character_level: u32,
@@ -39,6 +39,7 @@ impl QuickmatchPoolQuery {
 
 impl PoolQuery<QuickmatchPoolEntry> for QuickmatchPoolQuery {
     fn matches(&self, entry: &QuickmatchPoolEntry) -> bool {
+        // TODO: password team matching
         if self.arena_id != entry.arena_id || self.settings != entry.settings {
             return false;
         }

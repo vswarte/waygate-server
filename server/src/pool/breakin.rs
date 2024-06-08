@@ -1,7 +1,7 @@
 use super::PoolQuery;
 use crate::pool::matching::weapon;
 
-#[derive(Clone, Debug)]
+#[derive(Debug, Default)]
 pub struct BreakInPoolEntry {
     pub character_level: u32,
     pub weapon_level: u32,
