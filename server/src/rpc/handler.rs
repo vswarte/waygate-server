@@ -24,6 +24,8 @@ pub async fn dispatch_request(
         RequestParams::GetAnnounceMessageList(_)
             => announcement::handle_get_announce_message_list().await?,
 
+        RequestParams::PollMatchingTicket
+            => matchingticket::handle_poll_matching_ticket().await?,
         RequestParams::CreateMatchingTicket(p)
             => matchingticket::handle_create_matching_ticket(session, *p).await?,
 
@@ -108,6 +110,9 @@ pub async fn dispatch_request(
         RequestParams::GrGetPlayerEquipments(p)
             => player_equipments::handle_gr_get_player_equipments(*p).await?, 
 
-        _ => return Err(Box::new(ClientError::NoHandler)),
+        _ => {
+            log::info!("Got {request:?}");
+            return Err(Box::new(ClientError::NoHandler))
+        },
     })
 }

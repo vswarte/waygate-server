@@ -33,8 +33,7 @@ pub struct ResponseGetBloodstainListParams {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct RequestGetDeadingGhostParams {
-    pub map: i32,
-    pub play_region: i32,
+    pub area: PlayRegionArea,
     pub identifier: ObjectIdentifier,
 }
 

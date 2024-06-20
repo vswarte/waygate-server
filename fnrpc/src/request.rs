@@ -94,6 +94,8 @@ pub enum RequestParams {
     DeleteUGC,
     SendQuickMatchStart,
     SendQuickMatchResult,
+    SendRegulationHash,
+    Hoge,
 }
 
 impl RequestParams {
@@ -189,6 +191,8 @@ impl RequestParams {
             Self::DeleteUGC => "DeleteUGC",
             Self::SendQuickMatchStart => "SendQuickMatchStart",
             Self::SendQuickMatchResult => "SendQuickMatchResult",
+            Self::SendRegulationHash => "SendRegulationHash",
+            Self::Hoge => "Hoge",
         }
     }
 }

@@ -80,7 +80,7 @@ pub enum ResponseParams {
     GrUploadPlayerEquipments,
     GrGetPlayerEquipments(player_equipments::ResponseGrGetPlayerEquipmentsParams),
     CreateMatchingTicket,
-    PollMatchingTicket,
+    PollMatchingTicket(matchingticket::ResponsePollMatchingTicketParams),
     DeleteMatchingTicket,
     CreateBattleSession,
     CreateRoom,
