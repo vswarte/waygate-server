@@ -13,8 +13,10 @@ futures-channel = "0.3"
 thiserror = "1"
 env_logger = "0.11"
 dotenvy = "0.15"
-sodiumoxide = "*"
 byteorder = "1"
+toml = "0.8"
+libsodium-sys-stable = "1"
+newtype = "0.2"
 
 [dependencies.sqlx]
 version = "0.7"

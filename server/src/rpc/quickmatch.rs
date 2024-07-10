@@ -86,7 +86,7 @@ pub async fn handle_join_quick_match(
         (session.player_id, session.external_id.clone())
     };
 
-    log::info!("Joining player ID: {joining_player_id:?}");
+    log::debug!("Joining player ID: {joining_player_id:?}");
 
     let push_payload = PushParams::Join(JoinParams {
         identifier: shared::ObjectIdentifier {
@@ -112,7 +112,7 @@ pub async fn handle_accept_quick_match(
     session: ClientSession,
     request: RequestAcceptQuickMatchParams,
 ) -> rpc::HandlerResult {
-    log::info!("RequestAcceptQuickMatchParams: {:#?}", request);
+    log::debug!("RequestAcceptQuickMatchParams: {:#?}", request);
 
     let (host_player_id, host_steam_id) = {
         let session = session.lock_read();
@@ -143,7 +143,7 @@ pub async fn handle_accept_quick_match(
 pub async fn handle_quick_match_result_log(
     _session: ClientSession,
 ) -> rpc::HandlerResult {
-    log::info!("Got quickmatch result log");
+    log::debug!("Got quickmatch result log");
 
     Ok(ResponseParams::QuickMatchResultLog)
 }
@@ -151,7 +151,7 @@ pub async fn handle_quick_match_result_log(
 pub async fn handle_send_quick_match_start(
     _session: ClientSession,
 ) -> rpc::HandlerResult {
-    log::info!("Got quickmatch start log");
+    log::debug!("Got quickmatch start log");
 
     Ok(ResponseParams::SendQuickMatchStart)
 }
@@ -159,7 +159,7 @@ pub async fn handle_send_quick_match_start(
 pub async fn handle_send_quick_match_result(
     _session: ClientSession,
 ) -> rpc::HandlerResult {
-    log::info!("Got quickmatch result log");
+    log::debug!("Got quickmatch result log");
 
     Ok(ResponseParams::SendQuickMatchResult)
 }

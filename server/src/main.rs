@@ -1,5 +1,3 @@
-#![feature(async_closure)]
-
 use std::io;
 use std::env;
 use tokio::net as tokionet;
@@ -11,11 +9,13 @@ mod pool;
 mod steam;
 mod client;
 mod session;
+mod config;
 
 #[tokio::main]
 async fn main () -> Result<(), io::Error> {
     dotenvy::dotenv().expect("Could not init env vars");
     env_logger::init();
+    config::init().expect("Could not load config");
 
     database::init().await.expect("Could not initialize database");
     steam::init().expect("Could not initialize steam");

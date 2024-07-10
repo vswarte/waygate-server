@@ -204,10 +204,9 @@ impl Client<ClientStateAwaitingPublicKey> {
                     ));
                 }
 
-                let client_pk = sodiumoxide::crypto::kx::x25519blake2b::PublicKey::from_slice(&client_pk)
-                    .ok_or(ClientError::Crypto(crypto::CryptoError::PublicKeyCreation))?;
-
-                let crypto = self.state.crypto.derive_session_keys(client_pk)?;
+                let crypto = self.state.crypto.derive_session_keys(
+                    client_pk.as_slice().try_into().unwrap()
+                )?;
 
                 Ok(Client {
                     steam_session: self.steam_session,

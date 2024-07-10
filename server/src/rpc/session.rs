@@ -25,26 +25,24 @@ pub async fn handle_create_session(
     let valid_until = session.valid_until;
     let cookie = session.cookie.clone();
 
-    Ok(
-        (
-            Arc::new(RwLock::new(session)),
-            ResponseParams::CreateSession(ResponseCreateSessionParams {
-                player_id,
-                steam_id: external_id,
-                ip_address: String::from(""),
-                session_data: SessionData {
-                    identifier: ObjectIdentifier {
-                        object_id: session_id,
-                        secondary_id: 0x0,
-                    },
-                    valid_from,
-                    valid_until,
-                    cookie,
+    Ok((
+        Arc::new(RwLock::new(session)),
+        ResponseParams::CreateSession(ResponseCreateSessionParams {
+            player_id,
+            steam_id: external_id,
+            ip_address: String::from(""),
+            session_data: SessionData {
+                identifier: ObjectIdentifier {
+                    object_id: session_id,
+                    secondary_id: 0x0,
                 },
-                redirect_url: String::from(""),
-            })
-        )
-    )
+                valid_from,
+                valid_until,
+                cookie,
+            },
+            redirect_url: String::from(""),
+        })
+    ))
 }
 
 pub async fn handle_restore_session(
@@ -67,18 +65,21 @@ pub async fn handle_restore_session(
     let valid_until = session.valid_until;
     let cookie = session.cookie.clone();
 
-    Ok((Arc::new(RwLock::new(session)), ResponseParams::RestoreSession(ResponseRestoreSessionParams {
-        session_data: SessionData {
-            identifier: ObjectIdentifier {
-                object_id: session_id,
-                secondary_id: 0x0,
+    Ok((
+        Arc::new(RwLock::new(session)),
+        ResponseParams::RestoreSession(ResponseRestoreSessionParams {
+            session_data: SessionData {
+                identifier: ObjectIdentifier {
+                    object_id: session_id,
+                    secondary_id: 0x0,
+                },
+                valid_from,
+                valid_until,
+                cookie,
             },
-            valid_from,
-            valid_until,
-            cookie,
-        },
-        unk_string: String::from(""),
-    })))
+            unk_string: String::from(""),
+        })
+    ))
 }
 
 pub async fn handle_delete_session(

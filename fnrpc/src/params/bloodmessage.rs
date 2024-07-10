@@ -57,4 +57,3 @@ pub struct ResponseReentryBloodMessageParams {
 pub struct RequestRemoveBloodMessageParams {
     pub identifier: ObjectIdentifier,
 }
-
