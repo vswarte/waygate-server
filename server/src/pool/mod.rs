@@ -18,14 +18,8 @@ use self::breakin::BreakInPoolEntry;
 
 #[derive(Debug, Error)]
 pub enum PoolError {
-    #[error("Could not initialize pool")]
-    Initialize,
-
     #[error("Entry not found")]
     NotFound,
-
-    #[error("Pool was not initialized")]
-    Uninitialized,
 }
 
 pub fn init_pools() -> Result<(), PoolError> {
@@ -76,7 +70,7 @@ pub struct PoolKeyGuard<T: 'static>(&'static Pool<T>, pub PoolKey);
 impl<T> Drop for PoolKeyGuard<T> {
     fn drop(&mut self) {
         log::info!("Dropped pool key guard");
-        self.0.remove(&self.1);
+        let _ = self.0.remove(&self.1);
     }
 }
 

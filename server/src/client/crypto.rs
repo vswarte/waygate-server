@@ -3,9 +3,7 @@ use std::io::{self, Read};
 use libsodium_sys::{
     crypto_kx_PUBLICKEYBYTES,
     crypto_kx_SECRETKEYBYTES,
-    crypto_kx_SEEDBYTES,
     crypto_kx_SESSIONKEYBYTES,
-    crypto_secretbox_xsalsa20poly1305_KEYBYTES,
     crypto_secretbox_xsalsa20poly1305_MACBYTES,
     crypto_secretbox_xsalsa20poly1305_NONCEBYTES,
     crypto_box_detached,
@@ -26,24 +24,9 @@ use super::key;
 
 pub const PUBLICKEYBYTES: usize = crypto_kx_PUBLICKEYBYTES as usize;
 pub const SECRETKEYBYTES: usize = crypto_kx_SECRETKEYBYTES as usize;
-pub const SEEDBYTES: usize = crypto_kx_SEEDBYTES as usize;
 pub const SESSIONKEYBYTES: usize = crypto_kx_SESSIONKEYBYTES as usize;
-pub const KEYBYTES: usize = crypto_secretbox_xsalsa20poly1305_KEYBYTES as usize;
 pub const NONCEBYTES: usize = crypto_secretbox_xsalsa20poly1305_NONCEBYTES as usize;
 pub const MACBYTES: usize = crypto_secretbox_xsalsa20poly1305_MACBYTES as usize;
-
-#[derive(Debug)]
-pub struct PublicKey(pub [u8; PUBLICKEYBYTES]);
-
-#[derive(Debug)]
-pub struct SecretKey(pub [u8; SECRETKEYBYTES]);
-
-#[derive(Debug)]
-pub struct Seed(pub [u8; SEEDBYTES]);
-
-#[derive(Debug)]
-pub struct SessionKey(pub [u8; SESSIONKEYBYTES]);
-
 
 #[derive(Debug, Error)]
 pub enum CryptoError {
@@ -52,6 +35,9 @@ pub enum CryptoError {
 
     #[error("Could not decrypt message")]
     Decrypt,
+
+    #[error("Could not encrypt message")]
+    Encrypt,
 
     #[error("Key exchange failed")]
     KeyExchange,
@@ -299,6 +285,10 @@ impl ClientCrypto<ClientCryptoStateActiveSession> {
                 self.state.tx.as_ptr(),
             )
         };
+
+        if result != 0 {
+            return Err(ClientError::Crypto(CryptoError::Encrypt))
+        }
 
         let message = Self::frame_payload(mac, payload).await?;
 

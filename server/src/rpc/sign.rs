@@ -7,7 +7,6 @@ use fnrpc::sign::*;
 use fnrpc::ResponseParams;
 use thiserror::Error;
 
-use crate::pool::matching::area::MatchingArea;
 use crate::pool::MatchResult;
 use crate::pool::sign::SignPoolEntry;
 use crate::pool::sign::SignPoolQuery;
@@ -120,7 +119,7 @@ pub async fn handle_remove_sign(
     let index = session.sign.iter()
         .position(|s| s.1.0 == request.sign_identifier.object_id)
         .ok_or(SignError::SignMissing)?;
-    let mut sign = session.sign.remove(index);
+    let _sign = session.sign.remove(index);
 
     Ok(ResponseParams::RemoveSign)
 }
@@ -268,7 +267,6 @@ pub async fn handle_create_match_area_sign(
 }
 
 pub async fn handle_get_match_area_sign_list(
-    session: ClientSession,
     request: RequestGetMatchAreaSignListParams,
 ) -> rpc::HandlerResult {
     log::info!("GetMatchAreaSignList: {request:?}");

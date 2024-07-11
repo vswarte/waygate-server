@@ -23,10 +23,10 @@ impl MatchingArea {
         match self {
             MatchingArea::PlayRegion { area: _, play_region: a } => match other {
                 MatchingArea::PlayRegion { area: _, play_region: b } => a == b,
-                MatchingArea::Puddle { match_area, area } => false,
+                MatchingArea::Puddle { match_area: _, area: _ } => false,
             },
             MatchingArea::Puddle { match_area: a, area: _ } => match other {
-                MatchingArea::PlayRegion { area, play_region } => false,
+                MatchingArea::PlayRegion { area: _, play_region: _ } => false,
                 MatchingArea::Puddle { match_area: b, area: _ } => a == b,
             },
         }
@@ -70,7 +70,7 @@ impl From<&MatchingArea> for PuddleArea {
                 match_area: match_area.to_owned(),
                 area: area.to_owned(),
             },
-            MatchingArea::PlayRegion { area, play_region } => unimplemented!("Tried converting puddle area to play region?"),
+            MatchingArea::PlayRegion { area: _, play_region: _ } => unimplemented!("Tried converting puddle area to play region?"),
         }
     }
 }

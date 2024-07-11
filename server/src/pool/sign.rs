@@ -39,7 +39,7 @@ impl SignPoolQuery {
 
 impl PoolQuery<SignPoolEntry> for SignPoolQuery {
     fn matches(&self, entry: &SignPoolEntry) -> bool {
-        if self.areas.iter().find(|c| c.matches(&entry.area)).is_none() {
+        if !self.areas.iter().any(|c| c.matches(&entry.area)) {
             return false;
         }
 

@@ -17,15 +17,15 @@ pub async fn handle_get_announce_message_list() -> rpc::HandlerResult {
     ))
 }
 
-impl Into<ResponseGetAnnounceMessageListParamsEntry> for &AnnouncementConfigItem {
-    fn into(self) -> ResponseGetAnnounceMessageListParamsEntry {
+impl From<&AnnouncementConfigItem> for ResponseGetAnnounceMessageListParamsEntry {
+    fn from(val: &AnnouncementConfigItem) -> Self {
         ResponseGetAnnounceMessageListParamsEntry {
-            index: self.index,
-            order: self.order,
+            index: val.index,
+            order: val.order,
             unk1: 1,
-            title: self.title.clone(),
-            body: self.body.clone(),
-            published_at: self.published_at,
+            title: val.title.clone(),
+            body: val.body.clone(),
+            published_at: val.published_at,
         }
     }
 }

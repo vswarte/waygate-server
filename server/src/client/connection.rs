@@ -16,7 +16,7 @@ pub async fn handle(
     // Acquire the steam ID and session ticket from the opening request
     let steam_id: Arc<OnceLock<String>> = Default::default();
     let session_ticket: Arc<OnceLock<String>> = Default::default();
-    let client_version: Arc<OnceLock<String>> = Default::default();
+    // let client_version: Arc<OnceLock<String>> = Default::default();
 
     let header_callback = {
         let steam_id = steam_id.clone();

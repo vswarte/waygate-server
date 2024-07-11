@@ -5,10 +5,12 @@ use std::io;
 use thiserror::Error;
 
 pub fn init() -> Result<(), ConfigError> {
-    // Validate all the config files by parsing them once
-    let _ = dbg!(announcement::get_config());
+    validate_config();
 
     Ok(())
+}
+
+fn validate_config() {
 }
 
 #[derive(Debug, Error)]

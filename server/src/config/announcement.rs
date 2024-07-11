@@ -1,8 +1,7 @@
-use std::{error::Error, fs, sync::OnceLock};
+use std::{fs, sync::OnceLock};
 
 use serde::Deserialize;
 
-use super::ConfigError;
 
 #[derive(Debug, Deserialize)]
 pub struct AnnouncementConfig {

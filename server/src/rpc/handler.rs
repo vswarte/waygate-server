@@ -26,8 +26,8 @@ pub async fn dispatch_request(
 
         RequestParams::PollMatchingTicket
             => matchingticket::handle_poll_matching_ticket().await?,
-        RequestParams::CreateMatchingTicket(p)
-            => matchingticket::handle_create_matching_ticket(session, *p).await?,
+        RequestParams::CreateMatchingTicket(_)
+            => matchingticket::handle_create_matching_ticket().await?,
 
         RequestParams::CreateBloodstain(p)
             => bloodstain::handle_create_bloodstain(session, *p).await?,
@@ -65,7 +65,7 @@ pub async fn dispatch_request(
         RequestParams::UpdateSign(p)
             => sign::handle_update_sign(session,*p).await?,
         RequestParams::GetMatchAreaSignList(p)
-            => sign::handle_get_match_area_sign_list(session, *p).await?,
+            => sign::handle_get_match_area_sign_list(*p).await?,
         RequestParams::CreateMatchAreaSign(p)
             => sign::handle_create_match_area_sign(session, *p).await?,
 
