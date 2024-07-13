@@ -24,7 +24,7 @@ is completely safe to use.
  - [x] Player ghosts
  - [x] Summoning per puddle
  - [x] Fia/Warrior Jar Pool
- - [~] Group passwords (WIP)
+ - [x] Group passwords (WIP)
  - [ ] Blue Cipher Ring
  - [ ] Quickmatch ranking
  - [ ] Match Density (PvP activity on map)
