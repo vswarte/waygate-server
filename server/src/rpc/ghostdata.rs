@@ -31,7 +31,8 @@ pub async fn handle_create_ghostdata(
             $2,
             $3,
             $4,
-            $5
+            $5,
+            $6
         ) RETURNING ghostdata_id")
         .bind(player_id)
         .bind(session_id)
