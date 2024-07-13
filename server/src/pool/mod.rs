@@ -2,7 +2,6 @@ use std::sync::{Arc, OnceLock, RwLock};
 use fnrpc::shared::ObjectIdentifier;
 use thiserror::Error;
 
-pub mod key;
 pub mod sign;
 pub mod breakin;
 pub mod matching;

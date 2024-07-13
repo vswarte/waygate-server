@@ -22,10 +22,6 @@ use crate::client::ProtocolError;
 
 pub type HandlerResult = Result<ResponseParams, Box<dyn Error>>;
 
-pub fn get_payload_type<R: Read>(mut r: R) -> Result<PayloadType, io::Error> {
-    Ok(r.read_u8()?.into())
-}
-
 pub fn create_handling_context<R: Read>(mut r: R) -> Result<(ResponseContext, RequestParams), crate::client::ClientError> {
     let payload_type: PayloadType = r.read_u8()?.into();
 

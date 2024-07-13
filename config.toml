@@ -1,9 +1,23 @@
+bind = "0.0.0.0:10901"
+database_url = "postgresql://postgres:test123@localhost/waygate"
+
 [[announcements]]
 index = 1
 order = 1
 title = "[Welcome to online multiplayer world of BINGUSTAN]" 
 body = "Bingus is pleased to welcome you to his country.\n"
 published_at = 1645681378
+
+[[announcements]]
+index = 2
+order = 2
+title = "[Changelog 0.1.2]" 
+body = """
+- Reworked config system
+- Group passwords now work for messages, bloodstains and ghosts.
+"""
+published_at = 1645681378
+
 
 [[announcements]]
 index = 2

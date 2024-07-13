@@ -60,7 +60,7 @@ pub fn begin_session(
     let ticket = hex_to_bytes(ticket)
         .ok_or(SteamError::InvalidTicket)?;
 
-    log::info!("Starting steam session for {:?}", steam_id);
+    log::debug!("Starting steam session for {:?}", steam_id);
 
     STEAM_SERVER.get()
         .expect("Could not get steam API instace")
@@ -71,7 +71,7 @@ pub fn begin_session(
 
 impl Drop for SteamSession {
     fn drop(&mut self) {
-        log::info!("Ending steam session for {:?}", self);
+        log::debug!("Ending steam session for {:?}", self);
 
         STEAM_SERVER.get()
             .expect("Could not get steam API instance")

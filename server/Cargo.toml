@@ -7,16 +7,25 @@ edition = "2021"
 url = "2"
 rand = "0.8"
 async-trait = "0.1"
-log = "0.4"
 futures = "0.3"
 futures-channel = "0.3"
 thiserror = "1"
-env_logger = "0.11"
-dotenvy = "0.15"
 byteorder = "1"
 toml = "0.8"
-libsodium-sys-stable = "1"
 newtype = "0.2"
+log4rs = "1"
+
+[dependencies.log]
+version = "0.4"
+features = [
+    "kv",
+]
+
+[dependencies.libsodium-sys-stable]
+version = "1"
+features = [
+    "fetch-latest",
+]
 
 [dependencies.sqlx]
 version = "0.7"

@@ -24,7 +24,8 @@ pub async fn handle_create_ghostdata(
             session_id,
             replay_data,
             area,
-            play_region
+            play_region,
+            group_passwords
         ) VALUES (
             $1,
             $2,
@@ -37,6 +38,7 @@ pub async fn handle_create_ghostdata(
         .bind(request.replay_data)
         .bind(request.area.area)
         .bind(request.area.play_region)
+        .bind(request.group_passwords)
         .fetch_one(&mut *connection)
         .await?
         .get("ghostdata_id");
@@ -77,6 +79,7 @@ struct GhostData {
     replay_data: Vec<u8>,
     area: i32,
     play_region: i32,
+    group_passwords: Vec<String>,
 }
 
 impl From<GhostData> for ResponseGetGhostDataListParamsEntry {
@@ -91,7 +94,7 @@ impl From<GhostData> for ResponseGetGhostDataListParamsEntry {
                 secondary_id: val.session_id,
             },
             replay_data: val.replay_data,
-            group_passwords: vec![],
+            group_passwords: val.group_passwords,
         }
     }
 }

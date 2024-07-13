@@ -5,6 +5,7 @@ pub(crate) mod connection;
 
 use std::io;
 use std::net::SocketAddr;
+use byteorder::ReadBytesExt;
 use thiserror::Error;
 use tungstenite::Message;
 use futures_util::SinkExt;
@@ -369,9 +370,9 @@ impl Client<ClientStateAuthenticated> {
     ) -> Result<(), ClientError> {
         let decrypted = self.state.crypto.session_decrypt(message).await?;
 
-        let payload_type = rpc::get_payload_type(decrypted.as_slice())?;
+        let payload_type = decrypted.as_slice().read_u8()?;
 
-        match payload_type {
+        match payload_type.into() {
             PayloadType::Heartbeat
                 => self.handle_heartbeat().await?,
 

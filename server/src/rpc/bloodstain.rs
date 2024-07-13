@@ -26,14 +26,16 @@ pub async fn handle_create_bloodstain(
             advertisement_data,
             replay_data,
             area,
-            play_region
+            play_region,
+            group_passwords
         ) VALUES (
             $1,
             $2,
             $3,
             $4,
             $5,
-            $6
+            $6,
+            $7
         ) RETURNING bloodstain_id")
         .bind(player_id)
         .bind(session_id)
@@ -41,6 +43,7 @@ pub async fn handle_create_bloodstain(
         .bind(params.replay_data)
         .bind(params.area.area)
         .bind(params.area.play_region)
+        .bind(params.group_passwords)
         .fetch_one(&mut *connection)
         .await?
         .get("bloodstain_id");
@@ -106,6 +109,7 @@ struct Bloodstain {
     replay_data: Vec<u8>,
     area: i32,
     play_region: i32,
+    group_passwords: Vec<String>,
 }
 
 impl From<Bloodstain> for ResponseGetBloodstainListParamsEntry {
@@ -120,7 +124,7 @@ impl From<Bloodstain> for ResponseGetBloodstainListParamsEntry {
                 secondary_id: val.session_id,
             },
             advertisement_data: val.advertisement_data,
-            group_passwords: vec![],
+            group_passwords: val.group_passwords,
         }
     }
 }

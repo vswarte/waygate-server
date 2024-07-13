@@ -1,17 +1,25 @@
 use fnrpc::RequestParams;
 
-use crate::{client::ClientError, rpc::*, session::ClientSession};
+use crate::session::{ClientSession, ClientSessionContainer};
+use crate::rpc::*;
+use crate::client::ClientError;
 
 pub async fn dispatch_request(
     session: ClientSession,
     request: RequestParams,
 ) -> HandlerResult {
-    log::debug!("Player sent request. request_type = {}", request.name());
+
+    log::debug!(
+        "dispatch_request player = {}, type= {}",
+        session.lock_read().player_id,
+        request.name(),
+    );
 
     Ok(match request {
         RequestParams::DeleteSession => session::handle_delete_session(session).await?,
 
-        // Client throws a steamworks error if this is returns an error
+        // Client throws a steamworks error if this is returns an error but it
+        // seems unused otherwise.
         RequestParams::RegisterUGC
             => ugc::handle_register_ugc().await?,
 
@@ -97,21 +105,12 @@ pub async fn dispatch_request(
         RequestParams::RejectBreakInTarget(p)
             => breakin::handle_reject_break_in_target(session, *p).await?, 
 
-        RequestParams::GetItemLog(p)
-            => player::handle_get_item_log(session, *p).await?, 
-        RequestParams::UseItemLog(p)
-            => player::handle_use_item_log(session, *p).await?, 
-        RequestParams::KillEnemyLog(p)
-            => player::handle_kill_enemy_log(session, *p).await?, 
-
-        RequestParams::JoinMultiplay(p)
-            => player::handle_join_multiplay(session, *p).await?, 
-
+        RequestParams::GrUploadPlayerEquipments(p)
+            => player_equipments::handle_gr_upload_player_equipments(session, *p).await?, 
         RequestParams::GrGetPlayerEquipments(p)
             => player_equipments::handle_gr_get_player_equipments(*p).await?, 
 
         _ => {
-            log::info!("Got {request:?}");
             return Err(Box::new(ClientError::NoHandler))
         },
     })

@@ -27,7 +27,8 @@ pub async fn handle_create_blood_message(
             rating_bad,
             data,
             area,
-            play_region
+            play_region,
+            group_passwords
         ) VALUES (
             $1,
             $2,
@@ -36,7 +37,8 @@ pub async fn handle_create_blood_message(
             0,
             $4,
             $5,
-            $6
+            $6,
+            $7
         ) RETURNING bloodmessage_id")
         .bind(player_id)
         .bind(request.character_id)
@@ -44,6 +46,7 @@ pub async fn handle_create_blood_message(
         .bind(request.data)
         .bind(request.area.area)
         .bind(request.area.play_region)
+        .bind(request.group_passwords)
         .fetch_one(&mut *connection)
         .await?
         .get("bloodmessage_id");
@@ -128,17 +131,11 @@ pub async fn handle_remove_blood_message(
 ) -> rpc::HandlerResult {
     let player_id = session.lock_read().player_id;
 
-    log::info!(
-        "Player sent RemoveBloodMessage. player = {}. bloodmessage_id = {}.",
-        player_id,
-        request.identifier.object_id,
-    );
-
     let mut connection = database::acquire().await?;
     sqlx::query("DELETE FROM bloodmessages WHERE bloodmessage_id = $1 AND player_id = $2")
         .bind(request.identifier.object_id)
         .bind(player_id)
-        .fetch_all(&mut *connection)
+        .execute(&mut *connection)
         .await?;
 
     Ok(ResponseParams::RemoveBloodMessage)
@@ -155,6 +152,7 @@ struct BloodMessage {
     data: Vec<u8>,
     area: i32,
     play_region: i32,
+    group_passwords: Vec<String>,
 }
 
 impl From<BloodMessage> for ResponseGetBloodMessageListParamsEntry {
@@ -173,7 +171,7 @@ impl From<BloodMessage> for ResponseGetBloodMessageListParamsEntry {
                 area: val.area,
                 play_region: val.play_region,
             },
-            group_passwords: vec![],
+            group_passwords: val.group_passwords,
         }
     }
 }

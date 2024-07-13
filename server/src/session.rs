@@ -56,12 +56,12 @@ impl ClientSessionInner {
                 })?;
 
             self.breakin = Some(key);
-            log::info!("Added player to breakin pool. player_id = {}", self.player_id);
+            log::debug!("Added player to breakin pool. player_id = {}", self.player_id);
         } else if !self.invadeable && self.breakin.is_some() {
             let _ = self.breakin.take()
                 .ok_or(SessionError::MissingBreakinEntry)?;
 
-            log::info!("Removed player from breakin pool. player_id = {}", self.player_id);
+            log::debug!("Removed player from breakin pool. player_id = {}", self.player_id);
         }
 
         Ok(())

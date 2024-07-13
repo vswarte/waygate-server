@@ -1,5 +1,4 @@
 use std::io;
-use std::env;
 use tokio::net as tokionet;
 
 mod database;
@@ -13,19 +12,19 @@ mod config;
 
 #[tokio::main]
 async fn main () -> Result<(), io::Error> {
-    dotenvy::dotenv().expect("Could not init env vars");
-    env_logger::init();
-    config::init().expect("Could not load config");
+    log4rs::init_file("logging.yml", Default::default()).unwrap();
 
-    database::init().await.expect("Could not initialize database");
+    let config = config::get();
+    log::debug!("Loaded config: {:#?}", config);
+
+    database::init(config.database_url.as_str())
+        .await.expect("Could not initialize database");
+
     steam::init().expect("Could not initialize steam");
     pool::init_pools().expect("Could not initialize pools");
 
-    let bind = env::args()
-        .nth(1)
-        .unwrap_or("0.0.0.0:10901".to_string());
-
-    listener(bind).await.expect("Could not bind to socket");
+    listener(config.bind.to_owned())
+        .await.expect("Could not bind to socket");
 
     Ok(())
 }

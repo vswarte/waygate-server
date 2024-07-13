@@ -5,9 +5,6 @@ use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum DatabaseError {
-    #[error("Could not get DATABASE_URL from .env {0}")]
-    MissingDatabaseUrl(#[from] dotenvy::Error),
-
     #[error("Sqlx error {0}")]
     Sqlx(#[from] sqlx::Error),
 
@@ -21,8 +18,8 @@ pub enum DatabaseError {
 
 static POOL: sync::OnceLock<Pool<Postgres>> = sync::OnceLock::new();
 
-pub async fn init() -> Result<(), DatabaseError> {
-    let pool = Pool::<Postgres>::connect(&dotenvy::var("DATABASE_URL")?)
+pub async fn init(url: &str) -> Result<(), DatabaseError> {
+    let pool = Pool::<Postgres>::connect(url)
             .await?;
 
     sqlx::migrate!("./migrations")
