@@ -199,7 +199,7 @@ mod test {
         let finger = SignPoolQuery {
             character_level: 1,
             weapon_level: 1,
-            areas: vec![MatchingArea::PlayRegion { area: 1, play_region: 1}],
+            areas: vec![MatchingArea::PlayRegion { area: 2, play_region: 2}],
             password: String::default(),
         };
 
