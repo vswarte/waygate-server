@@ -11,11 +11,11 @@ fn main() {
     let (server_public, server_secret) = generate_keypair();
 
     println!("# Add this to server's general.toml");
-    println!("client_public_keu = \"{}\"", BASE64_STANDARD.encode(client_public));
+    println!("client_public_key = \"{}\"", BASE64_STANDARD.encode(client_public));
     println!("server_secret_key = \"{}\"", BASE64_STANDARD.encode(server_secret));
     println!();
     println!("# Add this to clients's waygate.toml");
-    println!("client_secret_keu = \"{}\"", BASE64_STANDARD.encode(client_secret));
+    println!("client_secret_key = \"{}\"", BASE64_STANDARD.encode(client_secret));
     println!("server_public_key = \"{}\"", BASE64_STANDARD.encode(server_public));
 }
 
