@@ -12,7 +12,7 @@ mod config;
 
 #[tokio::main]
 async fn main () -> Result<(), io::Error> {
-    log4rs::init_file("logging.yml", Default::default()).unwrap();
+    log4rs::init_file("logging.toml", Default::default()).unwrap();
 
     let config = config::get();
     log::debug!("Loaded config: {:#?}", config);

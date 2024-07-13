@@ -13,7 +13,6 @@ thiserror = "1"
 byteorder = "1"
 toml = "0.8"
 newtype = "0.2"
-log4rs = "1"
 base64 = "0.22"
 
 [dependencies.log]
@@ -21,6 +20,13 @@ version = "0.4"
 features = [
     "kv",
 ]
+
+[dependencies.log4rs]
+version = "1"
+features = [
+    "toml_format",
+]
+
 
 [dependencies.libsodium-sys-stable]
 version = "1"

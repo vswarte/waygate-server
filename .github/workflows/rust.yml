@@ -47,7 +47,7 @@ jobs:
     - name: Upload artifacts
       uses: actions/upload-artifact@v3
       with:
-        name: build-artifacts
+        name: waygate-server
         path: |
           target/release/waygate-server
           target/release/generate-keys

@@ -1,0 +1,19 @@
+[root]
+level = "debug"
+# Specifies what appenders to use
+appenders = ["stdout", "file"]
+
+# Config for the console logging
+[appenders.stdout]
+kind = "console"
+
+[appenders.stdout.encoder]
+pattern = "{d(%+)(utc)} [{f}:{L}] {h({l})} {M}:{m}{n}"
+
+# Config for the file-based logging
+[appenders.file]
+kind = "file"
+path = "waygate.log"
+
+[appenders.file.encoder]
+pattern = "[{d(%Y-%m-%dT%H:%M:%S%.6f)} {h({l}):<5.5} {M}] {m}{n}"
