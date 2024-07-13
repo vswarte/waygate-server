@@ -136,7 +136,7 @@ pub enum JoinPayload {
     RejectSign(RejectSignParams), // 0x7
     Unk8(Unk8Params), // 0x8
     Visit(VisitParams), // 0x9
-    RejectVisit(RejectVisitParams), // 0XA
+    RejectVisit(RejectVisitParams), // 0xA
     JoinQuickMatch(JoinQuickMatchParams), // 0xB
     AcceptQuickMatch(AcceptQuickMatchParams), // 0xC
     UnkD(UnkDParams), // 0xD

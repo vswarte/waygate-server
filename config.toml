@@ -1,5 +1,7 @@
 bind = "0.0.0.0:10901"
 database_url = "postgresql://postgres:test123@localhost/waygate"
+client_public_key = "hQBVt5lmrykxDhcPkCCgNa7YXWYO+OmRPPDTjPugoS4="
+server_secret_key = "pkryIBfz7CeyxKbN787xd2j7XUr123F+T0FuRcBwW7s="
 
 [[announcements]]
 index = 1

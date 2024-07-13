@@ -6,6 +6,8 @@ use serde::Deserialize;
 pub struct Config {
     pub bind: String,
     pub database_url: String,
+    pub client_public_key: String,
+    pub server_secret_key: String,
     pub announcements: Vec<AnnouncementItem>,
 }
 

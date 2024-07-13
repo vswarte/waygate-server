@@ -18,9 +18,8 @@ use libsodium_sys::{
 use thiserror::Error;
 use tokio::io::AsyncWriteExt;
 
-use crate::client::ClientError;
-
-use super::key;
+use crate::{client::ClientError, config};
+use base64::prelude::*;
 
 pub const PUBLICKEYBYTES: usize = crypto_kx_PUBLICKEYBYTES as usize;
 pub const SECRETKEYBYTES: usize = crypto_kx_SECRETKEYBYTES as usize;
@@ -150,6 +149,10 @@ impl ClientCrypto<ClientCryptoStateParametersGenerated> {
         let (nonce, mac, mut payload) = Self::split_nonce_mac_and_payload(r)
             .await.map_err(ClientError::Io)?;
 
+        let config = config::get();
+        let client_public_key = BASE64_STANDARD.decode(&config.client_public_key)?;
+        let server_secret_key = BASE64_STANDARD.decode(&config.server_secret_key)?;
+
         let result = unsafe {
             libsodium_sys::crypto_box_open_detached(
                 payload.as_mut_ptr(),
@@ -157,8 +160,8 @@ impl ClientCrypto<ClientCryptoStateParametersGenerated> {
                 mac.as_ptr(),
                 payload.len() as u64,
                 nonce.as_ptr(),
-                key::CLIENT_PUBLIC_KEY.as_ptr(),
-                key::SERVER_SECRET_KEY.as_ptr(),
+                client_public_key.as_ptr(),
+                server_secret_key.as_ptr(),
             )
         };
 
@@ -190,6 +193,10 @@ impl ClientCrypto<ClientCryptoStateParametersGenerated> {
             randombytes_buf(bootstrap_nonce.as_mut_ptr() as *mut ffi::c_void, NONCEBYTES);
         };
 
+        let config = config::get();
+        let client_public_key = BASE64_STANDARD.decode(&config.client_public_key)?;
+        let server_secret_key = BASE64_STANDARD.decode(&config.server_secret_key)?;
+
         let mut mac = [0u8; MACBYTES];
         let result = unsafe {
             crypto_box_detached(
@@ -198,8 +205,8 @@ impl ClientCrypto<ClientCryptoStateParametersGenerated> {
                 payload.as_ptr(),
                 payload.len() as u64,
                 bootstrap_nonce.as_ptr(),
-                key::CLIENT_PUBLIC_KEY.as_ptr(),
-                key::SERVER_SECRET_KEY.as_ptr(),
+                client_public_key.as_ptr(),
+                server_secret_key.as_ptr(),
             )
         };
 

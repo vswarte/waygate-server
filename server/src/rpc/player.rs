@@ -16,6 +16,11 @@ pub async fn handle_update_player_status(
         session.invadeable = request.character.online_activity == 0x1;
         session.matching = Some((&request).into());
 
+        // fuck
+        if request.character.group_passwords.contains(&"piss".to_string()) {
+
+        }
+
         session.update_invadeability()?;
     }
 

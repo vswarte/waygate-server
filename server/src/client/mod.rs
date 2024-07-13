@@ -1,10 +1,10 @@
-mod key;
 mod crypto;
 pub(crate) mod transport;
 pub(crate) mod connection;
 
 use std::io;
 use std::net::SocketAddr;
+use base64::DecodeError;
 use byteorder::ReadBytesExt;
 use thiserror::Error;
 use tungstenite::Message;
@@ -47,6 +47,9 @@ pub enum ClientError {
 
     #[error("Client closed connection")]
     ClosedConnection,
+
+    #[error("Bootstrap keys decode failed")]
+    Decode(#[from] DecodeError),
 }
 
 #[derive(Debug, Error)]
