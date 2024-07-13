@@ -55,6 +55,9 @@ jobs:
         path: |
           target/release/waygate-server
           target/release/generate-keys
-          target/release/build/steamwork-sys-*/out/libsteam_api.so
+          target/**/waygate-server.exe
+          target/**/generate-keys.exe
+          target/**/libsteam_api.so
+          target/**/steam_api64.dll
           config.toml
           logging.toml
