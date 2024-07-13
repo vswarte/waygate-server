@@ -16,10 +16,10 @@ order = 2
 title = "[Changelog 0.1.2]" 
 body = """
 - Reworked config system
+- Implemented fia and warrior jar pools
 - Group passwords now work for messages, bloodstains and ghosts.
 """
 published_at = 1645681378
-
 
 [[announcements]]
 index = 2
