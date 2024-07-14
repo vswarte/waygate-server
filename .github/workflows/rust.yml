@@ -59,6 +59,7 @@ jobs:
         find ./target/release -name steam_api64.dll -exec cp {} artifacts/ \;
         cp config.toml artifacts/
         cp logging.toml artifacts/
+        cp steam_appid.txt artifacts/
       shell: bash
 
     - name: Upload artifacts
