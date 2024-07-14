@@ -9,7 +9,6 @@ use fnrpc::ResponseParams;
 use crate::rpc;
 use crate::session;
 use crate::session::ClientSession;
-use crate::session::ClientSessionContainer;
 
 // TODO: actually handle the request in some capacity
 pub async fn handle_create_session(
@@ -82,7 +81,7 @@ pub async fn handle_restore_session(
 }
 
 pub async fn handle_delete_session(
-    session: ClientSession,
+    _session: ClientSession,
 ) -> rpc::HandlerResult {
     Ok(ResponseParams::DeleteSession)
 }
