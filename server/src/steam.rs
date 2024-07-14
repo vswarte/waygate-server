@@ -62,9 +62,27 @@ pub fn begin_session(
 
     log::debug!("Starting steam session for {:?}", steam_id);
 
-    STEAM_SERVER.get()
+    let result = STEAM_SERVER.get()
         .expect("Could not get steam API instace")
-        .begin_authentication_session(steam_id, ticket.as_slice())?;
+        .begin_authentication_session(steam_id, ticket.as_slice());
+
+    if let Err(error) = result {
+        match error {
+            steamworks::AuthSessionError::DuplicateRequest => {
+                log::warn!("Got duplicate request, attempting to clear the previous one");
+                STEAM_SERVER.get()
+                    .expect("Could not get steam API instace")
+                    .end_authentication_session(steam_id);
+
+                STEAM_SERVER.get()
+                    .expect("Could not get steam API instace")
+                    .begin_authentication_session(steam_id, ticket.as_slice())?;
+
+                log::warn!("Reattempting the auth");
+            },
+            _ => return Err(SteamError::SteamAuth(error)),
+        }
+    }
 
     Ok(SteamSession(steam_id))
 }

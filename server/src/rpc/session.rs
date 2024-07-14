@@ -6,7 +6,6 @@ use fnrpc::session::*;
 use fnrpc::shared::ObjectIdentifier;
 use fnrpc::ResponseParams;
 
-use crate::database;
 use crate::rpc;
 use crate::session;
 use crate::session::ClientSession;
@@ -85,13 +84,5 @@ pub async fn handle_restore_session(
 pub async fn handle_delete_session(
     session: ClientSession,
 ) -> rpc::HandlerResult {
-    let player_id = session.lock_read().player_id;
-
-    let mut connection = database::acquire().await?;
-    sqlx::query("DELETE FROM bloodmessages WHERE player_id = $1")
-        .bind(player_id)
-        .fetch_all(&mut *connection)
-        .await?;
-
     Ok(ResponseParams::DeleteSession)
 }

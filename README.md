@@ -1,4 +1,4 @@
-# Waygate :globe_with_meridians: Elden Ring Private Server
+# Waygate :cyclone: Elden Ring Private Server
 Waygate is an attempt at implementing a server based on Elden Ring's matchmaking
 protocol. The aim of this project is to offer a more vanilla online experience
 while allowing users to mod the game.

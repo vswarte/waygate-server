@@ -27,7 +27,6 @@ features = [
     "toml_format",
 ]
 
-
 [dependencies.libsodium-sys-stable]
 version = "1"
 features = [
