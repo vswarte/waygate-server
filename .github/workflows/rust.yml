@@ -48,16 +48,19 @@ jobs:
     - name: Run tests
       run: cargo test
 
+    - name: Prepare artifact files
+      run: |
+        mkdir -p artifacts
+        cp target/release/**/waygate-server artifacts/ 2>/dev/null || :
+        cp target/release/**/generate-keys artifacts/ 2>/dev/null || :
+        cp target/release/**/libsteam_api.so artifacts/ 2>/dev/null || :
+        cp target/release/**/steam_api64.dll artifacts/ 2>/dev/null || :
+        cp config.toml artifacts/
+        cp logging.toml artifacts/
+      shell: bash
+
     - name: Upload artifacts
       uses: actions/upload-artifact@v3
       with:
         name: waygate-server-${{ matrix.os }}
-        path: |
-          target/release/waygate-server
-          target/release/generate-keys
-          target/**/waygate-server.exe
-          target/**/generate-keys.exe
-          target/**/libsteam_api.so
-          target/**/steam_api64.dll
-          config.toml
-          logging.toml
+        path: artifacts/
