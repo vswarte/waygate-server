@@ -51,12 +51,12 @@ jobs:
     - name: Prepare artifact files
       run: |
         mkdir -p artifacts
-        find . -name waygate-server -exec cp {} artifacts/ \;
-        find . -name generate-keys -exec cp {} artifacts/ \;
-        find . -name waygate-server.exe -exec cp {} artifacts/ \;
-        find . -name generate-keys.exe -exec cp {} artifacts/ \;
-        find . -name libsteam_api.so -exec cp {} artifacts/ \;
-        find . -name steam_api64.dll -exec cp {} artifacts/ \;
+        find ./target/release -name waygate-server -exec cp {} artifacts/ \;
+        find ./target/release -name generate-keys -exec cp {} artifacts/ \;
+        find ./target/release -name waygate-server.exe -exec cp {} artifacts/ \;
+        find ./target/release -name generate-keys.exe -exec cp {} artifacts/ \;
+        find ./target/release -name libsteam_api.so -exec cp {} artifacts/ \;
+        find ./target/release -name steam_api64.dll -exec cp {} artifacts/ \;
         cp config.toml artifacts/
         cp logging.toml artifacts/
       shell: bash
