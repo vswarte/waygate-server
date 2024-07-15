@@ -1,4 +1,4 @@
-use fnrpc::shared::{PlayRegionArea, PuddleArea};
+use crate::rpc::message::shared::*;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum MatchingArea {

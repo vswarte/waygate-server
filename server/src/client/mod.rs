@@ -9,13 +9,12 @@ use byteorder::ReadBytesExt;
 use thiserror::Error;
 use tungstenite::Message;
 use futures_util::SinkExt;
-use fnrpc::{PayloadType, RequestParams};
+use crate::rpc::message::{PayloadType, RequestParams};
 
 use crate::rpc;
 use crate::push;
 use crate::rpc::handler::dispatch_request;
-use crate::session;
-use crate::session::ClientSessionContainer;
+use crate::session::{self, ClientSessionContainer};
 use crate::steam::SteamSession;
 
 pub const CLIENT_HELLO_TIMEOUT: u64 = 5;
@@ -43,7 +42,7 @@ pub enum ClientError {
     Wire(#[from] fnrpc::FNWireError),
 
     #[error("Could not get a handler for message")]
-    NoHandler,
+    NoHandler(String),
 
     #[error("Client closed connection")]
     ClosedConnection,

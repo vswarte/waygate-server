@@ -1,4 +1,4 @@
-use fnrpc::RequestParams;
+use message::RequestParams;
 
 use crate::session::{ClientSession, ClientSessionContainer};
 use crate::rpc::*;
@@ -8,7 +8,6 @@ pub async fn dispatch_request(
     session: ClientSession,
     request: RequestParams,
 ) -> HandlerResult {
-
     log::debug!(
         "dispatch_request player = {}, type= {}",
         session.lock_read().player_id,
@@ -111,7 +110,7 @@ pub async fn dispatch_request(
             => player_equipments::handle_gr_get_player_equipments(*p).await?, 
 
         _ => {
-            return Err(Box::new(ClientError::NoHandler))
+            return Err(Box::new(ClientError::NoHandler(request.name().to_string())))
         },
     })
 }

@@ -1,6 +1,6 @@
 use serde::{Serialize, Deserialize};
 
-use crate::params::shared::*;
+use super::*;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct RequestSearchQuickMatchParams {

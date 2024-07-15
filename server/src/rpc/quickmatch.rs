@@ -1,10 +1,4 @@
-use fnrpc::push::AcceptQuickMatchParams;
-use fnrpc::push::JoinParams;
-use fnrpc::push::JoinPayload;
-use fnrpc::push::PushParams;
-use fnrpc::quickmatch::*;
-use fnrpc::shared;
-use fnrpc::ResponseParams;
+use super::message::*;
 use rand::Rng;
 
 use crate::pool;
@@ -93,7 +87,7 @@ pub async fn handle_join_quick_match(
             object_id: rand::thread_rng().gen::<i32>(),
             secondary_id: rand::thread_rng().gen::<i32>(),
         },
-        join_payload: JoinPayload::JoinQuickMatch(fnrpc::push::JoinQuickMatchParams {
+        join_payload: JoinPayload::JoinQuickMatch(JoinQuickMatchParams {
             quickmatch_settings: quickmatch.settings,
             joining_player_id,
             joining_player_steam_id,

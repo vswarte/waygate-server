@@ -1,6 +1,6 @@
 use serde::{Serialize, Deserialize};
 
-use crate::shared::Location;
+use super::*;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct RequestUpdatePlayerStatusParams {

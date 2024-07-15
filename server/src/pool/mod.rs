@@ -1,5 +1,4 @@
 use std::sync::{Arc, OnceLock, RwLock};
-use fnrpc::shared::ObjectIdentifier;
 use thiserror::Error;
 
 pub mod sign;
@@ -14,6 +13,8 @@ use std::sync::{RwLockReadGuard, RwLockWriteGuard};
 use self::quickmatch::QuickmatchPoolEntry;
 use self::sign::SignPoolEntry;
 use self::breakin::BreakInPoolEntry;
+
+use crate::rpc::message::shared::ObjectIdentifier;
 
 #[derive(Debug, Error)]
 pub enum PoolError {

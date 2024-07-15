@@ -9,6 +9,7 @@ mod steam;
 mod client;
 mod session;
 mod config;
+mod api;
 
 #[tokio::main]
 async fn main () -> Result<(), io::Error> {
@@ -23,8 +24,14 @@ async fn main () -> Result<(), io::Error> {
     steam::init().expect("Could not initialize steam");
     pool::init_pools().expect("Could not initialize pools");
 
-    listener(config.bind.to_owned())
-        .await.expect("Could not bind to socket");
+    tokio::select! {
+        _ = api::start_api() => {
+            log::warn!("Shut down API");
+        },
+        _= listener(config.bind.to_owned()) => {
+            log::warn!("Shut down game RPC");
+        },
+    };
 
     Ok(())
 }

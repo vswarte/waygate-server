@@ -1,5 +1,6 @@
 use serde::{Serialize, Deserialize};
-use crate::params::*;
+
+use super::*;
 
 #[repr(u32)]
 #[derive(Serialize, Deserialize, Debug)]

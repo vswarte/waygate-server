@@ -1,8 +1,7 @@
-use fnrpc::ResponseParams;
-use fnrpc::announcement::*;
-
 use crate::rpc;
 use crate::config;
+
+use super::message::*;
 
 pub async fn handle_get_announce_message_list() -> rpc::HandlerResult {
     Ok(ResponseParams::GetAnnounceMessageList(

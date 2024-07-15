@@ -8,6 +8,8 @@ pub struct Config {
     pub database_url: String,
     pub client_public_key: String,
     pub server_secret_key: String,
+    pub api_bind: String,
+    pub api_key: String,
     pub announcements: Vec<AnnouncementItem>,
 }
 

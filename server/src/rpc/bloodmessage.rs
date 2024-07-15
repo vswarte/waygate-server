@@ -1,13 +1,12 @@
 use sqlx::Row;
-use fnrpc::bloodmessage::*;
-use fnrpc::shared::*;
-use fnrpc::ResponseParams;
 use thiserror::Error;
 
 use crate::database;
 use crate::rpc;
 use crate::session::ClientSession;
 use crate::session::ClientSessionContainer;
+
+use super::message::*;
 
 pub async fn handle_create_blood_message(
     session: ClientSession,

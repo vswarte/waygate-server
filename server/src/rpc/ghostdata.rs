@@ -1,13 +1,11 @@
 use sqlx::Row;
 
-use fnrpc::shared::*;
-use fnrpc::ghostdata::*;
-use fnrpc::ResponseParams;
-
 use crate::database;
 use crate::rpc;
 use crate::session::ClientSession;
 use crate::session::ClientSessionContainer;
+
+use super::message::*;
 
 pub async fn handle_create_ghostdata(
     session: ClientSession,

@@ -1,10 +1,9 @@
-use fnrpc::player_equipments::*;
-use fnrpc::ResponseParams;
-
 use crate::database;
 use crate::rpc;
 use crate::session::ClientSession;
 use crate::session::ClientSessionContainer;
+
+use crate::rpc::message::*;
 
 pub async fn handle_gr_get_player_equipments(
     request: RequestGrGetPlayerEquipmentsParams,

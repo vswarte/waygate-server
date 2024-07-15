@@ -1,10 +1,9 @@
-use fnrpc::player::RequestUpdatePlayerStatusParams;
-use fnrpc::ResponseParams;
-
 use crate::pool::breakin::BreakInPoolEntry;
 use crate::rpc;
 use crate::session::ClientSession;
 use crate::session::ClientSessionContainer;
+
+use super::message::*;
 
 pub async fn handle_update_player_status(
     session: ClientSession,

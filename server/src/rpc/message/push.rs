@@ -1,7 +1,6 @@
 use serde::Serialize;
-use crate::params::*;
 
-use self::shared::ObjectIdentifier;
+use super::*;
 
 #[derive(Serialize, Debug)]
 pub struct Unk0Params {

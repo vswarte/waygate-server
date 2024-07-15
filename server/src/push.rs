@@ -1,8 +1,9 @@
 use std::sync;
 use std::collections;
-use fnrpc::push::PushParams;
 use thiserror::Error;
 use tokio::sync as tokiosync;
+
+use crate::rpc::message::*;
 
 pub type ClientPushChannelRX = tokiosync::mpsc::Receiver<Vec<u8>>;
 pub type ClientPushChannelTX = tokiosync::mpsc::Sender<Vec<u8>>;
@@ -53,6 +54,33 @@ pub async fn send_push(
         .send(buffer)
         .await
         .map_err(|_| PushError::Send)?;
+
+    Ok(())
+}
+
+pub async fn broadcast(params: PushParams) -> Result<(), PushError> {
+    let buffer = {
+        let mut buffer: Vec<u8> = vec![
+            0x06, // Message type (push)
+            0x00, // ???
+        ];
+
+        let mut serialized = fnrpc::serialize(params)?;
+
+        buffer.append(&mut serialized);
+        buffer
+    };
+
+
+    for entry in CLIENT_PUSH_MAP.get_or_init(Default::default)
+        .write()
+        .await
+        .iter() {
+
+        entry.1.send(buffer.clone())
+            .await
+            .map_err(|_| PushError::Send)?;
+    }
 
     Ok(())
 }

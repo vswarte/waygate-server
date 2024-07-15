@@ -1,7 +1,5 @@
-use fnrpc::ugc::*;
-use fnrpc::ResponseParams;
-
 use crate::rpc;
+use crate::rpc::message::*;
 
 pub async fn handle_register_ugc() -> rpc::HandlerResult {
     Ok(ResponseParams::RegisterUGC(

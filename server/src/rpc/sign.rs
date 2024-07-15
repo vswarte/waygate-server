@@ -1,10 +1,4 @@
-use fnrpc::push::JoinParams;
 use rand::prelude::*;
-use fnrpc::push::JoinPayload;
-use fnrpc::push::PushParams;
-use fnrpc::shared::ObjectIdentifier;
-use fnrpc::sign::*;
-use fnrpc::ResponseParams;
 use thiserror::Error;
 
 use crate::pool::MatchResult;
@@ -16,6 +10,8 @@ use crate::push;
 use crate::rpc;
 use crate::session::ClientSession;
 use crate::session::ClientSessionContainer;
+
+use super::message::*;
 
 #[derive(Debug, Error)]
 pub enum SignError {
@@ -93,7 +89,7 @@ pub async fn handle_summon_sign(
             object_id: rand::thread_rng().gen::<i32>(),
             secondary_id: rand::thread_rng().gen::<i32>(),
         },
-        join_payload: JoinPayload::SummonSign(fnrpc::push::SummonSignParams {
+        join_payload: JoinPayload::SummonSign(SummonSignParams {
             summoning_player_id: player_id,
             steam_id: String::default(),
             summoned_player_id: poolkey.1,
@@ -138,7 +134,7 @@ pub async fn handle_reject_sign(
             object_id: rand::thread_rng().gen::<i32>(),
             secondary_id: rand::thread_rng().gen::<i32>(),
         },
-        join_payload: JoinPayload::RejectSign(fnrpc::push::RejectSignParams {
+        join_payload: JoinPayload::RejectSign(RejectSignParams {
             sign_identifier: request.sign_identifier,
             summoned_player_id,
         }),

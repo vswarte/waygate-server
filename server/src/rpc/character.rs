@@ -1,7 +1,6 @@
-use fnrpc::character::*;
-use fnrpc::ResponseParams;
-
 use crate::rpc;
+
+use super::message::*;
 
 pub async fn handle_update_login_player_character(
 ) -> rpc::HandlerResult {

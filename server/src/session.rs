@@ -1,8 +1,9 @@
 use std::{sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard}, time};
-use fnrpc::player::RequestUpdatePlayerStatusParams;
 use rand::prelude::*;
 use sqlx::Row;
 use thiserror::Error;
+
+use crate::rpc::message::RequestUpdatePlayerStatusParams;
 
 use crate::{database::{self, DatabaseError}, pool::{breakin::BreakInPoolEntry, breakin_pool, quickmatch::QuickmatchPoolEntry, sign::SignPoolEntry, PoolError, PoolKeyGuard}};
 

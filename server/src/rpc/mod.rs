@@ -12,11 +12,12 @@ pub(crate) mod quickmatch;
 pub(crate) mod breakin;
 pub(crate) mod player_equipments;
 pub(crate) mod matchingticket;
+pub(crate) mod message;
 
 use std::{error::Error, io::{self, Read, Write}};
 
 use byteorder::{ReadBytesExt, WriteBytesExt, LE};
-use fnrpc::{serialize, PayloadType, RequestParams, ResponseParams};
+use message::{PayloadType, RequestParams, ResponseParams};
 
 use crate::client::ProtocolError;
 
@@ -56,7 +57,7 @@ impl ResponseContext {
         buffer.write_u32::<LE>(self.sequence)?;
         buffer.write_u8(1)?; // Status code
 
-        let param_buffer = serialize(params)
+        let param_buffer = fnrpc::serialize(params)
             .map_err(|_| io::Error::from(io::ErrorKind::InvalidData))?;
         buffer.write_all(param_buffer.as_slice())?;
 
@@ -79,7 +80,7 @@ impl ResponseContext {
             },
             Ok(params) => {
                 buffer.write_u8(1)?; // Status code
-                let param_buffer = serialize(params)
+                let param_buffer = fnrpc::serialize(params)
                     .map_err(|_| io::Error::from(io::ErrorKind::InvalidData))?;
                 buffer.write_all(param_buffer.as_slice())?;
             },

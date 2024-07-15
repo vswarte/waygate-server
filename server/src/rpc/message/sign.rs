@@ -1,6 +1,6 @@
 use serde::{Serialize, Deserialize};
 
-use crate::params::shared::*;
+use super::shared::*;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct RequestCreateSignParams {
