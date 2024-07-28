@@ -53,7 +53,7 @@ The most important section of this README, this project took a long time to
 execute and there's still a bit to go. Without these people this project
 would've remained on my disk forever.
 
- - Tremwil for implementing the serde wire (de)serializer and writing tools to hook the games serialization layer and typemaps.
+ - Tremwil for implementing the serde wire (de)serializer and writing tools to hook the games serialization layer and generating typemaps from said hooks.
  - LukeYui for answering my dumb questions
  - ClayAmore for testing and support on the motivational end
  - Steelovsky for testing
