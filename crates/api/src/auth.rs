@@ -4,12 +4,19 @@ use actix_web::{
     http::header::HeaderValue,
     Error
 };
-use waygate_config::GENERAL;
 use std::future::{ready, Ready};
 use std::task::{Context, Poll};
 use std::pin::Pin;
 
-pub struct CheckKey;
+pub struct CheckKey {
+    api_key: String,
+}
+
+impl CheckKey {
+    pub fn new(api_key: &str) -> Self {
+        Self { api_key: api_key.to_string() }
+    }
+}
 
 impl<S, B> Transform<S, ServiceRequest> for CheckKey
 where
@@ -23,11 +30,13 @@ where
     type Future = Ready<Result<Self::Transform, Self::InitError>>;
 
     fn new_transform(&self, service: S) -> Self::Future {
-        ready(Ok(CheckKeyMiddleware { service }))
+        let api_key = self.api_key.clone();
+        ready(Ok(CheckKeyMiddleware { service, api_key }))
     }
 }
 
 pub struct CheckKeyMiddleware<S> {
+    api_key: String,
     service: S,
 }
 
@@ -45,8 +54,7 @@ where
     }
 
     fn call(&self, req: ServiceRequest) -> Self::Future {
-        let key = GENERAL.get().unwrap().api_key.as_str();
-        let expected = HeaderValue::from_str(key).unwrap();
+        let expected = HeaderValue::from_str(&self.api_key).unwrap();
         let authorized = req.headers()
             .get("X-Auth-Token")
             .map(|v| v == expected)

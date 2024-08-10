@@ -14,10 +14,7 @@ features = [
 ]
 
 [dependencies.libsodium-sys-stable]
-version = "1"
-features = [
-    "fetch-latest",
-]
+workspace = true
 
 [dependencies.tracing]
 workspace = true

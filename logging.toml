@@ -1,5 +1,5 @@
 [root]
-level = "debug"
+level = "info"
 # Specifies what appenders to use
 appenders = ["stdout", "file"]
 

@@ -8,7 +8,7 @@ use tokio::net::{TcpListener, TcpStream};
 use tungstenite::handshake::server::{Request, Response};
 use waygate_api::serve_api;
 use waygate_config::init_config;
-use waygate_connection::{new_client, ClientError, TransportError};
+use waygate_connection::{init_crypto, new_client, ClientError, TransportError};
 use waygate_database::init_database;
 use waygate_steam::{begin_session, init_steamworks};
 use waygate_rpc::handle_request;
@@ -32,6 +32,16 @@ struct Args {
     /// Database URL pointing to the postgresql instance.
     #[arg(long, env("WAYGATE_DATABASE"))]
     database: String,
+
+    /// Key used by server to encrypt KX messages going to client.
+    /// This key should be kept secret.
+    #[arg(long, env("WAYGATE_CLIENT_PUBLIC_KEY"))]
+    client_public_key: String,
+
+    /// Key used by server to decrypt incoming KX messages from the client.
+    /// This key should be kept secret.
+    #[arg(long, env("WAYGATE_SERVER_SECRET_KEY"))]
+    server_secret_key: String,
 }
 
 #[tokio::main]
@@ -40,13 +50,18 @@ async fn main() -> Result<(), io::Error> {
 
     log4rs::init_file("logging.toml", Default::default()).unwrap();
 
-    init_config().expect("Could not initialize config");
+    init_config()
+        .expect("Could not initialize config");
+
+    init_crypto(args.client_public_key.as_str(), args.server_secret_key.as_str())
+        .expect("Could not initialize crypto");
 
     init_database(args.database.as_str())
         .await
         .expect("Could not initialize database");
 
-    init_steamworks().expect("Could not initialize steam");
+    init_steamworks()
+        .expect("Could not initialize steam");
 
     tokio::select! {
         _ = serve_api(

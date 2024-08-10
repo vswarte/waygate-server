@@ -52,12 +52,12 @@ jobs:
       run: |
         mkdir -p artifacts
         find ./target/release -name waygate-server -exec cp {} artifacts/ \;
-        find ./target/release -name generate-keys -exec cp {} artifacts/ \;
+        find ./target/release -name waygate-generate-keys -exec cp {} artifacts/ \;
         find ./target/release -name waygate-server.exe -exec cp {} artifacts/ \;
-        find ./target/release -name generate-keys.exe -exec cp {} artifacts/ \;
+        find ./target/release -name waygate-generate-keys.exe -exec cp {} artifacts/ \;
         find ./target/release -name libsteam_api.so -exec cp {} artifacts/ \;
         find ./target/release -name steam_api64.dll -exec cp {} artifacts/ \;
-        cp config.toml artifacts/
+        cp announcements.toml artifacts/
         cp logging.toml artifacts/
         cp steam_appid.txt artifacts/
       shell: bash

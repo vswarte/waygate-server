@@ -2884,6 +2884,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "waygate-generate-keys"
+version = "0.1.0"
+dependencies = [
+ "base64 0.22.1",
+ "libsodium-sys-stable",
+]
+
+[[package]]
 name = "waygate-message"
 version = "0.1.0"
 dependencies = [

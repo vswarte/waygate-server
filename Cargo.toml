@@ -1,6 +1,7 @@
 [workspace]
 members = [
-    "server",
+    "crates/server",
+    "crates/generate-keys",
     "crates/wire",
     "crates/pool",
     "crates/message",
@@ -65,6 +66,18 @@ version = "0.20"
 features = [
     "rustls-tls-native-roots",
 ]
+
+[workspace.dependencies.libsodium-sys-stable]
+version = "1"
+features = [
+    "fetch-latest",
+]
+
+[workspace.dependencies.waygate-server]
+path = "crates/server"
+
+[workspace.dependencies.waygate-generate-keys]
+path = "crates/generate-keys"
 
 [workspace.dependencies.waygate-pool]
 path = "crates/pool"

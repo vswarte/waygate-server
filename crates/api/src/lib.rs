@@ -12,11 +12,12 @@ pub enum ApiError {
     Start(#[from] std::io::Error),
 }
 
-pub async fn serve_api(bind: &str, key: &str) -> Result<(), ApiError> {
+pub async fn serve_api(bind: &str, api_key: &str) -> Result<(), ApiError> {
+    let api_key = api_key.to_string();
     Ok(
-        HttpServer::new(|| {
+        HttpServer::new(move || {
                 App::new()
-                    .wrap(CheckKey)
+                    .wrap(CheckKey::new(&api_key))
                     .service(health)
                     .service(notify::notify_message)
             })
