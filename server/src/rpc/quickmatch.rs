@@ -1,12 +1,7 @@
-use super::message::*;
 use rand::Rng;
+use waygate_message::*;
+use waygate_pool::{QUICKMATCH_POOL, QuickmatchPoolQuery, QuickmatchPoolEntry, PoolError};
 
-use crate::pool;
-use crate::pool::quickmatch_pool;
-use crate::pool::quickmatch::QuickmatchPoolEntry;
-use crate::pool::quickmatch::QuickmatchPoolQuery;
-use crate::pool::MatchResult;
-use crate::pool::PoolError;
 use crate::push;
 use crate::rpc;
 use crate::session::ClientSession;
@@ -16,7 +11,7 @@ pub async fn handle_search_quick_match(
     request: RequestSearchQuickMatchParams,
 ) -> rpc::HandlerResult {
     Ok(ResponseParams::SearchQuickMatch(ResponseSearchQuickMatchParams {
-        matches: quickmatch_pool()
+        matches: QUICKMATCH_POOL
             .match_entries::<QuickmatchPoolQuery>(&request.into())
             .iter()
             .map(|m| m.into())
@@ -39,8 +34,7 @@ pub async fn handle_register_quick_match(
     );
 
     log::info!("QuickmatchPoolEntry: {:#?}", entry);
-    let key = quickmatch_pool()
-        .insert(session.player_id, entry)?;
+    let key = QUICKMATCH_POOL.insert(session.player_id, entry)?;
 
     session.quickmatch = Some(key);
     Ok(ResponseParams::RegisterQuickMatch)
@@ -70,7 +64,7 @@ pub async fn handle_join_quick_match(
 ) -> rpc::HandlerResult {
     log::info!("RequestJoinQuickMatchParams: {:#?}", request);
 
-    let quickmatch = pool::quickmatch_pool()
+    let quickmatch = QUICKMATCH_POOL
         .by_topic_id(request.host_player_id)
         .ok_or(std::io::Error::from(std::io::ErrorKind::Other))?;
 
@@ -83,7 +77,7 @@ pub async fn handle_join_quick_match(
     log::debug!("Joining player ID: {joining_player_id:?}");
 
     let push_payload = PushParams::Join(JoinParams {
-        identifier: shared::ObjectIdentifier {
+        identifier: ObjectIdentifier {
             object_id: rand::thread_rng().gen::<i32>(),
             secondary_id: rand::thread_rng().gen::<i32>(),
         },
@@ -113,12 +107,12 @@ pub async fn handle_accept_quick_match(
         (session.player_id, session.external_id.clone())
     };
 
-    let quickmatch = pool::quickmatch_pool()
+    let quickmatch = QUICKMATCH_POOL
         .by_topic_id(host_player_id)
         .ok_or(std::io::Error::from(std::io::ErrorKind::Other))?;
 
     let push_payload = PushParams::Join(JoinParams {
-        identifier: shared::ObjectIdentifier {
+        identifier: ObjectIdentifier {
             object_id: rand::thread_rng().gen::<i32>(),
             secondary_id: rand::thread_rng().gen::<i32>(),
         },
@@ -158,37 +152,3 @@ pub async fn handle_send_quick_match_result(
     Ok(ResponseParams::SendQuickMatchResult)
 }
 
-impl QuickmatchPoolEntry {
-    fn from_request(val: RequestRegisterQuickMatchParams, external_id: String) -> Self {
-        QuickmatchPoolEntry {
-            external_id,
-            character_level: val.matching_parameters.soul_level as u32,
-            weapon_level: val.matching_parameters.max_reinforce as u32,
-            arena_id: val.arena_id,
-            password: val.matching_parameters.password.clone(),
-            settings: val.quickmatch_settings,
-        }
-    }
-}
-
-impl From<&MatchResult<QuickmatchPoolEntry>> for ResponseSearchQuickMatchParamsEntry {
-    fn from(val: &MatchResult<QuickmatchPoolEntry>) -> Self {
-        ResponseSearchQuickMatchParamsEntry {
-            host_player_id: val.0.1,
-            host_steam_id: val.1.external_id.clone(),
-            arena_id: val.1.arena_id,
-        }
-    }
-}
-
-impl From<RequestSearchQuickMatchParams> for QuickmatchPoolQuery {
-    fn from(value: RequestSearchQuickMatchParams) -> Self {
-        Self {
-            character_level: value.matching_parameters.soul_level as u32,
-            weapon_level: value.matching_parameters.max_reinforce as u32,
-            password: value.matching_parameters.password.clone(),
-            arena_id: value.arena_id,
-            settings: value.quickmatch_settings,
-        }
-    }
-}

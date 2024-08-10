@@ -1,5 +1,8 @@
-use super::{matching::area::MatchingArea, PoolQuery};
-use crate::pool::matching::weapon;
+use waygate_message::{RequestCreateMatchAreaSignParams, RequestCreateSignParams, RequestGetMatchAreaSignListParams, RequestGetSignListParams, ResponseGetMatchAreaSignListParamsEntry, ResponseGetSignListParamsEntry};
+
+use crate::{MatchResult, PoolQuery};
+use crate::matching::weapon;
+use crate::matching::area::MatchingArea;
 
 #[derive(Debug, Default)]
 pub struct SignPoolEntry {
@@ -10,6 +13,64 @@ pub struct SignPoolEntry {
     pub password: String,
     pub group_passwords: Vec<String>,
     pub data: Vec<u8>,
+}
+
+impl From<RequestCreateSignParams> for SignPoolEntry {
+    fn from(val: RequestCreateSignParams) -> Self {
+        SignPoolEntry {
+            external_id: String::new(),
+            character_level: val.matching_parameters.soul_level as u32,
+            weapon_level: val.matching_parameters.max_reinforce as u32,
+            area: (&val.area).into(),
+            password: val.matching_parameters.password.clone(),
+            group_passwords: val.group_passwords.clone(),
+            data: val.data,
+        }
+    }
+}
+
+impl From<RequestCreateMatchAreaSignParams> for SignPoolEntry {
+    fn from(val: RequestCreateMatchAreaSignParams) -> Self {
+        SignPoolEntry {
+            external_id: String::new(),
+            character_level: val.matching_parameters.soul_level as u32,
+            weapon_level: val.matching_parameters.max_reinforce as u32,
+            area: (&val.area).into(),
+            password: val.matching_parameters.password.clone(),
+            group_passwords: val.group_passwords.clone(),
+            data: val.data,
+        }
+    }
+}
+
+impl Into<ResponseGetSignListParamsEntry> for &MatchResult<SignPoolEntry> {
+    fn into(self) -> ResponseGetSignListParamsEntry {
+        ResponseGetSignListParamsEntry {
+            player_id: self.0.1,
+            identifier: (&self.0).into(),
+            area: (&self.1.area).into(),
+            data: self.1.data.clone(),
+            steam_id: self.1.external_id.clone(),
+            unk_string: String::default(),
+            group_passwords: self.1.group_passwords.clone(),
+        }
+
+    }
+}
+
+impl From<&MatchResult<SignPoolEntry>> for ResponseGetMatchAreaSignListParamsEntry {
+    fn from(val: &MatchResult<SignPoolEntry>) -> Self {
+        ResponseGetMatchAreaSignListParamsEntry {
+            player_id: val.0.1,
+            identifier: (&val.0).into(),
+            data: val.1.data.clone(),
+            steam_id: val.1.external_id.clone(),
+            area: (&val.1.area).into(),
+            unk1: 0,
+            unk_string: String::default(),
+            group_passwords: val.1.group_passwords.clone(),
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -52,11 +113,33 @@ impl PoolQuery<SignPoolEntry> for SignPoolQuery {
     }
 }
 
+impl From<&RequestGetSignListParams> for SignPoolQuery {
+    fn from(value: &RequestGetSignListParams) -> Self {
+        Self {
+            character_level: value.matching_parameters.soul_level as u32,
+            weapon_level: value.matching_parameters.max_reinforce as u32,
+            areas: value.search_areas.iter().map(|e| e.into()).collect(),
+            password: value.matching_parameters.password.clone(),
+        }
+    }
+}
+
+impl From<&RequestGetMatchAreaSignListParams> for SignPoolQuery {
+    fn from(value: &RequestGetMatchAreaSignListParams) -> Self {
+        Self {
+            character_level: value.matching_parameters.soul_level as u32,
+            weapon_level: value.matching_parameters.max_reinforce as u32,
+            areas: vec![(&value.area).into()],
+            password: value.matching_parameters.password.clone(),
+        }
+    }
+}
+
 #[cfg(test)]
 mod test {
-    use crate::pool::matching::area::MatchingArea;
-    use crate::pool::PoolQuery;
-    use crate::pool::sign::{SignPoolEntry, SignPoolQuery};
+    use crate::PoolQuery;
+    use crate::matching::area::MatchingArea;
+    use crate::sign::{SignPoolEntry, SignPoolQuery};
 
     #[test]
     fn test_character_level() {

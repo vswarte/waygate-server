@@ -1,17 +1,14 @@
 use rand::prelude::*;
 use thiserror::Error;
 
-use crate::pool::MatchResult;
-use crate::pool::sign::SignPoolEntry;
-use crate::pool::sign::SignPoolQuery;
-use crate::pool::sign_pool;
-use crate::pool::PoolKey;
+use waygate_pool::{SIGN_POOL, SignPoolQuery, PoolKey};
+
 use crate::push;
 use crate::rpc;
 use crate::session::ClientSession;
 use crate::session::ClientSessionContainer;
 
-use super::message::*;
+use waygate_message::*;
 
 #[derive(Debug, Error)]
 pub enum SignError {
@@ -25,8 +22,7 @@ pub async fn handle_create_sign(
 ) -> rpc::HandlerResult {
     let mut session = session.lock_write();
 
-    let key = crate::pool::sign_pool()
-        .insert(session.player_id, request.into())?;
+    let key = SIGN_POOL.insert(session.player_id, request.into())?;
 
     let identifier: ObjectIdentifier = (&key.1).into();
     session.sign.push(key);
@@ -42,8 +38,7 @@ pub async fn handle_get_sign_list(
 ) -> rpc::HandlerResult {
     log::info!("Host requested signs list. host = {}", session.lock_read().player_id);
 
-    let mut pool_matches = sign_pool()
-        .match_entries::<SignPoolQuery>(&(&request).into());
+    let mut pool_matches = SIGN_POOL.match_entries::<SignPoolQuery>(&(&request).into());
 
     let already_received = pool_matches
         .iter()
@@ -54,7 +49,7 @@ pub async fn handle_get_sign_list(
                 None
             }
         })
-    .collect::<Vec<PoolKey>>();
+        .collect::<Vec<PoolKey>>();
 
     pool_matches.retain(|e| !already_received.contains(&e.0));
 
@@ -69,8 +64,6 @@ pub async fn handle_get_sign_list(
     }))
 }
 
-
-// Host tapped the sign
 pub async fn handle_summon_sign(
     session: ClientSession,
     request: RequestSummonSignParams,
@@ -79,7 +72,7 @@ pub async fn handle_summon_sign(
     log::info!("Host tapped a summon sign. host = {}", player_id);
 
     let poolkey: PoolKey = (&request.identifier).into();
-    if !sign_pool().has(&poolkey) {
+    if !SIGN_POOL.has(&poolkey) {
         return Err(Box::new(SignError::SignMissing));
     }
 
@@ -153,92 +146,12 @@ pub async fn handle_update_sign(
 ) -> rpc::HandlerResult {
     log::info!("Player sent UpdateSign. player = {}", session.lock_read().player_id);
 
-    let exists = crate::pool::sign_pool()
-        .has(&(&request.identifier).into());
+    let exists = SIGN_POOL.has(&(&request.identifier).into());
 
     if !exists {
         Err(Box::new(SignError::SignMissing))
     } else {
         Ok(ResponseParams::UpdateSign)
-    }
-}
-
-impl From<RequestCreateSignParams> for SignPoolEntry {
-    fn from(val: RequestCreateSignParams) -> Self {
-        SignPoolEntry {
-            external_id: String::new(),
-            character_level: val.matching_parameters.soul_level as u32,
-            weapon_level: val.matching_parameters.max_reinforce as u32,
-            area: (&val.area).into(),
-            password: val.matching_parameters.password.clone(),
-            group_passwords: val.group_passwords.clone(),
-            data: val.data,
-        }
-    }
-}
-
-impl From<RequestCreateMatchAreaSignParams> for SignPoolEntry {
-    fn from(val: RequestCreateMatchAreaSignParams) -> Self {
-        SignPoolEntry {
-            external_id: String::new(),
-            character_level: val.matching_parameters.soul_level as u32,
-            weapon_level: val.matching_parameters.max_reinforce as u32,
-            area: (&val.area).into(),
-            password: val.matching_parameters.password.clone(),
-            group_passwords: val.group_passwords.clone(),
-            data: val.data,
-        }
-    }
-}
-
-impl From<&MatchResult<SignPoolEntry>> for ResponseGetSignListParamsEntry {
-    fn from(val: &MatchResult<SignPoolEntry>) -> Self {
-        ResponseGetSignListParamsEntry {
-            player_id: val.0.1,
-            identifier: (&val.0).into(),
-            area: (&val.1.area).into(),
-            data: val.1.data.clone(),
-            steam_id: val.1.external_id.clone(),
-            unk_string: String::default(),
-            group_passwords: val.1.group_passwords.clone(),
-        }
-    }
-}
-
-impl From<&RequestGetSignListParams> for SignPoolQuery {
-    fn from(value: &RequestGetSignListParams) -> Self {
-        Self {
-            character_level: value.matching_parameters.soul_level as u32,
-            weapon_level: value.matching_parameters.max_reinforce as u32,
-            areas: value.search_areas.iter().map(|e| e.into()).collect(),
-            password: value.matching_parameters.password.clone(),
-        }
-    }
-}
-
-impl From<&RequestGetMatchAreaSignListParams> for SignPoolQuery {
-    fn from(value: &RequestGetMatchAreaSignListParams) -> Self {
-        Self {
-            character_level: value.matching_parameters.soul_level as u32,
-            weapon_level: value.matching_parameters.max_reinforce as u32,
-            areas: vec![(&value.area).into()],
-            password: value.matching_parameters.password.clone(),
-        }
-    }
-}
-
-impl From<&MatchResult<SignPoolEntry>> for ResponseGetMatchAreaSignListParamsEntry {
-    fn from(val: &MatchResult<SignPoolEntry>) -> Self {
-        ResponseGetMatchAreaSignListParamsEntry {
-            player_id: val.0.1,
-            identifier: (&val.0).into(),
-            data: val.1.data.clone(),
-            steam_id: val.1.external_id.clone(),
-            area: (&val.1.area).into(),
-            unk1: 0,
-            unk_string: String::default(),
-            group_passwords: val.1.group_passwords.clone(),
-        }
     }
 }
 
@@ -250,8 +163,7 @@ pub async fn handle_create_match_area_sign(
 
     let mut session = session.lock_write();
 
-    let key = crate::pool::sign_pool()
-        .insert(session.player_id, request.into())?;
+    let key = SIGN_POOL.insert(session.player_id, request.into())?;
 
     let identifier: ObjectIdentifier = (&key.1).into();
     session.sign.push(key);
@@ -266,8 +178,7 @@ pub async fn handle_get_match_area_sign_list(
 ) -> rpc::HandlerResult {
     log::info!("GetMatchAreaSignList: {request:?}");
 
-    let mut pool_matches = sign_pool()
-        .match_entries::<SignPoolQuery>(&(&request).into());
+    let mut pool_matches = SIGN_POOL.match_entries::<SignPoolQuery>(&(&request).into());
 
     let already_received = pool_matches
         .iter()

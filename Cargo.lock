@@ -754,17 +754,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "fnrpc"
-version = "0.1.0"
-dependencies = [
- "byteorder",
- "paste",
- "serde",
- "serde_repr",
- "thiserror",
-]
-
-[[package]]
 name = "fnv"
 version = "1.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2263,14 +2252,15 @@ dependencies = [
 
 [[package]]
 name = "tempfile"
-version = "3.10.1"
+version = "3.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "85b77fafb263dd9d05cbeac119526425676db3784113aa9295c88498cbf8bff1"
+checksum = "04cbcdd0c794ebb0d4cf35e88edd2f7d2c4c3e9a5a6dab322839b321c6a87a64"
 dependencies = [
  "cfg-if",
  "fastrand",
+ "once_cell",
  "rustix",
- "windows-sys 0.52.0",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -2709,6 +2699,42 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "af190c94f2773fdb3729c55b007a722abb5384da03bc0986df4c289bf5567e96"
 
 [[package]]
+name = "waygate-database"
+version = "0.1.0"
+dependencies = [
+ "sqlx",
+ "thiserror",
+ "tracing",
+]
+
+[[package]]
+name = "waygate-fnrpc"
+version = "0.1.0"
+dependencies = [
+ "byteorder",
+ "paste",
+ "serde",
+ "serde_repr",
+ "thiserror",
+]
+
+[[package]]
+name = "waygate-message"
+version = "0.1.0"
+dependencies = [
+ "serde",
+]
+
+[[package]]
+name = "waygate-pool"
+version = "0.1.0"
+dependencies = [
+ "thiserror",
+ "tracing",
+ "waygate-message",
+]
+
+[[package]]
 name = "waygate-server"
 version = "0.1.1"
 dependencies = [
@@ -2716,7 +2742,6 @@ dependencies = [
  "async-trait",
  "base64 0.22.1",
  "byteorder",
- "fnrpc",
  "futures",
  "futures-channel",
  "futures-util",
@@ -2734,6 +2759,10 @@ dependencies = [
  "toml",
  "tungstenite",
  "url",
+ "waygate-database",
+ "waygate-fnrpc",
+ "waygate-message",
+ "waygate-pool",
 ]
 
 [[package]]
@@ -2791,6 +2820,15 @@ name = "windows-sys"
 version = "0.52.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "282be5f36a8ce781fad8c8ae18fa3f9beff57ec1b52cb3de0789201425d9a33d"
+dependencies = [
+ "windows-targets 0.52.6",
+]
+
+[[package]]
+name = "windows-sys"
+version = "0.59.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1e38bc4d79ed67fd075bcc251a1c39b32a1776bbe92e5bef1f0bf1f8c531853b"
 dependencies = [
  "windows-targets 0.52.6",
 ]

@@ -1,5 +1,7 @@
-use super::PoolQuery;
-use crate::pool::matching::weapon;
+use crate::{MatchResult, PoolQuery};
+use crate::matching::weapon;
+
+use waygate_message::{RequestRegisterQuickMatchParams, RequestSearchQuickMatchParams, ResponseSearchQuickMatchParamsEntry};
 
 #[derive(Debug, Default)]
 pub struct QuickmatchPoolEntry {
@@ -9,6 +11,29 @@ pub struct QuickmatchPoolEntry {
     pub arena_id: i32,
     pub password: String,
     pub settings: i32,
+}
+
+impl QuickmatchPoolEntry {
+    pub fn from_request(val: RequestRegisterQuickMatchParams, external_id: String) -> Self {
+        QuickmatchPoolEntry {
+            external_id,
+            character_level: val.matching_parameters.soul_level as u32,
+            weapon_level: val.matching_parameters.max_reinforce as u32,
+            arena_id: val.arena_id,
+            password: val.matching_parameters.password.clone(),
+            settings: val.quickmatch_settings,
+        }
+    }
+}
+
+impl Into<ResponseSearchQuickMatchParamsEntry> for &MatchResult<QuickmatchPoolEntry> {
+    fn into(self) -> ResponseSearchQuickMatchParamsEntry {
+        ResponseSearchQuickMatchParamsEntry {
+            host_player_id: self.0.1,
+            host_steam_id: self.1.external_id.clone(),
+            arena_id: self.1.arena_id,
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -53,10 +78,22 @@ impl PoolQuery<QuickmatchPoolEntry> for QuickmatchPoolQuery {
     }
 }
 
+impl From<RequestSearchQuickMatchParams> for QuickmatchPoolQuery {
+    fn from(value: RequestSearchQuickMatchParams) -> Self {
+        Self {
+            character_level: value.matching_parameters.soul_level as u32,
+            weapon_level: value.matching_parameters.max_reinforce as u32,
+            password: value.matching_parameters.password.clone(),
+            arena_id: value.arena_id,
+            settings: value.quickmatch_settings,
+        }
+    }
+}
+
 #[cfg(test)]
 mod test {
-    use crate::pool::PoolQuery;
-    use crate::pool::quickmatch::{QuickmatchPoolEntry, QuickmatchPoolQuery};
+    use crate::PoolQuery;
+    use crate::quickmatch::{QuickmatchPoolEntry, QuickmatchPoolQuery};
 
     #[test]
     fn test_character_level() {

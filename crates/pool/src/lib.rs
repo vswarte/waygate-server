@@ -1,4 +1,4 @@
-use std::sync::{Arc, OnceLock, RwLock};
+use std::sync::{Arc, LazyLock, RwLock};
 use thiserror::Error;
 
 pub mod sign;
@@ -6,15 +6,16 @@ pub mod breakin;
 pub mod matching;
 pub mod quickmatch;
 
+pub use sign::*;
+pub use breakin::*;
+pub use matching::*;
+pub use quickmatch::*;
+
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicI32, Ordering};
 use std::sync::{RwLockReadGuard, RwLockWriteGuard};
 
-use self::quickmatch::QuickmatchPoolEntry;
-use self::sign::SignPoolEntry;
-use self::breakin::BreakInPoolEntry;
-
-use crate::rpc::message::shared::ObjectIdentifier;
+use waygate_message::ObjectIdentifier;
 
 #[derive(Debug, Error)]
 pub enum PoolError {
@@ -22,27 +23,9 @@ pub enum PoolError {
     NotFound,
 }
 
-pub fn init_pools() -> Result<(), PoolError> {
-    log::info!("Initialized matching pools");
-
-    Ok(())
-}
-
-static SIGN_POOL: OnceLock<Pool<SignPoolEntry>> = OnceLock::new();
-static BREAKIN_POOL: OnceLock<Pool<BreakInPoolEntry>> = OnceLock::new();
-static QUICKMATCH_POOL: OnceLock<Pool<QuickmatchPoolEntry>> = OnceLock::new();
-
-pub fn sign_pool() -> &'static Pool<SignPoolEntry> {
-    SIGN_POOL.get_or_init(Default::default)
-}
-
-pub fn breakin_pool() -> &'static Pool<BreakInPoolEntry> {
-    BREAKIN_POOL.get_or_init(Default::default)
-}
-
-pub fn quickmatch_pool() -> &'static Pool<QuickmatchPoolEntry> {
-    QUICKMATCH_POOL.get_or_init(Default::default)
-}
+pub static SIGN_POOL: LazyLock<Pool<SignPoolEntry>> = LazyLock::new(Default::default);
+pub static BREAKIN_POOL: LazyLock<Pool<BreakInPoolEntry>> = LazyLock::new(Default::default);
+pub static QUICKMATCH_POOL: LazyLock<Pool<QuickmatchPoolEntry>> = LazyLock::new(Default::default);
 
 pub struct MatchResult<TEntry>(pub PoolKey, pub Arc<TEntry>);
 
@@ -69,7 +52,7 @@ pub struct PoolKeyGuard<T: 'static>(&'static Pool<T>, pub PoolKey);
 
 impl<T> Drop for PoolKeyGuard<T> {
     fn drop(&mut self) {
-        log::info!("Dropped pool key guard");
+        tracing::info!("Dropped pool key guard");
         let _ = self.0.remove(&self.1);
     }
 }
@@ -109,7 +92,7 @@ impl<TEntry> Pool<TEntry> {
         let identifier = self.counter.fetch_add(1, Ordering::Relaxed);
         let key = PoolKey(identifier, topic);
 
-        log::info!("Adding entry {topic:?} to pool with key {identifier:?}");
+        tracing::info!("Adding entry {topic:?} to pool with key {identifier:?}");
 
         self.lock_write()
             .insert(key.clone(), Arc::new(entry));
@@ -121,7 +104,7 @@ impl<TEntry> Pool<TEntry> {
         &self,
         key: &PoolKey,
     ) -> Result<(), PoolError> {
-        log::info!("Remove entry {key:?} from pool");
+        tracing::info!("Remove entry {key:?} from pool");
         self.lock_write()
             .remove(key)
             .ok_or(PoolError::NotFound)?;
@@ -132,7 +115,7 @@ impl<TEntry> Pool<TEntry> {
     fn lock_read(&self) -> RwLockReadGuard<'_, HashMap<PoolKey, Arc<TEntry>>> {
         self.entries.read()
             .unwrap_or_else(|p| {
-                log::warn!("Pool recovering from mutex poisoning");
+                tracing::warn!("Pool recovering from mutex poisoning");
                 self.entries.clear_poison();
                 p.into_inner()
             })
@@ -141,7 +124,7 @@ impl<TEntry> Pool<TEntry> {
     fn lock_write(&self) -> RwLockWriteGuard<'_, HashMap<PoolKey, Arc<TEntry>>> {
         self.entries.write()
             .unwrap_or_else(|p| {
-                log::warn!("Pool recovering from mutex poisoning");
+                tracing::warn!("Pool recovering from mutex poisoning");
                 self.entries.clear_poison();
                 p.into_inner()
             })

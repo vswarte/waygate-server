@@ -3,7 +3,8 @@ use std::collections;
 use thiserror::Error;
 use tokio::sync as tokiosync;
 
-use crate::rpc::message::*;
+use waygate_fnrpc::serialize;
+use waygate_message::*;
 
 pub type ClientPushChannelRX = tokiosync::mpsc::Receiver<Vec<u8>>;
 pub type ClientPushChannelTX = tokiosync::mpsc::Sender<Vec<u8>>;
@@ -27,7 +28,7 @@ pub enum PushError {
     Send,
 
     #[error("Could not encode push message")]
-    Wire(#[from] fnrpc::FNWireError),
+    Wire(#[from] waygate_fnrpc::FNWireError),
 }
 
 pub async fn send_push(
@@ -40,7 +41,7 @@ pub async fn send_push(
             0x00, // ???
         ];
 
-        let mut serialized = fnrpc::serialize(params)?;
+        let mut serialized = serialize(params)?;
 
         buffer.append(&mut serialized);
         buffer
@@ -65,7 +66,7 @@ pub async fn broadcast(params: PushParams) -> Result<(), PushError> {
             0x00, // ???
         ];
 
-        let mut serialized = fnrpc::serialize(params)?;
+        let mut serialized = serialize(params)?;
 
         buffer.append(&mut serialized);
         buffer

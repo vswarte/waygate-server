@@ -9,7 +9,7 @@ use byteorder::ReadBytesExt;
 use thiserror::Error;
 use tungstenite::Message;
 use futures_util::SinkExt;
-use crate::rpc::message::{PayloadType, RequestParams};
+use waygate_message::{PayloadType, RequestParams};
 
 use crate::rpc;
 use crate::push;
@@ -39,7 +39,7 @@ pub enum ClientError {
     Crypto(#[from] crypto::CryptoError),
 
     #[error("Write error {0:?}")]
-    Wire(#[from] fnrpc::FNWireError),
+    Wire(#[from] waygate_fnrpc::FNWireError),
 
     #[error("Could not get a handler for message")]
     NoHandler(String),

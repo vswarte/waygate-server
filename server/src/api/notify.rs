@@ -2,7 +2,8 @@ use actix_web::{http::header::ContentType, post, web, HttpResponse, Responder};
 use rand::{thread_rng, Rng};
 use serde::Deserialize;
 
-use crate::{push, rpc::message::{NotifyParams, NotifyParamsSection1, NotifyParamsSection2, ObjectIdentifier, PushParams}};
+use crate::push;
+use waygate_message::{NotifyParams, NotifyParamsSection1, NotifyParamsSection2, ObjectIdentifier, PushParams};
 
 #[post("/notify/message")]
 async fn notify_message(req: web::Json<NotifyMessageRequest>) -> impl Responder {

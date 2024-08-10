@@ -1,14 +1,14 @@
-use crate::database;
 use crate::rpc;
 use crate::session::ClientSession;
 use crate::session::ClientSessionContainer;
 
-use crate::rpc::message::*;
+use waygate_database::database_connection;
+use waygate_message::*;
 
 pub async fn handle_gr_get_player_equipments(
     request: RequestGrGetPlayerEquipmentsParams,
 ) -> rpc::HandlerResult {
-    let mut connection = database::acquire().await?;
+    let mut connection = database_connection().await?;
     let entries = sqlx::query_as::<_, PlayerEquipments>("
         SELECT
             distinct on (player_id) player_id, *
@@ -43,7 +43,7 @@ pub async fn handle_gr_upload_player_equipments(
         (lock.player_id, lock.session_id)
     };
 
-    let mut connection = database::acquire().await?;
+    let mut connection = database_connection().await?;
     sqlx::query("INSERT INTO player_equipments (
             player_id,
             session_id,

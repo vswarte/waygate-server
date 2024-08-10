@@ -1,7 +1,7 @@
 use crate::rpc;
 use crate::config;
 
-use super::message::*;
+use waygate_message::*;
 
 pub async fn handle_get_announce_message_list() -> rpc::HandlerResult {
     Ok(ResponseParams::GetAnnounceMessageList(

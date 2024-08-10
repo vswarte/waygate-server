@@ -6,7 +6,7 @@ use crate::rpc;
 use crate::session;
 use crate::session::ClientSession;
 
-use super::message::*;
+use waygate_message::*;
 
 // TODO: actually handle the request in some capacity
 pub async fn handle_create_session(

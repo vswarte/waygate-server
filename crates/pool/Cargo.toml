@@ -1,0 +1,13 @@
+[package]
+name = "waygate-pool"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies.waygate-message]
+workspace = true
+
+[dependencies.thiserror]
+workspace = true
+
+[dependencies.tracing]
+workspace = true

@@ -1,11 +1,22 @@
-use super::PoolQuery;
-use crate::pool::matching::weapon;
+use waygate_message::{RequestGetBreakInTargetListParams, ResponseGetBreakInTargetListParamsEntry};
+
+use crate::{MatchResult, PoolQuery};
+use crate::matching::weapon;
 
 #[derive(Debug, Default)]
 pub struct BreakInPoolEntry {
     pub character_level: u32,
     pub weapon_level: u32,
     pub steam_id: String,
+}
+
+impl Into<ResponseGetBreakInTargetListParamsEntry> for &MatchResult<BreakInPoolEntry> {
+    fn into(self) -> ResponseGetBreakInTargetListParamsEntry {
+        ResponseGetBreakInTargetListParamsEntry {
+            player_id: self.0.1,
+            steam_id: self.1.steam_id.clone(),
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -47,9 +58,19 @@ impl PoolQuery<BreakInPoolEntry> for BreakInPoolQuery {
     }
 }
 
+impl From<RequestGetBreakInTargetListParams> for BreakInPoolQuery {
+    fn from(value: RequestGetBreakInTargetListParams) -> Self {
+        BreakInPoolQuery {
+            character_level: value.matching_parameters.soul_level as u32,
+            weapon_level: value.matching_parameters.max_reinforce as u32,
+        }
+    }
+}
+
 #[cfg(test)]
 mod test {
-    use crate::pool::{breakin::{BreakInPoolEntry, BreakInPoolQuery}, PoolQuery};
+    use crate::breakin::PoolQuery;
+    use crate::breakin::{BreakInPoolEntry, BreakInPoolQuery};
 
     #[test]
     fn test_character_level() {

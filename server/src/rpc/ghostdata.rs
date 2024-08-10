@@ -1,11 +1,11 @@
 use sqlx::Row;
+use waygate_database::database_connection;
 
-use crate::database;
 use crate::rpc;
 use crate::session::ClientSession;
 use crate::session::ClientSessionContainer;
 
-use super::message::*;
+use waygate_message::*;
 
 pub async fn handle_create_ghostdata(
     session: ClientSession,
@@ -16,7 +16,7 @@ pub async fn handle_create_ghostdata(
         (lock.player_id, lock.session_id)
     };
 
-    let mut connection = database::acquire().await?;
+    let mut connection = database_connection().await?;
     let ghostdata_id = sqlx::query("INSERT INTO ghostdata (
             player_id,
             session_id,
@@ -57,7 +57,7 @@ pub async fn handle_get_ghostdata_list(
         .map(|a| a.play_region)
         .collect::<Vec<i32>>();
 
-    let mut connection = database::acquire().await?;
+    let mut connection = database_connection().await?;
     let entries = sqlx::query_as::<_, GhostData>("SELECT * FROM ghostdata WHERE play_region = ANY($1) ORDER BY random() LIMIT 64")
         .bind(play_regions)
         .fetch_all(&mut *connection)

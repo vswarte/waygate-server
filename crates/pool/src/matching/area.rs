@@ -1,4 +1,5 @@
-use crate::rpc::message::shared::*;
+use waygate_message::{PlayRegionArea, PuddleArea};
+
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum MatchingArea {

@@ -1,6 +1,6 @@
 use crate::rpc;
 
-use super::message::*;
+use waygate_message::*;
 
 pub async fn handle_update_login_player_character(
 ) -> rpc::HandlerResult {

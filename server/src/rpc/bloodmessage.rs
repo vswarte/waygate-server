@@ -1,12 +1,12 @@
 use sqlx::Row;
 use thiserror::Error;
+use waygate_database::database_connection;
 
-use crate::database;
 use crate::rpc;
 use crate::session::ClientSession;
 use crate::session::ClientSessionContainer;
 
-use super::message::*;
+use waygate_message::*;
 
 pub async fn handle_create_blood_message(
     session: ClientSession,
@@ -17,7 +17,7 @@ pub async fn handle_create_blood_message(
         (lock.player_id, lock.session_id)
     };
 
-    let mut connection = database::acquire().await?;
+    let mut connection = database_connection().await?;
     let bloodmessage_id = sqlx::query("INSERT INTO bloodmessages (
             player_id,
             character_id,
@@ -65,7 +65,7 @@ pub async fn handle_get_blood_message_list(
         .map(|a| a.play_region)
         .collect::<Vec<i32>>();
 
-    let mut connection = database::acquire().await?;
+    let mut connection = database_connection().await?;
     let entries = sqlx::query_as::<_, BloodMessage>("SELECT * FROM bloodmessages WHERE play_region = ANY($1) ORDER BY random() LIMIT 64")
         .bind(play_regions)
         .fetch_all(&mut *connection)
@@ -91,7 +91,7 @@ pub async fn handle_evaluate_blood_message(
         },
     };
 
-    let mut connection = database::acquire().await?;
+    let mut connection = database_connection().await?;
     query.bind(request.identifier.object_id)
         .execute(&mut *connection)
         .await?;
@@ -107,7 +107,7 @@ pub async fn handle_reentry_blood_message(
         .map(|a| a.object_id)
         .collect::<Vec<i32>>();
 
-    let mut connection = database::acquire().await?;
+    let mut connection = database_connection().await?;
     let identifiers = sqlx::query_as::<_, BloodMessage>("SELECT * FROM bloodmessages WHERE bloodmessage_id = ANY($1)")
         .bind(bloodmessages)
         .fetch_all(&mut *connection)
@@ -130,7 +130,7 @@ pub async fn handle_remove_blood_message(
 ) -> rpc::HandlerResult {
     let player_id = session.lock_read().player_id;
 
-    let mut connection = database::acquire().await?;
+    let mut connection = database_connection().await?;
     sqlx::query("DELETE FROM bloodmessages WHERE bloodmessage_id = $1 AND player_id = $2")
         .bind(request.identifier.object_id)
         .bind(player_id)

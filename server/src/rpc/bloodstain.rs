@@ -1,11 +1,11 @@
 use sqlx::Row;
+use waygate_database::database_connection;
 
-use crate::database;
 use crate::rpc;
 use crate::session::ClientSession;
 use crate::session::ClientSessionContainer;
 
-use super::message::*;
+use waygate_message::*;
 
 pub async fn handle_create_bloodstain(
     session: ClientSession,
@@ -16,7 +16,7 @@ pub async fn handle_create_bloodstain(
         (lock.player_id, lock.session_id)
     };
 
-    let mut connection = database::acquire().await?;
+    let mut connection = database_connection().await?;
     let bloodstain_id = sqlx::query("INSERT INTO bloodstains (
             player_id,
             session_id,
@@ -60,7 +60,7 @@ pub async fn handle_get_bloodstain_list(
         .map(|a| a.play_region)
         .collect::<Vec<i32>>();
 
-    let mut connection = database::acquire().await?;
+    let mut connection = database_connection().await?;
     let entries = sqlx::query_as::<_, Bloodstain>("SELECT * FROM bloodstains WHERE play_region = ANY($1) ORDER BY random() LIMIT 64")
         .bind(play_regions)
         .fetch_all(&mut *connection)
@@ -79,7 +79,7 @@ pub async fn handle_get_deading_ghost(
 ) -> rpc::HandlerResult {
     log::info!("GetDeadingGhost: {:?}", params);
 
-    let mut connection = database::acquire().await?;
+    let mut connection = database_connection().await?;
     let bloodstain = sqlx::query_as::<_, Bloodstain>("SELECT * FROM bloodstains WHERE bloodstain_id = $1")
         .bind(params.identifier.object_id)
         .fetch_one(&mut *connection)
@@ -137,5 +137,14 @@ impl From<Bloodstain> for ResponseGetDeadingGhostParams {
             },
             replay_data: val.replay_data,
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    #[test]
+    pub fn create_bloodstain_deserializes() {
+        let message = include_bytes!("../../test/data/messages/RequestCreateBloodstain.bin");
+
     }
 }

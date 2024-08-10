@@ -3,9 +3,9 @@ use rand::prelude::*;
 use sqlx::Row;
 use thiserror::Error;
 
-use crate::rpc::message::RequestUpdatePlayerStatusParams;
-
-use crate::{database::{self, DatabaseError}, pool::{breakin::BreakInPoolEntry, breakin_pool, quickmatch::QuickmatchPoolEntry, sign::SignPoolEntry, PoolError, PoolKeyGuard}};
+use waygate_message::RequestUpdatePlayerStatusParams;
+use waygate_database::{database_connection, DatabaseError};
+use waygate_pool::{BREAKIN_POOL, SignPoolEntry, BreakInPoolEntry, QuickmatchPoolEntry, PoolError, PoolKeyGuard};
 
 // Sessions are valid for an hour
 pub const SESSION_VALIDITY: u64 = 60 * 60 * 7;
@@ -49,7 +49,7 @@ impl ClientSessionInner {
             let matching = self.matching.as_ref()
                 .ok_or(SessionError::MissingCharacterData)?;
 
-            let key = breakin_pool()
+            let key = BREAKIN_POOL
                 .insert(self.player_id, BreakInPoolEntry {
                     character_level: matching.level,
                     weapon_level: matching.max_reinforce_level,
@@ -123,7 +123,7 @@ pub async fn new_client_session(external_id: String) -> Result<ClientSessionInne
     let valid_from = (now - valid_for).as_secs() as i64;
     let valid_until = (now + valid_for).as_secs() as i64;
 
-    let mut connection = database::acquire().await?;
+    let mut connection = database_connection().await?;
     let session_id = sqlx::query("INSERT INTO sessions (player_id, cookie, valid_until) VALUES ($1, $2, $3) RETURNING session_id")
         .bind(player_id)
         .bind(&cookie)
@@ -154,7 +154,7 @@ pub async fn new_client_session(external_id: String) -> Result<ClientSessionInne
 pub async fn get_client_session(external_id: String, session_id: i32, cookie: &str) -> Result<ClientSessionInner, SessionError> {
     let now = time::SystemTime::now().duration_since(time::UNIX_EPOCH).unwrap();
 
-    let mut connection = database::acquire().await?;
+    let mut connection = database_connection().await?;
     // let session = sqlx::query_as::<_, Session>("SELECT * FROM sessions WHERE session_id = $1 AND cookie = $2 AND valid_until > $3")
     let session = sqlx::query_as::<_, Session>("SELECT * FROM sessions WHERE session_id = $1 AND cookie = $2")
         .bind(session_id)
@@ -200,7 +200,7 @@ struct Session {
 /// Tries to fetch our player ID by the external_id, creates the record and
 /// returns ID of newly created row if none exists with that external ID.
 async fn acquire_player_id(external_id: &str) -> Result<i32, DatabaseError> {
-    let mut connection = database::acquire().await?;
+    let mut connection = database_connection().await?;
     let result = sqlx::query_as::<_, Player>("SELECT player_id FROM players WHERE external_id = $1",)
         .bind(external_id)
         .fetch_optional(&mut *connection)

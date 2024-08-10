@@ -34,18 +34,6 @@ features = [
     "fetch-latest",
 ]
 
-[dependencies.sqlx]
-version = "0.7"
-features = [
-    "postgres",
-    "migrate",
-    "runtime-tokio",
-    "macros",
-]
-
-[dependencies.serde]
-workspace = true
-
 [dependencies.futures-util]
 version = "0.3"
 features = [
@@ -70,8 +58,23 @@ features = [
     "full",
 ]
 
-[dependencies.fnrpc]
-path = "../fnrpc"
+[dependencies.waygate-fnrpc]
+workspace = true
+
+[dependencies.waygate-message]
+workspace = true
+
+[dependencies.waygate-pool]
+workspace = true
+
+[dependencies.waygate-database]
+workspace = true
+
+[dependencies.sqlx]
+workspace = true
+
+[dependencies.serde]
+workspace = true
 
 [dependencies.steamworks]
 git = "https://github.com/vswarte/steamworks-rs"

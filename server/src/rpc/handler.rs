@@ -1,8 +1,8 @@
-use message::RequestParams;
-
 use crate::session::{ClientSession, ClientSessionContainer};
 use crate::rpc::*;
 use crate::client::ClientError;
+
+use waygate_message::*;
 
 pub async fn dispatch_request(
     session: ClientSession,

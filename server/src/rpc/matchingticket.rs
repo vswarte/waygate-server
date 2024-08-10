@@ -1,4 +1,4 @@
-use super::message::*;
+use waygate_message::*;
 
 use crate::rpc;
 

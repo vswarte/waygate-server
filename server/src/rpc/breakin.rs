@@ -1,30 +1,20 @@
 use rand::prelude::*;
 
-use crate::pool::breakin::BreakInPoolEntry;
-use crate::pool::breakin::BreakInPoolQuery;
-use crate::pool::breakin_pool;
-use crate::pool::MatchResult;
+use waygate_pool::BREAKIN_POOL;
+use waygate_pool::breakin::BreakInPoolQuery;
+
 use crate::push;
 use crate::rpc;
 use crate::session::ClientSession;
 use crate::session::ClientSessionContainer;
 
-use super::message::*;
-
-impl From<RequestGetBreakInTargetListParams> for BreakInPoolQuery {
-    fn from(value: RequestGetBreakInTargetListParams) -> Self {
-        BreakInPoolQuery {
-            character_level: value.matching_parameters.soul_level as u32,
-            weapon_level: value.matching_parameters.max_reinforce as u32,
-        }
-    }
-}
+use waygate_message::*;
 
 pub async fn handle_get_break_in_target_list(
     params: RequestGetBreakInTargetListParams,
 ) -> rpc::HandlerResult {
     let play_region = params.play_region;
-    let entries = breakin_pool()
+    let entries = BREAKIN_POOL
         .match_entries::<BreakInPoolQuery>(&params.into())
         .iter()
         .map(|m| m.into())
@@ -118,13 +108,4 @@ pub async fn handle_reject_break_in_target(
             .await
             .map(|_| ResponseParams::RejectBreakInTarget)?
     )
-}
-
-impl From<&MatchResult<BreakInPoolEntry>> for ResponseGetBreakInTargetListParamsEntry {
-    fn from(val: &MatchResult<BreakInPoolEntry>) -> Self {
-        ResponseGetBreakInTargetListParamsEntry {
-            player_id: val.0.1,
-            steam_id: val.1.steam_id.clone(),
-        }
-    }
 }

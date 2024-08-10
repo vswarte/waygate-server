@@ -25,15 +25,15 @@ pub async fn init(url: &str) -> Result<(), DatabaseError> {
     sqlx::migrate!("./migrations")
         .run(&pool)
         .await?;
-    log::info!("Ran migrations");
+    tracing::info!("Completed migrations");
 
     POOL.set(pool).expect("Could not set POOL static");
-    log::info!("Initialized database pool");
+    tracing::info!("Initialized database pool");
 
     Ok(())
 }
 
-pub async fn acquire() -> Result<PoolConnection<Postgres>, DatabaseError> {
+pub async fn database_connection() -> Result<PoolConnection<Postgres>, DatabaseError> {
     match POOL.get() {
         Some(p) => Ok(p.acquire().await?),
         None => Err(DatabaseError::Acquire),

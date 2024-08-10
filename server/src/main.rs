@@ -1,10 +1,8 @@
 use std::io;
 use tokio::net as tokionet;
 
-mod database;
 mod rpc;
 mod push;
-mod pool;
 mod steam;
 mod client;
 mod session;
@@ -18,11 +16,10 @@ async fn main () -> Result<(), io::Error> {
     let config = config::get();
     log::debug!("Loaded config: {:#?}", config);
 
-    database::init(config.database_url.as_str())
+    waygate_database::init(config.database_url.as_str())
         .await.expect("Could not initialize database");
 
     steam::init().expect("Could not initialize steam");
-    pool::init_pools().expect("Could not initialize pools");
 
     tokio::select! {
         _ = api::start_api() => {

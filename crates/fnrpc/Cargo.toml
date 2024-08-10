@@ -1,13 +1,15 @@
 [package]
-name = "fnrpc"
+name = "waygate-fnrpc"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
 byteorder = "1.4"
-thiserror = "1.0"
 paste = "1.0"
 serde_repr ="0.1"
 
 [dependencies.serde]
+workspace = true
+
+[dependencies.thiserror]
 workspace = true
