@@ -1,0 +1,25 @@
+[package]
+name = "waygate-api"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+actix-web = "4"
+
+[dependencies.thiserror]
+workspace = true
+
+[dependencies.serde]
+workspace = true
+
+[dependencies.rand]
+workspace = true
+
+[dependencies.waygate-config]
+workspace = true
+
+[dependencies.waygate-message]
+workspace = true
+
+[dependencies.waygate-connection]
+workspace = true

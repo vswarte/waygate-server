@@ -1,0 +1,65 @@
+[package]
+name = "waygate-connection"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+futures = "0.3"
+futures-channel = "0.3"
+
+[dependencies.futures-util]
+version = "0.3"
+features = [
+    "sink",
+]
+
+[dependencies.libsodium-sys-stable]
+version = "1"
+features = [
+    "fetch-latest",
+]
+
+[dependencies.tracing]
+workspace = true
+
+[dependencies.byteorder]
+workspace = true
+
+[dependencies.rand]
+workspace = true
+
+[dependencies.sqlx]
+workspace = true
+
+[dependencies.base64]
+workspace = true
+
+[dependencies.tokio]
+workspace = true
+
+[dependencies.tungstenite]
+workspace = true
+
+[dependencies.tokio-tungstenite]
+workspace = true
+
+[dependencies.thiserror]
+workspace = true
+
+[dependencies.waygate-wire]
+workspace = true
+
+[dependencies.waygate-message]
+workspace = true
+
+[dependencies.waygate-config]
+workspace = true
+
+[dependencies.waygate-steam]
+workspace = true
+
+[dependencies.waygate-database]
+workspace = true
+
+[dependencies.waygate-pool]
+workspace = true

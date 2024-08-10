@@ -15,10 +15,9 @@ pub enum DatabaseError {
     MigrateError(#[from] sqlx::migrate::MigrateError),
 }
 
-
 static POOL: sync::OnceLock<Pool<Postgres>> = sync::OnceLock::new();
 
-pub async fn init(url: &str) -> Result<(), DatabaseError> {
+pub async fn init_database(url: &str) -> Result<(), DatabaseError> {
     let pool = Pool::<Postgres>::connect(url)
             .await?;
 

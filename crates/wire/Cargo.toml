@@ -1,0 +1,15 @@
+[package]
+name = "waygate-wire"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+byteorder = "1.4"
+paste = "1.0"
+serde_repr ="0.1"
+
+[dependencies.serde]
+workspace = true
+
+[dependencies.thiserror]
+workspace = true

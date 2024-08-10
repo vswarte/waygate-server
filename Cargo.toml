@@ -1,10 +1,15 @@
 [workspace]
 members = [
     "server",
-    "crates/fnrpc",
+    "crates/wire",
     "crates/pool",
     "crates/message",
     "crates/database",
+    "crates/api",
+    "crates/steam",
+    "crates/config",
+    "crates/connection",
+    "crates/rpc",
 ]
 
 [profile.release]
@@ -14,8 +19,12 @@ codegen-units = 1
 panic = "abort"
 opt-level = "z"
 
-[workspace.dependencies.tracing]
-version = "0.1"
+[workspace.dependencies]
+thiserror = "1.0"
+rand = "0.8"
+base64 = "0.22"
+tracing = "0.1"
+byteorder = "1"
 
 [workspace.dependencies.serde]
 version = "1.0"
@@ -32,11 +41,36 @@ features = [
     "macros",
 ]
 
+[workspace.dependencies.clap]
+version = "4"
+features = [
+    "derive",
+    "env",
+]
+
+[workspace.dependencies.tokio]
+version = "1"
+features = [
+    "full",
+]
+
+[workspace.dependencies.tungstenite]
+version = "0.20"
+features = [
+    "rustls",
+]
+
+[workspace.dependencies.tokio-tungstenite]
+version = "0.20"
+features = [
+    "rustls-tls-native-roots",
+]
+
 [workspace.dependencies.waygate-pool]
 path = "crates/pool"
 
-[workspace.dependencies.waygate-fnrpc]
-path = "crates/fnrpc"
+[workspace.dependencies.waygate-wire]
+path = "crates/wire"
 
 [workspace.dependencies.waygate-message]
 path = "crates/message"
@@ -44,5 +78,17 @@ path = "crates/message"
 [workspace.dependencies.waygate-database]
 path = "crates/database"
 
-[workspace.dependencies]
-thiserror = "1.0"
+[workspace.dependencies.waygate-api]
+path = "crates/api"
+
+[workspace.dependencies.waygate-steam]
+path = "crates/steam"
+
+[workspace.dependencies.waygate-config]
+path = "crates/config"
+
+[workspace.dependencies.waygate-connection]
+path = "crates/connection"
+
+[workspace.dependencies.waygate-rpc]
+path = "crates/rpc"

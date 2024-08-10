@@ -5,22 +5,8 @@ edition = "2021"
 
 [dependencies]
 url = "2"
-rand = "0.8"
 async-trait = "0.1"
-futures = "0.3"
-futures-channel = "0.3"
-thiserror = "1"
-byteorder = "1"
-toml = "0.8"
 newtype = "0.2"
-base64 = "0.22"
-actix-web = "4"
-
-[dependencies.log]
-version = "0.4"
-features = [
-    "kv",
-]
 
 [dependencies.log4rs]
 version = "1"
@@ -28,37 +14,37 @@ features = [
     "toml_format",
 ]
 
-[dependencies.libsodium-sys-stable]
-version = "1"
-features = [
-    "fetch-latest",
-]
+[dependencies.tracing]
+workspace = true
 
-[dependencies.futures-util]
-version = "0.3"
-features = [
-    "sink",
-]
+[dependencies.thiserror]
+workspace = true
 
-[dependencies.tungstenite]
-version = "0.20"
-features = [
-    "rustls",
-]
-
-[dependencies.tokio-tungstenite]
-version = "0.20"
-features = [
-    "rustls-tls-native-roots",
-]
+[dependencies.byteorder]
+workspace = true
 
 [dependencies.tokio]
-version = "1"
-features = [
-    "full",
-]
+workspace = true
 
-[dependencies.waygate-fnrpc]
+[dependencies.tungstenite]
+workspace = true
+
+[dependencies.tokio-tungstenite]
+workspace = true
+
+[dependencies.sqlx]
+workspace = true
+
+[dependencies.serde]
+workspace = true
+
+[dependencies.clap]
+workspace = true
+
+[dependencies.rand]
+workspace = true
+
+[dependencies.waygate-wire]
 workspace = true
 
 [dependencies.waygate-message]
@@ -70,11 +56,17 @@ workspace = true
 [dependencies.waygate-database]
 workspace = true
 
-[dependencies.sqlx]
+[dependencies.waygate-api]
 workspace = true
 
-[dependencies.serde]
+[dependencies.waygate-steam]
 workspace = true
 
-[dependencies.steamworks]
-git = "https://github.com/vswarte/steamworks-rs"
+[dependencies.waygate-config]
+workspace = true
+
+[dependencies.waygate-connection]
+workspace = true
+
+[dependencies.waygate-rpc]
+workspace = true

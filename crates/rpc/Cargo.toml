@@ -1,0 +1,37 @@
+[package]
+name = "waygate-rpc"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies.byteorder]
+workspace = true
+
+[dependencies.sqlx]
+workspace = true
+
+[dependencies.thiserror]
+workspace = true
+
+[dependencies.rand]
+workspace = true
+
+[dependencies.tracing]
+workspace = true
+
+[dependencies.waygate-wire]
+workspace = true
+
+[dependencies.waygate-message]
+workspace = true
+
+[dependencies.waygate-connection]
+workspace = true
+
+[dependencies.waygate-database]
+workspace = true
+
+[dependencies.waygate-pool]
+workspace = true
+
+[dependencies.waygate-config]
+workspace = true
