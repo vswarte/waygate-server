@@ -21,6 +21,9 @@ The server requires a postgresql database to store messages, bloodstains, ghosts
 and more. I am not going to cover how to set up a postgresql database as enough
 places cover this exact procedure.
 
+It is worth noting however that waygate-server will run migrations automatically
+once connected to a database.
+
 ### Keys
 The game uses a set of fixed keys to kick off the connection and perform the key
 exchange. You will need to generate a key pair for your server and client. You
