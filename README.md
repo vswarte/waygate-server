@@ -16,7 +16,7 @@ banned from official online play, however there is no guarantee this server
 is completely safe to use.
 
 ## Setup
-### Server setup
+### Postgresql
 The server requires a postgresql database to store messages, bloodstains, ghosts
 and more. I am not going to cover how to set up a postgresql database as enough
 places cover this exact procedure.
@@ -69,6 +69,17 @@ $ ./waygate-server \
 #### Database URL
 The `--database` parameter expects a database URL like so: `postgresql://<USERNAME>:<PASSWORD>@<HOST>/<DATABASE>`.
 
+#### API
+The server also spins up a HTTP JSON API that allows people to do automated healthchecks,
+broadcast messages and more in the future. This HTTP server is bound seperately
+from the game server to what was specified by the `--api-bind` parameter.
+
+API authentication is regulated by the `--api-key` which requires you to specify
+a key that must be matched on incoming HTTP requests. You can use random.org or
+a password generator to derive a secure API key.
+
+You can find more about the API as well as examples [here](crates/api/README.md).
+
 #### Setting up the client
 // TBD
 
@@ -79,30 +90,6 @@ which has its [own manual](https://docs.rs/log4rs/latest/log4rs/config/index.htm
 
 #### Announcements
 The announcements are set in `announcements.toml`.
-
-### API
-The server also spins up a JSON HTTP API that allows people to do automated healthchecks,
-broadcast messages and more in the future. This HTTP server is bound seperately
-from the game server dictated by the `--api-bind` parameter.
-
-API authentication is regulated by the `--api-key` which requires you to specify
-a key that must be matched on incoming HTTP requests. You can use random.org or
-a password generator to derive a secure API key.
-
-Example healtcheck call:
-```bash
-$ curl -X GET http://localhost:10902/health \
-    --header "X-Auth-Token: <API KEY>" \
-    --header "Content-Type: application/json"         
-```
-
-Example announcement call:
-```bash
-$ curl -v -X POST http://localhost:10902/notify/message \
-    --header "X-Auth-Token: <API KEY>" \
-    --header "Content-Type: application/json" \
-    --data '{"message":"Test Announcement"}'
-```
 
 ## What's working? What needs to be done?
  - [x] Summoning per sign
