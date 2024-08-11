@@ -232,3 +232,25 @@ pub struct RequestJoinMultiplayParams {
     pub unk5: u32,
     pub unk6: u32,
 }
+
+#[cfg(test)]
+mod test {
+    use waygate_wire::deserialize;
+    use crate::{ObjectIdentifier, RequestUpdateSignParams, RequestUseItemLogParams};
+
+    #[test]
+    fn deserialize_use_item_log() {
+        let deserialized: RequestUseItemLogParams = deserialize(
+            include_bytes!("../test/data/RequestUseItemLog.bin"),
+        ).unwrap();
+
+        assert_eq!(deserialized.used_items.len(), 1);
+        assert_eq!(deserialized.used_items[0].item_id, 101);
+        assert_eq!(deserialized.used_items[0].times_used, 1);
+        assert_eq!(deserialized.used_items[0].unk3, 1);
+        assert_eq!(deserialized.location.map, 60423600);
+        assert_eq!(deserialized.location.x, -45.939575);
+        assert_eq!(deserialized.location.y, 92.36392);
+        assert_eq!(deserialized.location.z, 79.65545);
+    }
+}

@@ -112,3 +112,49 @@ pub struct RequestCreateMatchAreaSignParams {
 pub struct ResponseCreateMatchAreaSignParams {
     pub identifier: ObjectIdentifier,
 }
+
+#[cfg(test)]
+mod test {
+    use waygate_wire::deserialize;
+    use crate::{ObjectIdentifier, RequestGetSignListParams, RequestUpdateSignParams};
+
+    #[test]
+    fn deserialize_update_sign() {
+        let deserialized: RequestUpdateSignParams = deserialize(
+            include_bytes!("../test/data/RequestUpdateSign.bin"),
+        ).unwrap();
+
+        assert_eq!(
+            deserialized.identifier,
+            ObjectIdentifier { object_id: -1198167463, secondary_id: 328094526 }
+        );
+        assert_eq!(deserialized.unk0, 0);
+    }
+
+    #[test]
+    fn deserialize_get_sign_list() {
+        let deserialized: RequestGetSignListParams = deserialize(
+            include_bytes!("../test/data/RequestGetSignList.bin"),
+        ).unwrap();
+
+        // TODO: add example with known signs
+        assert_eq!(deserialized.known_signs.len(), 0);
+        assert_eq!(deserialized.search_areas.len(), 2);
+        assert_eq!(deserialized.search_areas[0].play_region, 1100000);
+        assert_eq!(deserialized.search_areas[0].area, 1100000);
+        assert_eq!(deserialized.search_areas[1].play_region, 1100001);
+        assert_eq!(deserialized.search_areas[1].area, 1100001);
+        assert_eq!(deserialized.matching_parameters.game_version, 11001000);
+        assert_eq!(deserialized.matching_parameters.unk1, 5);
+        assert_eq!(deserialized.matching_parameters.region_flags, 256);
+        assert_eq!(deserialized.matching_parameters.unk2, 0);
+        assert_eq!(deserialized.matching_parameters.soul_level, 99);
+        assert_eq!(deserialized.matching_parameters.unk3, 0);
+        assert_eq!(deserialized.matching_parameters.unk4, 0);
+        assert_eq!(deserialized.matching_parameters.clear_count, 0);
+        assert_eq!(deserialized.matching_parameters.password, "");
+        assert_eq!(deserialized.matching_parameters.unk5, 0);
+        assert_eq!(deserialized.matching_parameters.max_reinforce, 22);
+        assert_eq!(deserialized.matching_parameters.unk6, 5);
+    }
+}

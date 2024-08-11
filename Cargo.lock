@@ -2896,6 +2896,7 @@ name = "waygate-message"
 version = "0.1.0"
 dependencies = [
  "serde",
+ "waygate-wire",
 ]
 
 [[package]]

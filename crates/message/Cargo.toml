@@ -5,3 +5,6 @@ edition = "2021"
 
 [dependencies.serde]
 workspace = true
+
+[dependencies.waygate-wire]
+workspace = true
