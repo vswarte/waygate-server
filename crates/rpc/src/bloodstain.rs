@@ -138,12 +138,3 @@ impl From<Bloodstain> for ResponseGetDeadingGhostParams {
         }
     }
 }
-
-#[cfg(test)]
-mod test {
-    #[test]
-    pub fn create_bloodstain_deserializes() {
-        let message = include_bytes!("../../test/data/messages/RequestCreateBloodstain.bin");
-
-    }
-}
