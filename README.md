@@ -54,7 +54,7 @@ for your platform and invoke it as such:
 $ ./waygate-server \
     --bind 0.0.0.0:10901 \
     --api-bind 0.0.0.0:10902 \
-    --api-key <API KEY> \
+    --api-key "<API KEY>" \
     --database "<DATABASE URL>" \
     --client-public-key "<CLIENT PUBLIC KEY>" \
     --server-secret-key "<SERVER SECRET KEY>"
