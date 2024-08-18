@@ -9,6 +9,7 @@ pub async fn handle_update_player_status(
 ) -> HandlerResult {
     {
         let mut session = session.lock_write();
+
         // YOLO it for now, client will reject unwanted invasions anyways
         session.invadeable = request.character.online_activity == 0x1;
 

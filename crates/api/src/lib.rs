@@ -2,6 +2,7 @@ use actix_web::{get, http::header::ContentType, App, HttpResponse, HttpServer, R
 use thiserror::Error;
 
 mod auth;
+mod ban;
 mod notify;
 
 use auth::CheckKey;
@@ -20,6 +21,9 @@ pub async fn serve_api(bind: &str, api_key: &str) -> Result<(), ApiError> {
                     .wrap(CheckKey::new(&api_key))
                     .service(health)
                     .service(notify::notify_message)
+                    .service(ban::get_ban)
+                    .service(ban::post_ban)
+                    .service(ban::delete_ban)
             })
             .bind(bind)?
             .run()

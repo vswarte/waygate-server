@@ -1,6 +1,5 @@
 use std::ffi::c_void;
 use std::io::{self, Read};
-use std::sync::OnceLock;
 use libsodium_sys::{
     crypto_kx_PUBLICKEYBYTES,
     crypto_kx_SECRETKEYBYTES,

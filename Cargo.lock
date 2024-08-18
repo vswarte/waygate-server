@@ -2835,9 +2835,12 @@ dependencies = [
  "actix-web",
  "rand",
  "serde",
+ "sqlx",
  "thiserror",
+ "tracing",
  "waygate-config",
  "waygate-connection",
+ "waygate-database",
  "waygate-message",
 ]
 

@@ -174,7 +174,7 @@ pub struct CharacterEquipment {
     pub arms: EquippedProtector,
     pub legs: EquippedProtector,
 
-    pub talismans: Vec<u32>,
+    pub accessories: Vec<u32>,
     pub quickslots: Vec<u32>,
     pub menuslots: Vec<u32>,
     pub arrows: Vec<u32>,
