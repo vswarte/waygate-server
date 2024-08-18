@@ -50,6 +50,9 @@ pub enum ClientError {
 
     #[error("Bootstrap keys decode failed. {0}")]
     Decode(#[from] DecodeError),
+
+    #[error("Player has been banned.")]
+    Banned,
 }
 
 #[derive(Debug, Error)]

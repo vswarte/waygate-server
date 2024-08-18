@@ -9,7 +9,7 @@ use tungstenite::handshake::server::{Request, Response};
 use waygate_api::serve_api;
 use waygate_config::init_config;
 use waygate_connection::{init_crypto, new_client, ClientError, TransportError};
-use waygate_database::init_database;
+use waygate_database::{database_connection, init_database};
 use waygate_steam::{begin_session, init_steamworks};
 use waygate_rpc::handle_request;
 
@@ -84,11 +84,11 @@ async fn serve_game(bind: &str) -> Result<(), io::Error> {
         tokio::spawn(async move {
             match handle_connection(stream, peer_address).await {
                 Ok(_) => tracing::info!(
-                    "Peer disconnected. peer_addres = {}",
+                    "Client disconnected. peer_addres = {}",
                     peer_address.to_string(),
                 ),
                 Err(e) => tracing::error!(
-                    "Peer connection crashed. peer_address = {}, e = {:?}",
+                    "Client connection was closed. peer_address = {}, e = {:?}",
                     peer_address.to_string(),
                     e,
                 ),
@@ -147,6 +147,15 @@ async fn handle_connection(
         }
     };
 
+    tracing::info!("Authenticated steam session. external_id = {external_id}");
+
+    // Check if the external ID is on a banlist *after* authenticating the app
+    // ticket. If the player is banned we gracefully close the connection.
+    if is_player_banned(external_id).await? {
+        tracing::info!("Player is banned. Closing connection. {external_id}");
+        return Ok(())
+    }
+
     let mut client = new_client(steam_session, peer_address, transport.into())
         .await_hello()
         .await?
@@ -163,4 +172,16 @@ async fn handle_connection(
     loop {
         client.serve().await?;
     }
+}
+
+// TODO: make this a COUNT() query when I'm sober
+async fn is_player_banned(external_id: &str) -> Result<bool, Box<dyn Error>> {
+    let mut connection = database_connection().await?;
+    let count = sqlx::query("SELECT ban_id FROM bans WHERE external_id = $1")
+        .bind(external_id)
+        .fetch_all(&mut *connection)
+        .await?
+        .len();
+
+    Ok(count > 0)
 }
