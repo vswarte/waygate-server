@@ -1,7 +1,7 @@
 use crate::*;
 
 use waygate_message::*;
-use waygate_connection::{ClientSession, ClientSessionContainer};
+use waygate_connection::ClientSession;
 
 pub async fn handle_request(
     session: ClientSession,
@@ -9,7 +9,7 @@ pub async fn handle_request(
 ) -> HandlerResult {
     tracing::debug!(
         "dispatch_request player = {}, type= {}",
-        session.lock_read().player_id,
+        session.player_id,
         request.name(),
     );
 

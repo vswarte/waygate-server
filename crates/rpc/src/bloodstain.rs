@@ -1,5 +1,5 @@
 use sqlx::Row;
-use waygate_connection::{ClientSession, ClientSessionContainer};
+use waygate_connection::ClientSession;
 use waygate_database::database_connection;
 
 use waygate_message::*;
@@ -10,11 +10,6 @@ pub async fn handle_create_bloodstain(
     session: ClientSession,
     params: RequestCreateBloodstainParams,
 ) -> HandlerResult {
-    let (player_id, session_id) = {
-        let lock = session.lock_read();
-        (lock.player_id, lock.session_id)
-    };
-
     let mut connection = database_connection().await?;
     let bloodstain_id = sqlx::query("INSERT INTO bloodstains (
             player_id,
@@ -33,8 +28,8 @@ pub async fn handle_create_bloodstain(
             $6,
             $7
         ) RETURNING bloodstain_id")
-        .bind(player_id)
-        .bind(session_id)
+        .bind(session.player_id)
+        .bind(session.session_id)
         .bind(params.advertisement_data)
         .bind(params.replay_data)
         .bind(params.area.area)
@@ -47,7 +42,7 @@ pub async fn handle_create_bloodstain(
     Ok(ResponseParams::CreateBloodstain(
         ResponseCreateBloodstainParams {
             object_id: bloodstain_id,
-            secondary_id: session_id,
+            secondary_id: session.session_id,
         }
     ))
 }

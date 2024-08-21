@@ -2842,6 +2842,7 @@ dependencies = [
  "waygate-connection",
  "waygate-database",
  "waygate-message",
+ "waygate-session",
 ]
 
 [[package]]
@@ -2952,8 +2953,19 @@ dependencies = [
  "waygate-message",
  "waygate-pool",
  "waygate-rpc",
+ "waygate-session",
  "waygate-steam",
  "waygate-wire",
+]
+
+[[package]]
+name = "waygate-session"
+version = "0.1.0"
+dependencies = [
+ "sqlx",
+ "thiserror",
+ "tracing",
+ "waygate-database",
 ]
 
 [[package]]

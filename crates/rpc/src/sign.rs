@@ -3,7 +3,6 @@ use thiserror::Error;
 
 use waygate_connection::send_push;
 use waygate_connection::ClientSession;
-use waygate_connection::ClientSessionContainer;
 use waygate_pool::{PoolKey, SignPoolQuery, SIGN_POOL};
 
 use crate::HandlerResult;
@@ -20,12 +19,10 @@ pub async fn handle_create_sign(
     session: ClientSession,
     request: RequestCreateSignParams,
 ) -> HandlerResult {
-    let mut session = session.lock_write();
-
     let key = SIGN_POOL.insert(session.player_id, request.into())?;
 
     let identifier: ObjectIdentifier = (&key.1).into();
-    session.sign.push(key);
+    session.game_session_mut().sign.push(key);
 
     Ok(ResponseParams::CreateSign(ResponseCreateSignParams {
         identifier,
@@ -38,7 +35,7 @@ pub async fn handle_get_sign_list(
 ) -> HandlerResult {
     tracing::info!(
         "Host requested signs list. host = {}",
-        session.lock_read().player_id
+        session.player_id
     );
 
     let mut pool_matches = SIGN_POOL.match_entries::<SignPoolQuery>(&(&request).into());
@@ -67,7 +64,7 @@ pub async fn handle_summon_sign(
     session: ClientSession,
     request: RequestSummonSignParams,
 ) -> HandlerResult {
-    let player_id = session.lock_read().player_id;
+    let player_id = session.player_id;
     tracing::info!("Host tapped a summon sign. host = {}", player_id);
 
     let poolkey: PoolKey = (&request.identifier).into();
@@ -103,16 +100,14 @@ pub async fn handle_remove_sign(
 ) -> HandlerResult {
     tracing::info!(
         "Player sent RemoveSign. player = {}",
-        session.lock_read().player_id
+        session.player_id
     );
 
-    let mut session = session.lock_write();
-    let index = session
-        .sign
-        .iter()
+    let mut game_session = session.game_session_mut();
+    let index = game_session.sign.iter()
         .position(|s| s.1 .0 == request.sign_identifier.object_id)
         .ok_or(SignError::SignMissing)?;
-    let _sign = session.sign.remove(index);
+    let _sign = game_session.sign.remove(index);
 
     Ok(ResponseParams::RemoveSign)
 }
@@ -123,7 +118,7 @@ pub async fn handle_reject_sign(
 ) -> HandlerResult {
     tracing::info!("Player sent RejectSign.");
 
-    let summoned_player_id = session.lock_read().player_id;
+    let summoned_player_id = session.player_id;
 
     // Inform the host that the summon is not coming
     let push_payload = PushParams::Join(JoinParams {
@@ -148,7 +143,7 @@ pub async fn handle_update_sign(
 ) -> HandlerResult {
     tracing::info!(
         "Player sent UpdateSign. player = {}",
-        session.lock_read().player_id
+        session.player_id
     );
 
     let exists = SIGN_POOL.has(&(&request.identifier).into());
@@ -166,12 +161,10 @@ pub async fn handle_create_match_area_sign(
 ) -> HandlerResult {
     tracing::info!("CreateMatchAreaSign: {request:?}");
 
-    let mut session = session.lock_write();
-
     let key = SIGN_POOL.insert(session.player_id, request.into())?;
 
     let identifier: ObjectIdentifier = (&key.1).into();
-    session.sign.push(key);
+    session.game_session_mut().sign.push(key);
 
     Ok(ResponseParams::CreateMatchAreaSign(
         ResponseCreateMatchAreaSignParams { identifier },

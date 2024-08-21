@@ -1,7 +1,6 @@
 use rand::Rng;
 use waygate_connection::send_push;
 use waygate_connection::ClientSession;
-use waygate_connection::ClientSessionContainer;
 use waygate_message::*;
 use waygate_pool::{QUICKMATCH_POOL, QuickmatchPoolQuery, QuickmatchPoolEntry, PoolError};
 
@@ -26,24 +25,21 @@ pub async fn handle_register_quick_match(
 ) -> HandlerResult {
     tracing::info!("RequestRegisterQuickMatchParams: {:#?}", request);
 
-    let mut session = session.lock_write();
-
     let entry: QuickmatchPoolEntry = QuickmatchPoolEntry::from_request(
         request,
         session.external_id.clone(),
     );
 
-    tracing::info!("QuickmatchPoolEntry: {:#?}", entry);
     let key = QUICKMATCH_POOL.insert(session.player_id, entry)?;
 
-    session.quickmatch = Some(key);
+    session.game_session_mut().quickmatch = Some(key);
     Ok(ResponseParams::RegisterQuickMatch)
 }
 
 pub async fn handle_unregister_quick_match(
     session: ClientSession,
 ) -> HandlerResult {
-    let _ = session.lock_write().quickmatch.take();
+    let _ = session.game_session_mut().quickmatch.take();
 
     Ok(ResponseParams::UnregisterQuickMatch)
 }
@@ -52,7 +48,7 @@ pub async fn handle_update_quick_match(
     session: ClientSession,
 ) -> HandlerResult {
     // Current we just check if the quickmatch is known in-memory at all.
-    let _existing = session.lock_write().quickmatch.as_ref()
+    let _existing = session.game_session().quickmatch.as_ref()
         .ok_or(PoolError::NotFound)?;
 
     Ok(ResponseParams::UpdateQuickMatch)
@@ -62,19 +58,9 @@ pub async fn handle_join_quick_match(
     session: ClientSession,
     request: RequestJoinQuickMatchParams,
 ) -> HandlerResult {
-    tracing::info!("RequestJoinQuickMatchParams: {:#?}", request);
-
     let quickmatch = QUICKMATCH_POOL
         .by_topic_id(request.host_player_id)
         .ok_or(std::io::Error::from(std::io::ErrorKind::Other))?;
-
-    let (joining_player_id, joining_player_steam_id) = {
-        let session = session.lock_read();
-
-        (session.player_id, session.external_id.clone())
-    };
-
-    tracing::debug!("Joining player ID: {joining_player_id:?}");
 
     let push_payload = PushParams::Join(JoinParams {
         identifier: ObjectIdentifier {
@@ -83,8 +69,8 @@ pub async fn handle_join_quick_match(
         },
         join_payload: JoinPayload::JoinQuickMatch(JoinQuickMatchParams {
             quickmatch_settings: quickmatch.settings,
-            joining_player_id,
-            joining_player_steam_id,
+            joining_player_id: session.player_id,
+            joining_player_steam_id: session.external_id.clone(),
             unk2: 0x3,
             arena_id: quickmatch.arena_id,
             unk3: 0x0,
@@ -100,15 +86,8 @@ pub async fn handle_accept_quick_match(
     session: ClientSession,
     request: RequestAcceptQuickMatchParams,
 ) -> HandlerResult {
-    tracing::debug!("RequestAcceptQuickMatchParams: {:#?}", request);
-
-    let (host_player_id, host_steam_id) = {
-        let session = session.lock_read();
-        (session.player_id, session.external_id.clone())
-    };
-
     let quickmatch = QUICKMATCH_POOL
-        .by_topic_id(host_player_id)
+        .by_topic_id(session.player_id)
         .ok_or(std::io::Error::from(std::io::ErrorKind::Other))?;
 
     let push_payload = PushParams::Join(JoinParams {
@@ -118,8 +97,8 @@ pub async fn handle_accept_quick_match(
         },
         join_payload: JoinPayload::AcceptQuickMatch(AcceptQuickMatchParams {
             quickmatch_settings: quickmatch.settings,
-            host_player_id,
-            host_steam_id,
+            host_player_id: session.player_id,
+            host_steam_id: session.external_id.clone(),
             join_data: request.join_data,
         })
     });

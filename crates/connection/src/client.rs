@@ -1,6 +1,7 @@
 use std::future::Future;
 use std::io::{self, Read, Write};
 use std::net::SocketAddr;
+use std::sync::Arc;
 use base64::DecodeError;
 use byteorder::{ReadBytesExt, WriteBytesExt, LE};
 use thiserror::Error;
@@ -10,7 +11,7 @@ use futures_util::SinkExt;
 use waygate_message::{PayloadType, RequestParams, ResponseParams};
 use waygate_wire::{deserialize, serialize, FNWireError};
 
-use crate::{add_client_channel, handle_create_session, handle_restore_session, new_client_crypto, ClientPushChannelRX, ClientSession, ClientSessionContainer, CryptoError};
+use crate::{add_client_channel, handle_create_session, handle_restore_session, new_client_crypto, ClientPushChannelRX, ClientSession, CryptoError};
 use crate::ClientCrypto;
 use crate::ClientCryptoStateActiveSession;
 use crate::ClientCryptoStateParametersGenerated;
@@ -327,7 +328,7 @@ impl Client<ClientStateReceivedSessionDetails> {
             .await.map_err(|e| ClientError::Transport(TransportError::WriteFailed(e)))?;
 
         let (push_tx, push_rx) = channel(25);
-        let player_id = session.lock_read().player_id;
+        let player_id = session.player_id;
         add_client_channel(player_id, push_tx).await;
 
         Ok(Client {
@@ -336,7 +337,7 @@ impl Client<ClientStateReceivedSessionDetails> {
             state: ClientStateAuthenticated {
                 transport: self.state.transport,
                 crypto: self.state.crypto,
-                session,
+                session: Arc::new(session),
                 push_rx,
                 dispatch,
             }

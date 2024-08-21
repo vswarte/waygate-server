@@ -35,3 +35,4 @@ workspace = true
 
 [dependencies.waygate-config]
 workspace = true
+

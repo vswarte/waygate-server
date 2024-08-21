@@ -1,4 +1,4 @@
-use waygate_connection::{ClientSession, ClientSessionContainer};
+use waygate_connection::ClientSession;
 use waygate_message::*;
 
 use crate::HandlerResult;
@@ -8,15 +8,13 @@ pub async fn handle_update_player_status(
     request: RequestUpdatePlayerStatusParams
 ) -> HandlerResult {
     {
-        let mut session = session.lock_write();
-
+        let mut game_session = session.game_session_mut();
         // YOLO it for now, client will reject unwanted invasions anyways
-        session.invadeable = request.character.online_activity == 0x1;
-
-        session.matching = Some((&request).into());
-
-        session.update_invadeability()?;
+        game_session.invadeable = request.character.online_activity == 0x1;
+        game_session.matching = Some((&request).into());
     }
+
+    session.update_invadeability()?;
 
     Ok(ResponseParams::UpdatePlayerStatus)
 }

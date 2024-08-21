@@ -32,3 +32,6 @@ workspace = true
 
 [dependencies.waygate-database]
 workspace = true
+
+[dependencies.waygate-session]
+workspace = true

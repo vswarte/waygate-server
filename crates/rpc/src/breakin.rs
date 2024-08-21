@@ -2,7 +2,6 @@ use rand::prelude::*;
 
 use waygate_connection::send_push;
 use waygate_connection::ClientSession;
-use waygate_connection::ClientSessionContainer;
 use waygate_pool::BREAKIN_POOL;
 use waygate_pool::breakin::BreakInPoolQuery;
 use waygate_message::*;
@@ -31,19 +30,14 @@ pub async fn handle_break_in_target(
     session: ClientSession,
     request: RequestBreakInTargetParams,
 ) -> HandlerResult {
-    let (player_id, external_id) = {
-        let lock = session.lock_read();
-        (lock.player_id, lock.external_id.clone())
-    };
-
     let push_payload = PushParams::Join(JoinParams {
         identifier: ObjectIdentifier {
             object_id: rand::thread_rng().gen::<i32>(),
             secondary_id: rand::thread_rng().gen::<i32>(),
         },
         join_payload: JoinPayload::BreakInTarget(BreakInTargetParams {
-            invader_player_id: player_id,
-            invader_steam_id: external_id,
+            invader_player_id: session.player_id,
+            invader_steam_id: session.external_id.clone(),
             unk1: 0x0,
             unk2: 0x0,
             play_region: 6100000,
@@ -84,20 +78,15 @@ pub async fn handle_reject_break_in_target(
     session: ClientSession,
     request: RequestRejectBreakInTargetParams,
 ) -> HandlerResult {
-    let (player_id, steam_id) = {
-        let lock = session.lock_read();
-        (lock.player_id, lock.external_id.clone())
-    };
-
     let push_payload = PushParams::Join(JoinParams {
         identifier: ObjectIdentifier {
             object_id: rand::thread_rng().gen::<i32>(),
             secondary_id: rand::thread_rng().gen::<i32>(),
         },
         join_payload: JoinPayload::RejectBreakInTarget(RejectBreakInTargetParams {
-            host_player_id: player_id,
+            host_player_id: session.player_id,
             unk1: -90,
-            host_steam_id: steam_id,
+            host_steam_id: session.external_id.clone(),
             unk2: 0,
         }),
     });

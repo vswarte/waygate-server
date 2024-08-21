@@ -1,6 +1,6 @@
 use sqlx::Row;
 use thiserror::Error;
-use waygate_connection::{ClientSession, ClientSessionContainer};
+use waygate_connection::ClientSession;
 use waygate_database::database_connection;
 
 use waygate_message::*;
@@ -11,11 +11,6 @@ pub async fn handle_create_blood_message(
     session: ClientSession,
     request: RequestCreateBloodMessageParams,
 ) -> HandlerResult {
-    let (player_id, session_id) = {
-        let lock = session.lock_read();
-        (lock.player_id, lock.session_id)
-    };
-
     let mut connection = database_connection().await?;
     let bloodmessage_id = sqlx::query("INSERT INTO bloodmessages (
             player_id,
@@ -38,9 +33,9 @@ pub async fn handle_create_blood_message(
             $6,
             $7
         ) RETURNING bloodmessage_id")
-        .bind(player_id)
+        .bind(session.player_id)
         .bind(request.character_id)
-        .bind(session_id)
+        .bind(session.session_id)
         .bind(request.data)
         .bind(request.area.area)
         .bind(request.area.play_region)
@@ -52,7 +47,7 @@ pub async fn handle_create_blood_message(
     Ok(ResponseParams::CreateBloodMessage(
         ResponseCreateBloodMessageParams {
             object_id: bloodmessage_id,
-            secondary_id: session_id,
+            secondary_id: session.session_id,
         },
     ))
 }
@@ -127,12 +122,10 @@ pub async fn handle_remove_blood_message(
     session: ClientSession,
     request: RequestRemoveBloodMessageParams,
 ) -> HandlerResult {
-    let player_id = session.lock_read().player_id;
-
     let mut connection = database_connection().await?;
     sqlx::query("DELETE FROM bloodmessages WHERE bloodmessage_id = $1 AND player_id = $2")
         .bind(request.identifier.object_id)
-        .bind(player_id)
+        .bind(session.player_id)
         .execute(&mut *connection)
         .await?;
 

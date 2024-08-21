@@ -4,6 +4,7 @@ use thiserror::Error;
 mod auth;
 mod ban;
 mod notify;
+mod pagination;
 
 use auth::CheckKey;
 

@@ -1,7 +1,7 @@
-use std::sync::{Arc, OnceLock};
-use std::net::SocketAddr;
-use std::io;
 use std::error::Error;
+use std::io;
+use std::net::SocketAddr;
+use std::sync::{Arc, OnceLock};
 
 use clap::Parser;
 use tokio::net::{TcpListener, TcpStream};
@@ -9,9 +9,10 @@ use tungstenite::handshake::server::{Request, Response};
 use waygate_api::serve_api;
 use waygate_config::init_config;
 use waygate_connection::{init_crypto, new_client, ClientError, TransportError};
-use waygate_database::{database_connection, init_database};
-use waygate_steam::{begin_session, init_steamworks};
+use waygate_database::init_database;
 use waygate_rpc::handle_request;
+use waygate_session::is_banned;
+use waygate_steam::{begin_session, init_steamworks};
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
@@ -50,18 +51,19 @@ async fn main() -> Result<(), io::Error> {
 
     log4rs::init_file("logging.toml", Default::default()).unwrap();
 
-    init_config()
-        .expect("Could not initialize config");
+    init_config().expect("Could not initialize config");
 
-    init_crypto(args.client_public_key.as_str(), args.server_secret_key.as_str())
-        .expect("Could not initialize crypto");
+    init_crypto(
+        args.client_public_key.as_str(),
+        args.server_secret_key.as_str(),
+    )
+    .expect("Could not initialize crypto");
 
     init_database(args.database.as_str())
         .await
         .expect("Could not initialize database");
 
-    init_steamworks()
-        .expect("Could not initialize steam");
+    init_steamworks().expect("Could not initialize steam");
 
     tokio::select! {
         _ = serve_api(
@@ -151,9 +153,9 @@ async fn handle_connection(
 
     // Check if the external ID is on a banlist *after* authenticating the app
     // ticket. If the player is banned we gracefully close the connection.
-    if is_player_banned(external_id).await? {
+    if is_banned(external_id).await? {
         tracing::info!("Player is banned. Closing connection. {external_id}");
-        return Ok(())
+        return Ok(());
     }
 
     let mut client = new_client(steam_session, peer_address, transport.into())
@@ -174,14 +176,3 @@ async fn handle_connection(
     }
 }
 
-// TODO: make this a COUNT() query when I'm sober
-async fn is_player_banned(external_id: &str) -> Result<bool, Box<dyn Error>> {
-    let mut connection = database_connection().await?;
-    let count = sqlx::query("SELECT ban_id FROM bans WHERE external_id = $1")
-        .bind(external_id)
-        .fetch_all(&mut *connection)
-        .await?
-        .len();
-
-    Ok(count > 0)
-}

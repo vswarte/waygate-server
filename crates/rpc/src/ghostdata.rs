@@ -1,5 +1,5 @@
 use sqlx::Row;
-use waygate_connection::{ClientSession, ClientSessionContainer};
+use waygate_connection::ClientSession;
 use waygate_database::database_connection;
 
 use crate::HandlerResult;
@@ -10,10 +10,6 @@ pub async fn handle_create_ghostdata(
     session: ClientSession,
     request: RequestCreateGhostDataParams,
 ) -> HandlerResult {
-    let (player_id, session_id) = {
-        let lock = session.lock_read();
-        (lock.player_id, lock.session_id)
-    };
 
     let mut connection = database_connection().await?;
     let ghostdata_id = sqlx::query("INSERT INTO ghostdata (
@@ -31,8 +27,8 @@ pub async fn handle_create_ghostdata(
             $5,
             $6
         ) RETURNING ghostdata_id")
-        .bind(player_id)
-        .bind(session_id)
+        .bind(session.player_id)
+        .bind(session.session_id)
         .bind(request.replay_data)
         .bind(request.area.area)
         .bind(request.area.play_region)
@@ -44,7 +40,7 @@ pub async fn handle_create_ghostdata(
     Ok(ResponseParams::CreateBloodstain(
         ResponseCreateGhostDataParams {
             object_id: ghostdata_id,
-            secondary_id: session_id,
+            secondary_id: session.session_id,
         }
     ))
 }

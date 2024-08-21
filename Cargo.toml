@@ -11,6 +11,7 @@ members = [
     "crates/config",
     "crates/connection",
     "crates/rpc",
+    "crates/session",
 ]
 
 [profile.release]
@@ -105,3 +106,6 @@ path = "crates/connection"
 
 [workspace.dependencies.waygate-rpc]
 path = "crates/rpc"
+
+[workspace.dependencies.waygate-session]
+path = "crates/session"
