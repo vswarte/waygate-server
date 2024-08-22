@@ -70,3 +70,6 @@ workspace = true
 
 [dependencies.waygate-rpc]
 workspace = true
+
+[dependencies.waygate-session]
+workspace = true

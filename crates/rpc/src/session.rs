@@ -1,7 +1,3 @@
-use std::error::Error;
-use std::sync::Arc;
-use std::sync::RwLock;
-
 use waygate_connection::ClientSession;
 
 use waygate_message::*;

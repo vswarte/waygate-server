@@ -1,0 +1,16 @@
+[package]
+name = "waygate-session"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies.sqlx]
+workspace = true
+
+[dependencies.thiserror]
+workspace = true
+
+[dependencies.tracing]
+workspace = true
+
+[dependencies.waygate-database]
+workspace = true

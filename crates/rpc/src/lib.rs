@@ -15,11 +15,9 @@ pub(crate) mod matchingticket;
 
 pub use handler::handle_request;
 
-use std::{error::Error, io::{self, Read, Write}};
+use std::error::Error;
 
-use byteorder::{ReadBytesExt, WriteBytesExt, LE};
-use waygate_connection::{ClientError, ProtocolError};
-use waygate_message::{PayloadType, RequestParams, ResponseParams};
-use waygate_wire::{deserialize, serialize};
+use waygate_connection::ClientError;
+use waygate_message::ResponseParams;
 
 type HandlerResult = Result<ResponseParams, Box<dyn Error>>;

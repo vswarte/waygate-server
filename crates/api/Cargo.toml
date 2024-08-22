@@ -6,6 +6,9 @@ edition = "2021"
 [dependencies]
 actix-web = "4"
 
+[dependencies.sqlx]
+workspace = true
+
 [dependencies.thiserror]
 workspace = true
 
@@ -15,6 +18,9 @@ workspace = true
 [dependencies.rand]
 workspace = true
 
+[dependencies.tracing]
+workspace = true
+
 [dependencies.waygate-config]
 workspace = true
 
@@ -22,4 +28,10 @@ workspace = true
 workspace = true
 
 [dependencies.waygate-connection]
+workspace = true
+
+[dependencies.waygate-database]
+workspace = true
+
+[dependencies.waygate-session]
 workspace = true

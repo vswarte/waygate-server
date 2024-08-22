@@ -1,4 +1,4 @@
-use waygate_connection::{ClientSession, ClientSessionContainer};
+use waygate_connection::ClientSession;
 use waygate_database::database_connection;
 use waygate_message::*;
 
@@ -37,11 +37,6 @@ pub async fn handle_gr_upload_player_equipments(
     session: ClientSession,
     request: RequestGrUploadPlayerEquipmentsParams,
 ) -> HandlerResult {
-    let (player_id, session_id) = {
-        let lock = session.lock_read();
-        (lock.player_id, lock.session_id)
-    };
-
     let mut connection = database_connection().await?;
     sqlx::query("INSERT INTO player_equipments (
             player_id,
@@ -54,8 +49,8 @@ pub async fn handle_gr_upload_player_equipments(
             $3,
             $4
         )")
-        .bind(player_id)
-        .bind(session_id)
+        .bind(session.player_id)
+        .bind(session.session_id)
         .bind(request.data)
         .bind(request.pool)
         .execute(&mut *connection)

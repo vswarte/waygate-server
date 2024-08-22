@@ -1,4 +1,5 @@
-use std::{sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard}, time};
+use std::{sync::Arc, time};
+use std::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 use rand::prelude::*;
 use sqlx::Row;
 use thiserror::Error;
@@ -35,18 +36,37 @@ pub struct ClientSessionInner {
     pub valid_from: i64,
     pub valid_until: i64,
 
-    pub invadeable: bool,
-    pub matching: Option<CharacterMatchingData>,
-
-    pub sign: Vec<PoolKeyGuard<SignPoolEntry>>,
-    pub quickmatch: Option<PoolKeyGuard<QuickmatchPoolEntry>>,
-    pub breakin: Option<PoolKeyGuard<BreakInPoolEntry>>,
+    game_session: RwLock<ClientSessionGameSession>,
 }
 
+pub type ClientSession = Arc<ClientSessionInner>;
+
 impl ClientSessionInner {
-    pub fn update_invadeability(&mut self) -> Result<(), SessionError> {
-        if self.invadeable && self.breakin.is_none() {
-            let matching = self.matching.as_ref()
+    pub fn game_session_mut(&self) -> RwLockWriteGuard<ClientSessionGameSession> {
+        match self.game_session.write() {
+            Ok(o) => o,
+            Err(e) => {
+                self.game_session.clear_poison();
+                e.into_inner()
+            },
+        }
+    }
+
+    pub fn game_session(&self) -> RwLockReadGuard<ClientSessionGameSession> {
+        match self.game_session.read() {
+            Ok(o) => o,
+            Err(e) => {
+                self.game_session.clear_poison();
+                e.into_inner()
+            },
+        }
+    }
+
+    pub fn update_invadeability(&self) -> Result<(), SessionError> {
+        let mut game_session = self.game_session.write().unwrap();
+
+        if game_session.invadeable && game_session.breakin.is_none() {
+            let matching = game_session.matching.as_ref()
                 .ok_or(SessionError::MissingCharacterData)?;
 
             let key = BREAKIN_POOL
@@ -56,10 +76,10 @@ impl ClientSessionInner {
                     steam_id: self.external_id.clone(),
                 })?;
 
-            self.breakin = Some(key);
+            game_session.breakin = Some(key);
             tracing::debug!("Added player to breakin pool. player_id = {}", self.player_id);
-        } else if !self.invadeable && self.breakin.is_some() {
-            let _ = self.breakin.take()
+        } else if !game_session.invadeable && game_session.breakin.is_some() {
+            let _ = game_session.breakin.take()
                 .ok_or(SessionError::MissingBreakinEntry)?;
 
             tracing::debug!("Removed player from breakin pool. player_id = {}", self.player_id);
@@ -67,6 +87,15 @@ impl ClientSessionInner {
 
         Ok(())
     }
+}
+
+#[derive(Default, Debug)]
+pub struct ClientSessionGameSession {
+    pub invadeable: bool,
+    pub matching: Option<CharacterMatchingData>,
+    pub sign: Vec<PoolKeyGuard<SignPoolEntry>>,
+    pub quickmatch: Option<PoolKeyGuard<QuickmatchPoolEntry>>,
+    pub breakin: Option<PoolKeyGuard<BreakInPoolEntry>>,
 }
 
 #[derive(Clone, Debug)]
@@ -84,36 +113,6 @@ impl From<&RequestUpdatePlayerStatusParams> for CharacterMatchingData {
     }
 }
 
-pub type ClientSession = Arc<RwLock<ClientSessionInner>>;
-
-pub trait ClientSessionContainer {
-    fn lock_read(&self) -> RwLockReadGuard<'_, ClientSessionInner>;
-    fn lock_write(&self) -> RwLockWriteGuard<'_, ClientSessionInner>;
-}
-
-impl ClientSessionContainer for ClientSession {
-    fn lock_read(&self) -> RwLockReadGuard<'_, ClientSessionInner> {
-        match self.read() {
-            Ok(s) => s,
-            Err(e) => {
-                self.clear_poison();
-                e.into_inner()
-            },
-        }
-    }
-
-    fn lock_write(&self) -> RwLockWriteGuard<'_, ClientSessionInner> {
-        match self.write() {
-            Ok(s) => s,
-            Err(e) => {
-                self.clear_poison();
-                e.into_inner()
-            },
-        }
-    }
-}
-
-/// Creates a new session for a given external_id
 pub async fn new_client_session(external_id: String) -> Result<ClientSessionInner, SessionError> {
     let player_id = acquire_player_id(&external_id).await?;
     let cookie = generate_session_cookie();
@@ -140,13 +139,7 @@ pub async fn new_client_session(external_id: String) -> Result<ClientSessionInne
         session_id,
         valid_from,
         valid_until,
-
-        sign: vec![],
-        quickmatch: None,
-
-        invadeable: false,
-        matching: None,
-        breakin: None,
+        game_session: Default::default(),
     })
 }
 
@@ -155,7 +148,6 @@ pub async fn get_client_session(external_id: String, session_id: i32, cookie: &s
     let now = time::SystemTime::now().duration_since(time::UNIX_EPOCH).unwrap();
 
     let mut connection = database_connection().await?;
-    // let session = sqlx::query_as::<_, Session>("SELECT * FROM sessions WHERE session_id = $1 AND cookie = $2 AND valid_until > $3")
     let session = sqlx::query_as::<_, Session>("SELECT * FROM sessions WHERE session_id = $1 AND cookie = $2")
         .bind(session_id)
         .bind(cookie)
@@ -174,13 +166,7 @@ pub async fn get_client_session(external_id: String, session_id: i32, cookie: &s
         session_id: session.session_id,
         valid_from,
         valid_until: session.valid_until,
-
-        sign: vec![],
-        quickmatch: None,
-
-        invadeable: false,
-        matching: None,
-        breakin: None,
+        game_session: Default::default(),
     })
 }
 
@@ -232,7 +218,7 @@ fn encode_session_cookie(cookie: &[u8]) -> String {
 pub async fn handle_create_session(
     external_id: String,
     _params: RequestCreateSessionParams,
-) -> Result<(ClientSession, ResponseParams), Box<dyn std::error::Error>> {
+) -> Result<(ClientSessionInner, ResponseParams), Box<dyn std::error::Error>> {
     tracing::info!(
         "Player sent CreateSession. external_id = {}.",
         external_id,
@@ -247,7 +233,7 @@ pub async fn handle_create_session(
     let cookie = session.cookie.clone();
 
     Ok((
-        Arc::new(RwLock::new(session)),
+        session,
         ResponseParams::CreateSession(ResponseCreateSessionParams {
             player_id,
             steam_id: external_id,
@@ -269,7 +255,7 @@ pub async fn handle_create_session(
 pub async fn handle_restore_session(
     external_id: String,
     params: RequestRestoreSessionParams,
-) -> Result<(ClientSession, ResponseParams), Box<dyn std::error::Error>> {
+) -> Result<(ClientSessionInner, ResponseParams), Box<dyn std::error::Error>> {
     tracing::info!(
         "Player sent RestoreSession. external_id = {}.",
         external_id,
@@ -287,7 +273,7 @@ pub async fn handle_restore_session(
     let cookie = session.cookie.clone();
 
     Ok((
-        Arc::new(RwLock::new(session)),
+        session,
         ResponseParams::RestoreSession(ResponseRestoreSessionParams {
             session_data: SessionData {
                 identifier: ObjectIdentifier {
