@@ -72,7 +72,7 @@ pub struct RequestGetMatchAreaSignListParams {
     pub known_signs: Vec<ObjectIdentifier>,
     pub unk1: u32,
     pub area: PuddleArea,
-    pub unk2: u8,
+    pub unk2: u16,
     pub matching_parameters: MatchingParameters,
     pub unk3: u8,
     pub unk4: u8,
