@@ -70,8 +70,8 @@ pub async fn handle_request(
             => sign::handle_remove_sign(session, *p).await?,
         RequestParams::UpdateSign(p)
             => sign::handle_update_sign(session,*p).await?,
-        RequestParams::GetMatchAreaSignList(p)
-            => sign::handle_get_match_area_sign_list(*p).await?,
+        // RequestParams::GetMatchAreaSignList(p)
+        //     => sign::handle_get_match_area_sign_list(*p).await?,
         RequestParams::CreateMatchAreaSign(p)
             => sign::handle_create_match_area_sign(session, *p).await?,
 
