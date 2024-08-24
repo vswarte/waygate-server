@@ -8,6 +8,7 @@ use waygate_message::*;
 
 use crate::HandlerResult;
 
+/// Sent by invaders to retrieve a list of invadeable hosts.
 pub async fn handle_get_break_in_target_list(
     params: RequestGetBreakInTargetListParams,
 ) -> HandlerResult {
@@ -26,6 +27,9 @@ pub async fn handle_get_break_in_target_list(
     ))
 }
 
+/// Sent by invaders when they have selected a host from the list returned by
+/// `handle_get_break_in_target_list`. This causes the server to send a
+/// `BreakInTarget` push message to the selected hosted with the invaders details.
 pub async fn handle_break_in_target(
     session: ClientSession,
     request: RequestBreakInTargetParams,
@@ -51,6 +55,8 @@ pub async fn handle_break_in_target(
     )
 }
 
+/// Sent by the host after receiving a `BreakInTarget` push to share the
+/// lobby data such that the invader can join.
 pub async fn handle_allow_break_in_target(
     _session: ClientSession,
     request: RequestAllowBreakInTargetParams,
@@ -74,6 +80,9 @@ pub async fn handle_allow_break_in_target(
     )
 }
 
+/// Sent by the host to reject a `BreakInTarget` push. This might happen
+/// if the host has died since the invader selected the host or the lobby is
+/// already at capacity.
 pub async fn handle_reject_break_in_target(
     session: ClientSession,
     request: RequestRejectBreakInTargetParams,
