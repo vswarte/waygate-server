@@ -17,6 +17,7 @@ pub(crate) mod request;
 pub(crate) mod response;
 pub(crate) mod push;
 pub(crate) mod payload;
+pub(crate) mod log;
 
 pub use player::*;
 pub use shared::*;
@@ -37,3 +38,4 @@ pub use request::*;
 pub use response::*;
 pub use push::*;
 pub use payload::*;
+pub use log::*;

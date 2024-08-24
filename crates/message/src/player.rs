@@ -5,7 +5,7 @@ use super::*;
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct RequestUpdatePlayerStatusParams {
     pub unk1: u32,
-    pub map_id: u32,
+    pub play_region: u32,
     pub unk2: u32,
     pub death_count: u32,
     pub total_summon_count: u32,
@@ -57,20 +57,13 @@ pub struct CharacterData {
     pub max_reinforce_level: u32,
     pub unk20: u32,
 
-    // This is cursed. Apparently serde only takes u8 arrays of size n % 8
-    //pub unk21: [u8; 0x27],
-    pub unk21: [u8; 0x20],
-    pub wtf1: u8,
-    pub wtf2: u8,
-    pub wtf3: u8,
-    pub wtf4: u8,
-    pub wtf5: u8,
-    pub wtf6: u8,
-    pub wtf7: u8,
+    pub unk21: [u8; 0x1b],
+    pub unk_vec: Vec<u32>,
+    pub unk22: u32,
 
     pub password: String,
     pub group_passwords: Vec<String>,
-    pub unk22: u16,
+    pub unk23: u16,
     pub unk24: u8,
     pub unk25: u8,
     pub sites_of_grace: Vec<SiteOfGrace>,
@@ -106,12 +99,12 @@ pub struct CharacterDataAttributes {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct CharacterDataAttack {
-    pub right_armament_primary: u32,
-    pub right_armament_secondary: u32,
-    pub right_armament_tertiary: u32,
-    pub left_armament_primary: u32,
-    pub left_armament_secondary: u32,
-    pub left_armament_tertiary: u32,
+    pub right_armament_primary: i32,
+    pub right_armament_secondary: i32,
+    pub right_armament_tertiary: i32,
+    pub left_armament_primary: i32,
+    pub left_armament_secondary: i32,
+    pub left_armament_tertiary: i32,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -154,73 +147,30 @@ pub struct SiteOfGrace {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct EquippedWeapon {
-    pub weapon: u32,
-    pub ash_of_war: u32,
+    pub weapon: i32,
+    pub ash_of_war: i32,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct EquippedProtector {
-    pub protector: u32,
-    pub unk: u32,
+    pub protector: i32,
+    pub unk: i32,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct CharacterEquipment {
     pub weapons_left_hand: Vec<EquippedWeapon>,
     pub weapons_right_hand: Vec<EquippedWeapon>,
-
     pub head: EquippedProtector,
     pub chest: EquippedProtector,
     pub arms: EquippedProtector,
     pub legs: EquippedProtector,
-
-    pub accessories: Vec<u32>,
-    pub quickslots: Vec<u32>,
-    pub menuslots: Vec<u32>,
-    pub arrows: Vec<u32>,
-    pub bolts: Vec<u32>,
-    pub spells: Vec<u32>,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct RequestUseItemLogParams {
-    pub used_items: Vec<RequestUseItemLogParamsEntry>,
-    pub location: Location,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct RequestUseItemLogParamsEntry {
-    pub item_id: u32,
-    pub times_used: u32,
-    pub unk3: u32,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct RequestGetItemLogParams {
-    pub acquired_items: Vec<RequestGetItemLogParamsEntry>,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct RequestGetItemLogParamsEntry {
-    pub location: Location,
-    pub item_category: u32,
-    pub item_id: u32,
-    pub quantity: u32,
-    pub unk1: u32,
-    pub unk2: u32,
-    pub unk3: u32,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct RequestKillEnemyLogParams {
-    pub killed_enemies: Vec<RequestKillEnemyLogParamsEntry>,
-    pub location: Location,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct RequestKillEnemyLogParamsEntry {
-    pub npc_param: u32,
-    pub killed_count: u32,
+    pub accessories: Vec<i32>,
+    pub quickslots: Vec<i32>,
+    pub pouchslots: Vec<i32>,
+    pub arrows: Vec<i32>,
+    pub bolts: Vec<i32>,
+    pub spells: Vec<i32>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -231,26 +181,4 @@ pub struct RequestJoinMultiplayParams {
     pub unk4: u32,
     pub unk5: u32,
     pub unk6: u32,
-}
-
-#[cfg(test)]
-mod test {
-    use waygate_wire::deserialize;
-    use crate::{ObjectIdentifier, RequestUpdateSignParams, RequestUseItemLogParams};
-
-    #[test]
-    fn deserialize_use_item_log() {
-        let deserialized: RequestUseItemLogParams = deserialize(
-            include_bytes!("../test/data/RequestUseItemLog.bin"),
-        ).unwrap();
-
-        assert_eq!(deserialized.used_items.len(), 1);
-        assert_eq!(deserialized.used_items[0].item_id, 101);
-        assert_eq!(deserialized.used_items[0].times_used, 1);
-        assert_eq!(deserialized.used_items[0].unk3, 1);
-        assert_eq!(deserialized.location.map, 60423600);
-        assert_eq!(deserialized.location.x, -45.939575);
-        assert_eq!(deserialized.location.y, 92.36392);
-        assert_eq!(deserialized.location.z, 79.65545);
-    }
 }
