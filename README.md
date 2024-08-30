@@ -110,11 +110,6 @@ The announcements are set in `announcements.toml`.
  - [ ] A fuckton of telemetry-related messaging
 
 ### Non-gameplay tasks
-#### Banning players
-There is currently no way of banning players from your server. Blocking
-people on steam works to keep them you from matching with these players.
-A system for banning players from the server is being worked on.
-
 #### Code cleanup and tidying
 A lot of the development happened as I was reversing the game, so a few parts
 need rewriting to be more maintainable. The database needs indices as an
