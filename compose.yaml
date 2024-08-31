@@ -1,0 +1,28 @@
+services:
+  waygate-server:
+    container_name: waygate-server
+    image: waygate-server
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "10901:10901"
+      - "10902:10902"
+    volumes:
+      - ./logging.toml:/waygate/logging.toml
+      - ./announcements.toml:/waygate/announcements.toml
+    env_file:
+      - .env
+    depends_on:
+      - waygate-db
+
+  waygate-db:
+    container_name: waygate-db
+    image: postgres:16
+    env_file:
+      - .env
+    volumes:
+      - waygate_pgdata:/var/lib/postgresql/data
+
+volumes:
+  waygate_pgdata:
