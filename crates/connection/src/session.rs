@@ -4,7 +4,9 @@ use rand::prelude::*;
 use sqlx::Row;
 use thiserror::Error;
 
-use waygate_message::{ObjectIdentifier, RequestCreateSessionParams, RequestRestoreSessionParams, RequestUpdatePlayerStatusParams, ResponseCreateSessionParams, ResponseParams, ResponseRestoreSessionParams, SessionData};
+use waygate_message::armoredcore6::{RequestCreateSessionParams, RequestRestoreSessionParams, ResponseCreateSessionParams, ResponseParams, ResponseRestoreSessionParams, SessionData};
+use waygate_message::RequestUpdatePlayerStatusParams;
+use waygate_message::ObjectIdentifier;
 use waygate_database::{database_connection, DatabaseError};
 use waygate_pool::{BREAKIN_POOL, SignPoolEntry, BreakInPoolEntry, QuickmatchPoolEntry, PoolError, PoolKeyGuard};
 
@@ -144,7 +146,11 @@ pub async fn new_client_session(external_id: String) -> Result<ClientSessionInne
 }
 
 /// Creates a client session from an already existing session 
-pub async fn get_client_session(external_id: String, session_id: i32, cookie: &str) -> Result<ClientSessionInner, SessionError> {
+pub async fn get_client_session(
+    external_id: String,
+    session_id: i32,
+    cookie: &str,
+) -> Result<ClientSessionInner, SessionError> {
     let now = time::SystemTime::now().duration_since(time::UNIX_EPOCH).unwrap();
 
     let mut connection = database_connection().await?;

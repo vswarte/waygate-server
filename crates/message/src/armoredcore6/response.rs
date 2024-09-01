@@ -1,0 +1,47 @@
+use serde::{Deserialize, Serialize};
+
+use super::*;
+
+#[repr(u32)]
+#[derive(Serialize, Deserialize, Debug)]
+pub enum ResponseParams {
+    CreateSession(session::ResponseCreateSessionParams),
+    DeleteSession,
+    RestoreSession(session::ResponseRestoreSessionParams),
+    DebugCommand,
+    ServerPing,
+    CheckAlive,
+    GetAnnounceMessageList(announcement::ResponseGetAnnounceMessageListParams),
+    UpdateLoginPlayerCharacter(character::ResponseUpdateLoginPlayerCharacterParams),
+    SystemLog,
+    MenuUsageLog,
+    InGameResultLog,
+    UploadFamilySharingInfo,
+    UploadGuardITCode,
+    CreateMatchingTicket,
+    PollMatchingTicket(matchingticket::ResponsePollMatchingTicketParams),
+    DeleteMatchingTicket,
+    StartBattleSession,
+    FinishBattleSession,
+    CreateBattleSession,
+    CreateRoom,
+    UpdateRoom,
+    DeleteRoom,
+    GetRoom,
+    GetRoomList,
+    GenerateRoomBattleID,
+    RegisterUGC(ugc::ResponseRegisterUGCParams),
+    GetUGCIDList,
+    GetUGC,
+    DeleteUGC,
+    GetUGCStatus,
+    GenerateUGCServerID,
+    KeepUGCServerID,
+    UpdatePlayerProperties,
+    GetPlayerProperties,
+    GetRankingOrder,
+    GetRatingStatus,
+    GetPlayerRatingValue,
+    Report,
+    Healthcheck,
+}

@@ -8,7 +8,8 @@ use thiserror::Error;
 use tokio::sync::mpsc::channel;
 use tungstenite::Message;
 use futures_util::SinkExt;
-use waygate_message::{PayloadType, RequestParams, ResponseParams};
+use waygate_message::PayloadType;
+use waygate_message::armoredcore6::{ResponseParams, RequestParams};
 use waygate_wire::{deserialize, serialize, FNWireError};
 
 use crate::{add_client_channel, handle_create_session, handle_restore_session, new_client_crypto, ClientPushChannelRX, ClientSession, CryptoError};
