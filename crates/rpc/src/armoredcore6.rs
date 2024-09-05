@@ -5,3 +5,4 @@ pub(crate) mod character;
 pub(crate) mod ugc;
 pub(crate) mod matchingticket;
 pub(crate) mod player;
+pub(crate) mod room;

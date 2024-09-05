@@ -3,7 +3,7 @@ use waygate_connection::{ClientError, ClientSession};
 use waygate_message::armoredcore6::ResponseParams;
 
 use crate::HandlerResult;
-use crate::armoredcore6::{announcement, character, matchingticket, session, ugc};
+use crate::armoredcore6::{announcement, character, matchingticket, player, room, session, ugc};
 
 pub async fn handle_request(
     session: ClientSession,
@@ -16,27 +16,50 @@ pub async fn handle_request(
     );
 
     Ok(match request {
-        RequestParams::DeleteSession => session::handle_delete_session(session).await?,
+        RequestParams::DeleteSession
+            => session::handle_delete_session(session).await?,
 
-        // Client throws a steamworks error if this is returns an error but it
-        // seems unused otherwise.
-        RequestParams::RegisterUGC
-            => ugc::handle_register_ugc().await?,
+        RequestParams::RegisterUGC(p)
+            => ugc::handle_register_ugc(p).await?,
+
+        RequestParams::GetUGCStatus(p)
+            => ugc::handle_get_ugc_status(p).await?,
 
         RequestParams::UpdateLoginPlayerCharacter
             => character::handle_update_login_player_character().await?,
-
 
         RequestParams::GetAnnounceMessageList(_)
             => announcement::handle_get_announce_message_list().await?,
 
         RequestParams::PollMatchingTicket
             => matchingticket::handle_poll_matching_ticket().await?,
-        RequestParams::CreateMatchingTicket(_)
-            => matchingticket::handle_create_matching_ticket().await?,
+
+        RequestParams::UploadGuardITCode
+            => ResponseParams::UploadGuardITCode,
 
         RequestParams::UploadFamilySharingInfo
             => ResponseParams::UploadFamilySharingInfo,
+
+        RequestParams::CreateRoom(p)
+            => room::handle_create_room(session, p).await?,
+
+        RequestParams::UpdateRoom(p)
+            => room::handle_update_room(session, p).await?,
+
+        RequestParams::DeleteRoom(p)
+            => room::handle_delete_room(session, p).await?,
+
+        RequestParams::GetRoomList(p)
+            => room::handle_get_room_list(p).await?,
+
+        RequestParams::GenerateRoomBattleID(p)
+            => room::handle_generate_room_battle_id(p).await?,
+
+        RequestParams::GetRankingOrder(p)
+            => player::handle_get_ranking_order(p).await?,
+
+        RequestParams::GetRatingStatus
+            => ugc::handle_get_rating_status().await?,
 
         _ => {
             return Err(Box::new(ClientError::NoHandler(request.name().to_string())))

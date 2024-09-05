@@ -8,6 +8,7 @@ use waygate_message::armoredcore6::{RequestCreateSessionParams, RequestRestoreSe
 use waygate_message::RequestUpdatePlayerStatusParams;
 use waygate_message::ObjectIdentifier;
 use waygate_database::{database_connection, DatabaseError};
+use waygate_pool::armoredcore6::room::RoomPoolEntry;
 use waygate_pool::{BREAKIN_POOL, SignPoolEntry, BreakInPoolEntry, QuickmatchPoolEntry, PoolError, PoolKeyGuard};
 
 // Sessions are valid for an hour
@@ -98,6 +99,7 @@ pub struct ClientSessionGameSession {
     pub sign: Vec<PoolKeyGuard<SignPoolEntry>>,
     pub quickmatch: Option<PoolKeyGuard<QuickmatchPoolEntry>>,
     pub breakin: Option<PoolKeyGuard<BreakInPoolEntry>>,
+    pub room: Option<PoolKeyGuard<RoomPoolEntry>>,
 }
 
 #[derive(Clone, Debug)]
@@ -290,7 +292,7 @@ pub async fn handle_restore_session(
                 valid_until,
                 cookie,
             },
-            unk_string: String::from(""),
+            redirect_url: String::from(""),
         })
     ))
 }

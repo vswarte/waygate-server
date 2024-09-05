@@ -51,5 +51,5 @@ pub struct RequestRestoreSessionParams {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ResponseRestoreSessionParams {
     pub session_data: SessionData,
-    pub unk_string: String,
+    pub redirect_url: String,
 }

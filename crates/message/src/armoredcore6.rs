@@ -6,6 +6,8 @@ pub mod announcement;
 pub mod session;
 pub mod character;
 pub mod player;
+pub mod rating;
+pub mod room;
 
 pub use request::*;
 pub use response::*;
@@ -15,3 +17,5 @@ pub use announcement::*;
 pub use session::*;
 pub use character::*;
 pub use player::*;
+pub use rating::*;
+pub use room::*;
