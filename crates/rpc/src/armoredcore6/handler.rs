@@ -20,7 +20,7 @@ pub async fn handle_request(
             => session::handle_delete_session(session).await?,
 
         RequestParams::RegisterUGC(p)
-            => ugc::handle_register_ugc(p).await?,
+            => ugc::handle_register_ugc(session, p).await?,
 
         RequestParams::GetUGCStatus(p)
             => ugc::handle_get_ugc_status(p).await?,
@@ -59,7 +59,7 @@ pub async fn handle_request(
             => player::handle_get_ranking_order(p).await?,
 
         RequestParams::GetRatingStatus
-            => ugc::handle_get_rating_status().await?,
+            => player::handle_get_rating_status().await?,
 
         _ => {
             return Err(Box::new(ClientError::NoHandler(request.name().to_string())))

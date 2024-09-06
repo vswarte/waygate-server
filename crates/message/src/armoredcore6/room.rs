@@ -83,11 +83,11 @@ pub struct RequestDeleteRoomParams {
 pub struct ResponseDeleteRoomParams {}
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct RequestGenerateRoomBattleID{
+pub struct RequestGenerateRoomBattleIDParams {
     pub room_id: u32,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct ResponseGenerateRoomBattleID {
+pub struct ResponseGenerateRoomBattleIDParams {
     pub unk1: u64,
 }

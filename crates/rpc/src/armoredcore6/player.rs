@@ -1,4 +1,4 @@
-use waygate_message::armoredcore6::{RequestGetRankingOrder, ResponseGetRankingOrder, ResponseGetRankingOrderEntry, ResponseGetRatingStatusParams, ResponseParams};
+use waygate_message::armoredcore6::{RequestGetRankingOrderParams, ResponseGetRankingOrderParams, ResponseGetRankingOrderParamsEntry, ResponseGetRatingStatusParams, ResponseParams};
 
 use crate::HandlerResult;
 
@@ -47,18 +47,16 @@ pub async fn handle_get_rating_status() -> HandlerResult {
 }
 
 pub async fn handle_get_ranking_order(
-    request: Box<RequestGetRankingOrder>,
+    request: Box<RequestGetRankingOrderParams>,
 ) -> HandlerResult {
-    dbg!(&request);
-
     Ok(ResponseParams::GetRankingOrder(
-        ResponseGetRankingOrder {
+        ResponseGetRankingOrderParams {
             entries: vec![
-                ResponseGetRankingOrderEntry {
+                ResponseGetRankingOrderParamsEntry {
                     player_id: u32::MAX,
                     player_name: String::from("TEST MAN"),
                     ac_name: String::from("TEST AC NAME"),
-                    ac_ugc_code: String::from("CHEESECAKE"),
+                    ac_ugc_code: String::from("TEXYWH9UEEVA"),
                     steam_id: String::from(""),
                     ranking: 1,
                     rating: 9999,

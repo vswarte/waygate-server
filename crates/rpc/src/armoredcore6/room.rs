@@ -3,7 +3,7 @@ use std::sync::atomic::Ordering;
 use thiserror::Error;
 use waygate_connection::ClientSession;
 use waygate_message::armoredcore6::{
-    RequestCreateRoomParams, RequestDeleteRoomParams, RequestGenerateRoomBattleID, RequestGetRoomListParams, RequestUpdateRoomParams, ResponseCreateRoomParams, ResponseDeleteRoomParams, ResponseGenerateRoomBattleID, ResponseGetRoomListParams, ResponseParams, ResponseUpdateRoomParams
+    RequestCreateRoomParams, RequestDeleteRoomParams, RequestGenerateRoomBattleIDParams, RequestGetRoomListParams, RequestUpdateRoomParams, ResponseCreateRoomParams, ResponseDeleteRoomParams, ResponseGenerateRoomBattleIDParams, ResponseGetRoomListParams, ResponseParams, ResponseUpdateRoomParams
 };
 use waygate_pool::{
     armoredcore6::room::{normalize_room_keyword, RoomPoolEntry, RoomPoolQuery},
@@ -83,11 +83,11 @@ pub async fn handle_delete_room(
 }
 
 pub async fn handle_generate_room_battle_id(
-    request: Box<RequestGenerateRoomBattleID>,
+    request: Box<RequestGenerateRoomBattleIDParams>,
 ) -> HandlerResult {
     // let _ = session.game_session_mut().room.take();
 
-    Ok(ResponseParams::GenerateRoomBattleID(ResponseGenerateRoomBattleID {
+    Ok(ResponseParams::GenerateRoomBattleID(ResponseGenerateRoomBattleIDParams {
         unk1: 87874609782342,
     }))
 }
