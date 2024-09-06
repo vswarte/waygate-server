@@ -22,6 +22,9 @@ pub async fn handle_request(
         RequestParams::RegisterUGC(p)
             => ugc::handle_register_ugc(session, p).await?,
 
+        RequestParams::GetUGC(p)
+            => ugc::handle_get_ugc(p).await?,
+
         RequestParams::GetUGCStatus(p)
             => ugc::handle_get_ugc_status(p).await?,
 

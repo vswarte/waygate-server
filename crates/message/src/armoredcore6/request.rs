@@ -32,7 +32,7 @@ pub enum RequestParams {
     GenerateRoomBattleID(Box<room::RequestGenerateRoomBattleIDParams>),
     RegisterUGC(Box<ugc::RequestRegisterUGCParams>),
     GetUGCIDList,
-    GetUGC(Box<ugc::ResponseGetUGCParams>),
+    GetUGC(Box<ugc::RequestGetUGCParams>),
     DeleteUGC,
     GetUGCStatus(Box<ugc::RequestGetUGCStatusParams>),
     GenerateUGCServerID,
