@@ -1,7 +1,5 @@
 use serde::{Serialize, Deserialize};
 
-use super::*;
-
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct RequestUpdatePlayerStatusParams {
     pub unk1: u32,

@@ -3,8 +3,15 @@ name = "waygate-message"
 version = "0.1.0"
 edition = "2021"
 
+[[bin]]
+name = "validate-message"
+path = "src/bin/validate-message.rs"
+
 [dependencies.serde]
 workspace = true
 
 [dependencies.waygate-wire]
+workspace = true
+
+[dependencies.byteorder]
 workspace = true

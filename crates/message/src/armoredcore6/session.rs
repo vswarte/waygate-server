@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use super::*;
+use crate::ObjectIdentifier;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct RequestCreateSessionParams {

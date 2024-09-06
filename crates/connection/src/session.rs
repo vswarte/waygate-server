@@ -4,8 +4,11 @@ use rand::prelude::*;
 use sqlx::Row;
 use thiserror::Error;
 
-use waygate_message::{ObjectIdentifier, RequestCreateSessionParams, RequestRestoreSessionParams, RequestUpdatePlayerStatusParams, ResponseCreateSessionParams, ResponseParams, ResponseRestoreSessionParams, SessionData};
+use waygate_message::armoredcore6::{RequestCreateSessionParams, RequestRestoreSessionParams, ResponseCreateSessionParams, ResponseParams, ResponseRestoreSessionParams, SessionData};
+use waygate_message::RequestUpdatePlayerStatusParams;
+use waygate_message::ObjectIdentifier;
 use waygate_database::{database_connection, DatabaseError};
+use waygate_pool::armoredcore6::room::RoomPoolEntry;
 use waygate_pool::{BREAKIN_POOL, SignPoolEntry, BreakInPoolEntry, QuickmatchPoolEntry, PoolError, PoolKeyGuard};
 
 // Sessions are valid for an hour
@@ -96,6 +99,7 @@ pub struct ClientSessionGameSession {
     pub sign: Vec<PoolKeyGuard<SignPoolEntry>>,
     pub quickmatch: Option<PoolKeyGuard<QuickmatchPoolEntry>>,
     pub breakin: Option<PoolKeyGuard<BreakInPoolEntry>>,
+    pub room: Option<PoolKeyGuard<RoomPoolEntry>>,
 }
 
 #[derive(Clone, Debug)]
@@ -144,7 +148,11 @@ pub async fn new_client_session(external_id: String) -> Result<ClientSessionInne
 }
 
 /// Creates a client session from an already existing session 
-pub async fn get_client_session(external_id: String, session_id: i32, cookie: &str) -> Result<ClientSessionInner, SessionError> {
+pub async fn get_client_session(
+    external_id: String,
+    session_id: i32,
+    cookie: &str,
+) -> Result<ClientSessionInner, SessionError> {
     let now = time::SystemTime::now().duration_since(time::UNIX_EPOCH).unwrap();
 
     let mut connection = database_connection().await?;
@@ -284,7 +292,7 @@ pub async fn handle_restore_session(
                 valid_until,
                 cookie,
             },
-            unk_string: String::from(""),
+            redirect_url: String::from(""),
         })
     ))
 }

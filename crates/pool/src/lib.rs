@@ -1,10 +1,12 @@
 use std::sync::{Arc, LazyLock, RwLock};
+use armoredcore6::room::RoomPoolEntry;
 use thiserror::Error;
 
 pub mod sign;
 pub mod breakin;
 pub mod matching;
 pub mod quickmatch;
+pub mod armoredcore6;
 
 pub use sign::*;
 pub use breakin::*;
@@ -26,6 +28,7 @@ pub enum PoolError {
 pub static SIGN_POOL: LazyLock<Pool<SignPoolEntry>> = LazyLock::new(Default::default);
 pub static BREAKIN_POOL: LazyLock<Pool<BreakInPoolEntry>> = LazyLock::new(Default::default);
 pub static QUICKMATCH_POOL: LazyLock<Pool<QuickmatchPoolEntry>> = LazyLock::new(Default::default);
+pub static ROOM_POOL: LazyLock<Pool<RoomPoolEntry>> = LazyLock::new(Default::default);
 
 pub struct MatchResult<TEntry>(pub PoolKey, pub Arc<TEntry>);
 
@@ -128,6 +131,13 @@ impl<TEntry> Pool<TEntry> {
                 self.entries.clear_poison();
                 p.into_inner()
             })
+    }
+
+    pub fn by_key(&self, key: &PoolKey) -> Option<Arc<TEntry>> {
+        self.lock_read()
+            .iter()
+            .find(|(k, _)| k.1 == key.1 && k.0 == key.0)
+            .map(|(_ ,v)| v.clone())
     }
 
     pub fn by_topic_id(&self, topic: i32) -> Option<Arc<TEntry>> {

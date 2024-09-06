@@ -18,6 +18,7 @@ pub(crate) mod response;
 pub(crate) mod push;
 pub(crate) mod payload;
 pub(crate) mod log;
+pub mod armoredcore6;
 
 pub use player::*;
 pub use shared::*;
