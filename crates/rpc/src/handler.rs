@@ -34,6 +34,8 @@ pub async fn handle_request(
             => matchingticket::handle_poll_matching_ticket().await?,
         RequestParams::CreateMatchingTicket(_)
             => matchingticket::handle_create_matching_ticket().await?,
+        RequestParams::DeleteMatchingTicket
+            => ResponseParams::DeleteMatchingTicket,
 
         RequestParams::CreateBloodstain(p)
             => bloodstain::handle_create_bloodstain(session, *p).await?,
@@ -107,6 +109,12 @@ pub async fn handle_request(
             => player_equipments::handle_gr_upload_player_equipments(session, *p).await?, 
         RequestParams::GrGetPlayerEquipments(p)
             => player_equipments::handle_gr_get_player_equipments(*p).await?, 
+
+        RequestParams::CreateRoom(p)
+            => room::handle_create_room(*p).await?,
+
+        RequestParams::CreateBattleSession(p)
+            => room::handle_create_battle_session(*p).await?,
 
         _ => {
             return Err(Box::new(ClientError::NoHandler(request.name().to_string())))

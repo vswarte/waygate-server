@@ -58,16 +58,17 @@ pub struct CharacterData {
     pub unk20: u32,
 
     pub unk21: [u8; 0x1b],
-    pub unk_vec: Vec<u32>,
-    pub unk22: u32,
+    // Contains the character types of the players in the world
+    pub hosting_chr_types: Vec<u32>,
+    pub unk23: u32,
 
     pub password: String,
     pub group_passwords: Vec<String>,
-    pub unk23: u16,
-    pub unk24: u8,
+    pub unk24: u16,
     pub unk25: u8,
+    pub unk26: u8,
     pub sites_of_grace: Vec<SiteOfGrace>,
-    pub unk26: [u8; 0x18],
+    pub unk27: [u8; 0x18],
     pub equipment: CharacterEquipment,
 }
 
