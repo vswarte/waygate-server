@@ -10,6 +10,7 @@ pub struct SignPoolEntry {
     pub character_level: u32,
     pub weapon_level: u32,
     pub area: MatchingArea,
+    pub unk_area_value: i32,
     pub password: String,
     pub group_passwords: Vec<String>,
     pub data: Vec<u8>,
@@ -25,6 +26,7 @@ impl From<RequestCreateSignParams> for SignPoolEntry {
             password: val.matching_parameters.password.clone(),
             group_passwords: val.group_passwords.clone(),
             data: val.data,
+            unk_area_value: 0,
         }
     }
 }
@@ -35,10 +37,11 @@ impl From<RequestCreateMatchAreaSignParams> for SignPoolEntry {
             external_id: String::new(),
             character_level: val.matching_parameters.soul_level as u32,
             weapon_level: val.matching_parameters.max_reinforce as u32,
-            area: (&val.area).into(),
+            area: (&val.area.match_area).into(),
             password: val.matching_parameters.password.clone(),
             group_passwords: val.group_passwords.clone(),
             data: val.data,
+            unk_area_value: val.area.area,
         }
     }
 }
@@ -66,7 +69,8 @@ impl From<&MatchResult<SignPoolEntry>> for ResponseGetMatchAreaSignListParamsEnt
             data: val.1.data.clone(),
             steam_id: val.1.external_id.clone(),
             area: (&val.1.area).into(),
-            unk1: 0,
+            unk1: val.1.unk_area_value,
+            unk2: 0,
             unk_string: String::default(),
             group_passwords: val.1.group_passwords.clone(),
         }
@@ -129,7 +133,7 @@ impl From<&RequestGetMatchAreaSignListParams> for SignPoolQuery {
         Self {
             character_level: value.matching_parameters.soul_level as u32,
             weapon_level: value.matching_parameters.max_reinforce as u32,
-            areas: vec![(&value.area).into()],
+            areas: vec![MatchingArea::Puddle(value.match_area_id)],
             password: value.matching_parameters.password.clone(),
         }
     }
@@ -167,6 +171,7 @@ mod test {
             password: String::default(),
             group_passwords: vec![],
             data: vec![],
+            unk_area_value: 0,
         };
 
         let finger = SignPoolQuery {
@@ -189,6 +194,7 @@ mod test {
             password: String::default(),
             group_passwords: vec![],
             data: vec![],
+            unk_area_value: 0,
         };
 
         let finger = SignPoolQuery {
@@ -211,6 +217,7 @@ mod test {
             password: String::from("test"),
             group_passwords: vec![],
             data: vec![],
+            unk_area_value: 0,
         };
 
         let finger = SignPoolQuery {
@@ -233,6 +240,7 @@ mod test {
             password: String::from("123"),
             group_passwords: vec![],
             data: vec![],
+            unk_area_value: 0,
         };
 
         let finger = SignPoolQuery {
@@ -255,6 +263,7 @@ mod test {
             password: String::default(),
             group_passwords: vec![],
             data: vec![],
+            unk_area_value: 0,
         };
 
         let finger = SignPoolQuery {
@@ -277,6 +286,7 @@ mod test {
             password: String::default(),
             group_passwords: vec![],
             data: vec![],
+            unk_area_value: 0,
         };
 
         let finger = SignPoolQuery {

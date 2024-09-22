@@ -72,8 +72,8 @@ pub async fn handle_request(
             => sign::handle_remove_sign(session, *p).await?,
         RequestParams::UpdateSign(p)
             => sign::handle_update_sign(session,*p).await?,
-        // RequestParams::GetMatchAreaSignList(p)
-        //     => sign::handle_get_match_area_sign_list(*p).await?,
+        RequestParams::GetMatchAreaSignList(p)
+            => sign::handle_get_match_area_sign_list(*p).await?,
         RequestParams::CreateMatchAreaSign(p)
             => sign::handle_create_match_area_sign(session, *p).await?,
 
@@ -114,7 +114,7 @@ pub async fn handle_request(
             => room::handle_create_room(*p).await?,
 
         RequestParams::CreateBattleSession(p)
-            => room::handle_create_battle_session(*p).await?,
+            => quickmatch::handle_create_battle_session(*p).await?,
 
         _ => {
             return Err(Box::new(ClientError::NoHandler(request.name().to_string())))

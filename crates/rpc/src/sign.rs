@@ -3,6 +3,7 @@ use thiserror::Error;
 
 use waygate_connection::send_push;
 use waygate_connection::ClientSession;
+use waygate_pool::SignPoolEntry;
 use waygate_pool::{PoolKey, SignPoolQuery, SIGN_POOL};
 
 use crate::HandlerResult;
@@ -161,7 +162,9 @@ pub async fn handle_create_match_area_sign(
 ) -> HandlerResult {
     tracing::info!("CreateMatchAreaSign: {request:?}");
 
-    let key = SIGN_POOL.insert(session.player_id, request.into())?;
+    let mut pool_entry: SignPoolEntry = request.into();
+    pool_entry.external_id = session.external_id.clone();
+    let key = SIGN_POOL.insert(session.player_id, pool_entry)?;
 
     let identifier: ObjectIdentifier = (&key.1).into();
     session.game_session_mut().sign.push(key);
@@ -177,6 +180,8 @@ pub async fn handle_get_match_area_sign_list(
     tracing::info!("GetMatchAreaSignList: {request:?}");
 
     let mut pool_matches = SIGN_POOL.match_entries::<SignPoolQuery>(&(&request).into());
+
+    tracing::info!("Found {} matches", pool_matches.len());
 
     let already_received = pool_matches
         .iter()
@@ -194,7 +199,6 @@ pub async fn handle_get_match_area_sign_list(
     Ok(ResponseParams::GetMatchAreaSignList(
         ResponseGetMatchAreaSignListParams {
             known_signs: already_received.into_iter().map(|e| (&e).into()).collect(),
-
             entries: pool_matches.iter().map(|e| e.into()).collect(),
         },
     ))

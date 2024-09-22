@@ -83,7 +83,7 @@ pub enum ResponseParams {
     CreateMatchingTicket,
     PollMatchingTicket(matchingticket::ResponsePollMatchingTicketParams),
     DeleteMatchingTicket,
-    CreateBattleSession(room::ResponseCreateBattleSessionParams),
+    CreateBattleSession(quickmatch::ResponseCreateBattleSessionParams),
     CreateRoom,
     UpdateRoom,
     DeleteRoom,
