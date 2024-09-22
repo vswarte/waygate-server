@@ -131,3 +131,18 @@ pub async fn handle_send_quick_match_result(
     Ok(ResponseParams::SendQuickMatchResult)
 }
 
+pub async fn handle_create_battle_session(
+    request: RequestCreateBattleSessionParams
+) -> HandlerResult {
+    tracing::info!("BattleSession data: {request:#?}");
+
+
+    Ok(ResponseParams::CreateBattleSession(ResponseCreateBattleSessionParams {
+        unk1: 0,
+        unk2: 0,
+        unk3: 0,
+        unk4: 0,
+        unk5: 0,
+        unk6: 0,
+    }))
+}

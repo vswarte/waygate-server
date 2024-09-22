@@ -430,12 +430,19 @@ where
     ) -> Result<(), ClientError> {
         let (responder, request) = create_handling_context(message)?;
 
+        // let label = format!(
+        //     "{}-{}",
+        //     self.state.session.player_id,
+        //     request.name(),
+        // );
+
         let response = (self.state.dispatch)(
             self.state.session.clone(),
             request,
         ).await;
 
         let mut bytes = responder.create_response(response)?;
+        // std::fs::write(format!("./dump/response-{}.mmbin", label), &bytes).unwrap();
         let encrypted = self.state.crypto.session_encrypt(&mut bytes).await?;
 
         self.state.transport.sink.send(Message::Binary(encrypted))

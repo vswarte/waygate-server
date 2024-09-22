@@ -18,6 +18,7 @@ pub(crate) mod response;
 pub(crate) mod push;
 pub(crate) mod payload;
 pub(crate) mod log;
+pub(crate) mod room;
 
 pub use player::*;
 pub use shared::*;
@@ -39,3 +40,4 @@ pub use response::*;
 pub use push::*;
 pub use payload::*;
 pub use log::*;
+pub use room::*;

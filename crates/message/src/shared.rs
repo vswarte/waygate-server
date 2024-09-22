@@ -8,10 +8,7 @@ pub struct PlayRegionArea {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct PuddleArea {
-    pub match_area: i32,
-    pub area: i32,
-}
+pub struct PuddleArea(pub i32);
 
 #[derive(Serialize, Deserialize, PartialEq)]
 pub struct ObjectIdentifier {
