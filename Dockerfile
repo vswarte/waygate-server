@@ -4,10 +4,13 @@ WORKDIR /waygate
 
 COPY Cargo.toml Cargo.lock ./
 COPY crates ./crates
-RUN cargo build --release
+RUN --mount=type=cache,target=/usr/local/cargo/registry \
+    --mount=type=cache,target=/waygate/target \
+    cargo build --release
 
 RUN mkdir /waygate/artifacts
-RUN find ./target/release \( -name waygate-server -o -name waygate-generate-keys -o -name libsteam_api.so \) -exec cp {} /waygate/artifacts/ \;
+RUN --mount=type=cache,target=/waygate/target \
+    find ./target/release \( -name waygate-server -o -name waygate-generate-keys -o -name libsteam_api.so \) -exec cp {} /waygate/artifacts/ \;
 
 
 FROM steamcmd/steamcmd:latest
