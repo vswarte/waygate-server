@@ -138,8 +138,8 @@ async fn handle_connection(
         .await
         .map_err(|_| ClientError::Transport(TransportError::AcceptFailed))?;
 
-    let external_id = steam_id.get().unwrap();
-    let session_ticket = session_ticket.get().unwrap();
+    let external_id = steam_id.get().ok_or(ClientError::Credentials)?;
+    let session_ticket = session_ticket.get().ok_or(ClientError::Credentials)?;
 
     let steam_session = match begin_session(external_id.as_str(), session_ticket.as_str()) {
         Ok(s) => s,
