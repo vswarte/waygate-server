@@ -1,5 +1,6 @@
 services:
   waygate-server:
+    restart: unless-stopped
     container_name: waygate-server
     image: waygate-server
     build:
