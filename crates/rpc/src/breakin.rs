@@ -4,6 +4,7 @@ use waygate_connection::send_push;
 use waygate_connection::ClientSession;
 use waygate_message::*;
 use waygate_pool::breakin::BreakInPoolQuery;
+use waygate_pool::PoolError;
 use waygate_pool::BREAKIN_POOL;
 
 use rand::seq::SliceRandom;
@@ -38,6 +39,9 @@ pub async fn handle_break_in_target(
     session: ClientSession,
     request: RequestBreakInTargetParams,
 ) -> HandlerResult {
+    let target = BREAKIN_POOL
+        .by_topic_id(request.player_id)
+        .ok_or(PoolError::NotFound)?;
     let push_payload = PushParams::Join(JoinParams {
         identifier: ObjectIdentifier {
             object_id: rand::thread_rng().gen::<i32>(),
@@ -48,7 +52,7 @@ pub async fn handle_break_in_target(
             invader_steam_id: session.external_id.clone(),
             unk1: 0x0,
             unk2: 0x0,
-            play_region: 6100000,
+            play_region: target.play_region,
         }),
     });
 

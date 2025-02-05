@@ -7,6 +7,7 @@ use crate::matching::weapon;
 pub struct BreakInPoolEntry {
     pub character_level: u32,
     pub weapon_level: u32,
+    pub play_region: u32,
     pub steam_id: String,
 }
 
@@ -23,6 +24,7 @@ impl Into<ResponseGetBreakInTargetListParamsEntry> for &MatchResult<BreakInPoolE
 pub struct BreakInPoolQuery {
     pub character_level: u32,
     pub weapon_level: u32,
+    pub play_region: u32,
 }
 
 impl BreakInPoolQuery {
@@ -48,13 +50,9 @@ impl BreakInPoolQuery {
 
 impl PoolQuery<BreakInPoolEntry> for BreakInPoolQuery {
     fn matches(&self, entry: &BreakInPoolEntry) -> bool {
-        Self::check_character_level(
-            entry.character_level,
-            self.character_level,
-        ) && Self::check_weapon_level(
-            entry.weapon_level,
-            self.weapon_level,
-        )
+        entry.play_region == self.play_region
+            && Self::check_character_level(entry.character_level, self.character_level)
+            && Self::check_weapon_level(entry.weapon_level, self.weapon_level)
     }
 }
 
@@ -63,6 +61,7 @@ impl From<RequestGetBreakInTargetListParams> for BreakInPoolQuery {
         BreakInPoolQuery {
             character_level: value.matching_parameters.soul_level as u32,
             weapon_level: value.matching_parameters.max_reinforce as u32,
+            play_region: value.play_region,
         }
     }
 }
@@ -95,12 +94,14 @@ mod test {
         let host = BreakInPoolEntry {
             character_level: 1,
             weapon_level: 1,
+            play_region: 0,
             steam_id: String::default(),
         };
 
         let invader = BreakInPoolQuery {
             character_level: 1,
             weapon_level: 1,
+            play_region: 0,
         };
 
         assert!(invader.matches(&host));
@@ -111,14 +112,34 @@ mod test {
         let host = BreakInPoolEntry {
             character_level: 700,
             weapon_level: 1,
+            play_region: 0,
             steam_id: String::default(),
         };
 
         let invader = BreakInPoolQuery {
             character_level: 400,
             weapon_level: 1,
+            play_region: 0,
         };
 
         assert!(invader.matches(&host));
+    }
+
+    #[test]
+    fn play_region_must_match() {
+        let host = BreakInPoolEntry {
+            character_level: 1,
+            weapon_level: 1,
+            play_region: 1,
+            steam_id: String::default(),
+        };
+
+        let invader = BreakInPoolQuery {
+            character_level: 1,
+            weapon_level: 1,
+            play_region: 0,
+        };
+
+        assert!(!invader.matches(&host));
     }
 }

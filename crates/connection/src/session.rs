@@ -74,7 +74,9 @@ impl ClientSessionInner {
                     character_level: matching.level,
                     weapon_level: matching.max_reinforce_level,
                     steam_id: self.external_id.clone(),
-                })?;
+                    play_region: matching.play_region,
+                },
+            )?;
 
             game_session.breakin = Some(key);
             tracing::debug!("Added player to breakin pool. player_id = {}", self.player_id);
@@ -102,6 +104,7 @@ pub struct ClientSessionGameSession {
 pub struct CharacterMatchingData {
     pub level: u32,
     pub max_reinforce_level: u32,
+    pub play_region: u32,
 }
 
 impl From<&RequestUpdatePlayerStatusParams> for CharacterMatchingData {
@@ -109,6 +112,7 @@ impl From<&RequestUpdatePlayerStatusParams> for CharacterMatchingData {
         Self {
             level: value.character.level,
             max_reinforce_level: value.character.max_reinforce_level,
+            play_region: value.play_region,
         }
     }
 }
@@ -143,7 +147,7 @@ pub async fn new_client_session(external_id: String) -> Result<ClientSessionInne
     })
 }
 
-/// Creates a client session from an already existing session 
+/// Creates a client session from an already existing session
 pub async fn get_client_session(external_id: String, session_id: i32, cookie: &str) -> Result<ClientSessionInner, SessionError> {
     let now = time::SystemTime::now().duration_since(time::UNIX_EPOCH).unwrap();
 
