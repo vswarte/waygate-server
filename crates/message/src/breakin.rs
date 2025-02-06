@@ -5,7 +5,7 @@ use super::*;
 #[derive(Serialize, Deserialize, Debug)]
 pub struct RequestGetBreakInTargetListParams {
     pub play_region: u32,
-    pub unk4: u32,
+    pub target_count: u32,
     pub matching_parameters: MatchingParameters,
     pub unk48: u32,
 }
