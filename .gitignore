@@ -1,3 +1,7 @@
 /target
 /server/target
 /waygate.log
+.env
+
+*compose.override.yml
+*compose.override.yaml
