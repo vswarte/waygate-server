@@ -53,6 +53,7 @@ pub async fn handle_get_sign_list(
         .collect::<Vec<PoolKey>>();
 
     pool_matches.retain(|e| !already_received.contains(&e.0));
+    pool_matches.shuffle(&mut thread_rng());
 
     Ok(ResponseParams::GetSignList(ResponseGetSignListParams {
         known_signs: already_received.into_iter().map(|e| (&e).into()).collect(),

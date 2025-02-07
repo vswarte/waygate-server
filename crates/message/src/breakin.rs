@@ -4,8 +4,8 @@ use super::*;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct RequestGetBreakInTargetListParams {
-    pub unk0: u32,
     pub play_region: u32,
+    pub target_count: u32,
     pub matching_parameters: MatchingParameters,
     pub unk48: u32,
 }

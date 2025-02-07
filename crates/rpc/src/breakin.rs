@@ -2,9 +2,13 @@ use rand::prelude::*;
 
 use waygate_connection::send_push;
 use waygate_connection::ClientSession;
-use waygate_pool::BREAKIN_POOL;
-use waygate_pool::breakin::BreakInPoolQuery;
 use waygate_message::*;
+use waygate_pool::breakin::BreakInPoolQuery;
+use waygate_pool::PoolError;
+use waygate_pool::BREAKIN_POOL;
+
+use rand::seq::SliceRandom;
+use rand::thread_rng;
 
 use crate::HandlerResult;
 
@@ -13,11 +17,12 @@ pub async fn handle_get_break_in_target_list(
     params: RequestGetBreakInTargetListParams,
 ) -> HandlerResult {
     let play_region = params.play_region;
-    let entries = BREAKIN_POOL
+    let mut entries = BREAKIN_POOL
         .match_entries::<BreakInPoolQuery>(&params.into())
         .iter()
         .map(|m| m.into())
         .collect::<Vec<_>>();
+    entries.shuffle(&mut thread_rng());
 
     Ok(ResponseParams::GetBreakInTargetList(
         ResponseGetBreakInTargetListParams {
@@ -34,6 +39,9 @@ pub async fn handle_break_in_target(
     session: ClientSession,
     request: RequestBreakInTargetParams,
 ) -> HandlerResult {
+    let target = BREAKIN_POOL
+        .by_topic_id(request.player_id)
+        .ok_or(PoolError::NotFound)?;
     let push_payload = PushParams::Join(JoinParams {
         identifier: ObjectIdentifier {
             object_id: rand::thread_rng().gen::<i32>(),
@@ -44,15 +52,13 @@ pub async fn handle_break_in_target(
             invader_steam_id: session.external_id.clone(),
             unk1: 0x0,
             unk2: 0x0,
-            play_region: 6100000,
+            play_region: target.play_region,
         }),
     });
 
-    Ok(
-        send_push(request.player_id, push_payload)
-            .await
-            .map(|_| ResponseParams::BreakInTarget)?
-    )
+    Ok(send_push(request.player_id, push_payload)
+        .await
+        .map(|_| ResponseParams::BreakInTarget)?)
 }
 
 /// Sent by the host after receiving a `BreakInTarget` push to share the
@@ -73,11 +79,9 @@ pub async fn handle_allow_break_in_target(
         }),
     });
 
-    Ok(
-        send_push(request.player_id, push_payload)
-            .await
-            .map(|_| ResponseParams::AllowBreakInTarget)?
-    )
+    Ok(send_push(request.player_id, push_payload)
+        .await
+        .map(|_| ResponseParams::AllowBreakInTarget)?)
 }
 
 /// Sent by the host to reject a `BreakInTarget` push. This might happen
@@ -100,9 +104,7 @@ pub async fn handle_reject_break_in_target(
         }),
     });
 
-    Ok(
-        send_push(request.invading_player_id, push_payload)
-            .await
-            .map(|_| ResponseParams::RejectBreakInTarget)?
-    )
+    Ok(send_push(request.invading_player_id, push_payload)
+        .await
+        .map(|_| ResponseParams::RejectBreakInTarget)?)
 }
