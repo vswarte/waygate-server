@@ -1,0 +1,95 @@
+use message::eldenring::{
+    ObjectIdentifier, PlayRegionArea, RequestCreateGhostDataParams, RequestGetGhostDataListParams,
+    ResponseCreateGhostDataParams, ResponseGetGhostDataListParams,
+    ResponseGetGhostDataListParamsEntry,
+};
+use sqlx::Row;
+
+use crate::handler::HandleRequest;
+
+use super::DefaultClientHandler;
+
+impl HandleRequest<Box<RequestCreateGhostDataParams>, ResponseCreateGhostDataParams>
+    for DefaultClientHandler<'_>
+{
+    async fn handle(
+        &mut self,
+        request: &Box<RequestCreateGhostDataParams>,
+    ) -> Result<ResponseCreateGhostDataParams, Box<dyn std::error::Error>> {
+        let ghostdata_id = sqlx::query(
+            "INSERT INTO ghostdata (
+            player_id,
+            session_id,
+            replay_data,
+            area,
+            play_region,
+            group_passwords
+        ) VALUES (
+            $1,
+            $2,
+            $3,
+            $4,
+            $5,
+            $6
+        ) RETURNING ghostdata_id",
+        )
+        .bind(100)
+        .bind(100)
+        .bind(&request.replay_data)
+        .bind(request.area.area)
+        .bind(request.area.play_region)
+        .bind(&request.group_passwords)
+        .fetch_one(&self.services.database)
+        .await?
+        .get("ghostdata_id");
+
+        Ok(ResponseCreateGhostDataParams {
+            identifier: ObjectIdentifier(ghostdata_id),
+        })
+    }
+}
+
+impl HandleRequest<Box<RequestGetGhostDataListParams>, ResponseGetGhostDataListParams>
+    for DefaultClientHandler<'_>
+{
+    async fn handle(
+        &mut self,
+        request: &Box<RequestGetGhostDataListParams>,
+    ) -> Result<ResponseGetGhostDataListParams, Box<dyn std::error::Error>> {
+        let play_regions = request
+            .search_areas
+            .iter()
+            .map(|a| a.play_region)
+            .collect::<Vec<i32>>();
+
+        let entries: Vec<ResponseGetGhostDataListParamsEntry> =
+            sqlx::query_as::<_, GhostDataRecord>(
+                "SELECT * FROM ghostdata WHERE play_region = ANY($1) ORDER BY random() LIMIT 64",
+            )
+            .bind(play_regions)
+            .fetch_all(&self.services.database)
+            .await?
+            .into_iter()
+            .map(|e| ResponseGetGhostDataListParamsEntry {
+                area: PlayRegionArea {
+                    play_region: e.play_region,
+                    area: e.area,
+                },
+                identifier: ObjectIdentifier(e.ghostdata_id),
+                replay_data: e.replay_data,
+                group_passwords: e.group_passwords,
+            })
+            .collect();
+
+        Ok(ResponseGetGhostDataListParams { entries })
+    }
+}
+
+#[derive(sqlx::FromRow)]
+struct GhostDataRecord {
+    ghostdata_id: i64,
+    replay_data: Vec<u8>,
+    area: i32,
+    play_region: i32,
+    group_passwords: Vec<String>,
+}

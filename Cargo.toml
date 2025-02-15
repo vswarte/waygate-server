@@ -1,0 +1,22 @@
+[workspace]
+members = [
+    "server/",
+    "wire/",
+    "message/",
+]
+
+[workspace.dependencies]
+thiserror = "1"
+message = { path = "message/" }
+wire = { path = "wire/" }
+
+[workspace.dependencies.serde]
+version = "1.0"
+features = ["derive"]
+
+[profile.release]
+strip = true
+lto = true
+codegen-units = 1
+panic = "abort"
+opt-level = "z"
