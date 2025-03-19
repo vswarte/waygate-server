@@ -42,7 +42,6 @@ impl HandleRequest<Box<RequestSearchQuickMatchParams>, ResponseSearchQuickMatchP
         &mut self,
         request: &Box<RequestSearchQuickMatchParams>,
     ) -> Result<ResponseSearchQuickMatchParams, Box<dyn std::error::Error>> {
-        log::info!("Search {request:#?}");
         let mut pool_matches = self.services.pool_quickmatch.matches(&QuickMatchPoolQuery {
             arena_id: request.arena_id,
             character_level: request.matching_parameters.character_level as u32,

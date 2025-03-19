@@ -4,6 +4,8 @@ use std::{
     sync::{mpsc::channel, Arc, OnceLock},
 };
 
+use actix_web::{web, App, HttpServer};
+use api::{auth::CheckKey, ban::{delete_ban, get_ban, post_ban}, health::healthcheck, notification::announcement, AppState};
 use clap::Parser;
 use futures_util::{SinkExt, StreamExt};
 use handler::{eldenring::DefaultClientHandler, RequestHandler};
@@ -11,7 +13,6 @@ use message::{builder::MessageBuilder, reader::MessageReader, MessageType};
 use protocol::ClientProtocol;
 use services::eldenring::GameServices;
 use sqlx::{Pool, Postgres};
-use steam::SteamServer;
 use thiserror::Error;
 use tokio::net::{TcpListener, TcpStream};
 use tokio_tungstenite::tungstenite::handshake::server::{Request, Response};
@@ -21,6 +22,8 @@ mod handler;
 mod protocol;
 mod services;
 mod steam;
+mod api;
+mod notification;
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
@@ -56,7 +59,7 @@ struct Config {
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     let config = Config::parse();
-    log4rs::init_file("config/logging.yaml", Default::default()).unwrap();
+    log4rs::init_file("config/logging.yml", Default::default()).unwrap();
     log::info!("Bootstrapping with config {config:#?}");
 
     let config = Arc::new(config);
@@ -67,7 +70,14 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let services = Arc::new(GameServices::new(database.clone())?);
 
-    serve_websockets(config.clone(), database.clone(), services).await?;
+    tokio::select! {
+        _ = serve_websockets(config.clone(), database.clone(), services.clone()) => {
+            log::info!("Websocket server stopped listening");
+        },
+        _ = serve_api(config.clone(), database.clone(), services.clone()) => {
+            log::info!("API server stopped listening");
+        },
+    };
 
     Ok(())
 }
@@ -89,9 +99,7 @@ async fn serve_websockets(
             log::info!("Started serving client. remote = {peer_address}.");
 
             match serve_client(stream, peer_address, config, database, services).await {
-                Ok(_) => {
-                    log::info!("Client closed connection. remote = {peer_address}.");
-                }
+                Ok(_) => log::info!("Client closed connection. remote = {peer_address}."),
                 Err(e) => log::error!(
                     "Caught error while serving client. remote = {peer_address}. e = {e:?}."
                 ),
@@ -100,6 +108,38 @@ async fn serve_websockets(
 
         log::info!("Incoming connection from: {peer_address}");
     }
+
+    Ok(())
+}
+
+/// Serve API for control over the instance.
+async fn serve_api(
+    config: Arc<Config>,
+    database: Pool<Postgres>,
+    services: Arc<GameServices>,
+) -> Result<(), Box<dyn Error>> {
+    {
+        let config = config.clone();
+        let state = web::Data::new(AppState {
+            database,
+            services,
+        });
+
+        HttpServer::new(move || {
+            App::new()
+                .app_data(state.clone())
+                .wrap(CheckKey::new(&config.api_key))
+                .service(healthcheck)
+                .service(get_ban)
+                .service(post_ban)
+                .service(delete_ban)
+                .service(announcement)
+
+        })
+    }
+        .bind(&config.api_bind)?
+        .run()
+        .await?;
 
     Ok(())
 }
@@ -134,21 +174,18 @@ async fn serve_client(
         move |req: &Request, response: Response| {
             for (header, value) in req.headers() {
                 if header.as_str() == "x-steam-id" {
-                    external_id
-                        .set(String::from(value.to_str().unwrap()))
-                        .unwrap();
+                    let value = value.to_str().expect("Upgrade request missing X-STEAM-ID header");
+                    external_id.set(value.to_string()).unwrap();
                 }
 
                 if header.as_str() == "x-steam-session-ticket" {
-                    session_ticket
-                        .set(String::from(value.to_str().unwrap()))
-                        .unwrap();
+                    let value = value.to_str().expect("Upgrade request missing X-STEAM-SESSION-TICKET header");
+                    session_ticket.set(value.to_string()).unwrap();
                 }
 
                 if header.as_str() == "x-waygate-client-version" {
-                    waygate_version
-                        .set(String::from(value.to_str().unwrap()))
-                        .unwrap();
+                    let value = value.to_str().expect("Upgrade request missing X-WAYGATE-CLIENT-VERSION header");
+                    waygate_version.set(value.to_string()).unwrap();
                 }
             }
 
@@ -245,7 +282,7 @@ async fn serve_client(
                             std::fs::write(file_name, decrypted).unwrap();
                         }
 
-                        // Dispatch request to handler to get reponse.
+                        // Dispatch request to handler for specific message type.
                         let response = match handler.dispatch_request(deserialized).await {
                             Ok(Some(response)) => builder.body(response).build()?,
                             Err(e) => {
@@ -255,7 +292,7 @@ async fn serve_client(
                             Ok(None) => builder.error(0).build()?,
                         };
 
-                        // Throw response back at client.
+                        // Send response back to client.
                         let encrypted = protocol.encrypt_message(&response)?;
                         sink.send(Message::Binary(encrypted.into())).await?;
                     }
@@ -263,7 +300,7 @@ async fn serve_client(
                     // Clients send a push message type to confirm that they've received some
                     // server-originating push message.
                     MessageType::Push => {
-                        log::info!("Push confirmation from {}", handler.session.peer_address);
+                        log::debug!("Push confirmation from {}", handler.session.peer_address);
                     }
 
                     // Clients periodically send these. Client will disconnect if we dont
@@ -276,9 +313,7 @@ async fn serve_client(
                     _ => {}
                 }
             }
-            _ => {
-                log::debug!("Unknown websocket message type {event:#?}");
-            }
+            _ => log::warn!("Unknown websocket message type {event:#?}"),
         }
     }
 

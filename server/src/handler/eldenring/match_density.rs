@@ -11,6 +11,7 @@ impl HandleRequest<Box<RequestGetMatchDensityParams>, ResponseGetMatchDensityPar
         &mut self,
         _request: &Box<RequestGetMatchDensityParams>,
     ) -> Result<ResponseGetMatchDensityParams, Box<dyn std::error::Error>> {
+        // Some test stuff to fake match density
         let areas = vec![
             1100000, 1100001, 1100010, 1100011, 1100012, 1100013, 1100014, 1100015, 1100016,
             1100017, 1100018, 1100019, 1100021, 1100091,

@@ -1,8 +1,10 @@
 use std::{
     collections::HashMap,
-    sync::{mpsc::Sender, LazyLock, Mutex, MutexGuard, RwLock, RwLockReadGuard, RwLockWriteGuard},
+    sync::{mpsc::Sender, LazyLock, Mutex, MutexGuard},
     time::Duration,
 };
+
+use dashmap::DashMap;
 
 use crate::services::eldenring::PoolError;
 
@@ -14,30 +16,30 @@ pub const BREAKIN_ATTEMPT_CLEANUP_TIMEOUT: Duration = Duration::from_secs(30);
 // of locking. It might be better to split out these pools per area.
 #[derive(Default)]
 pub struct BreakInPool {
-    entries: RwLock<HashMap<BreakInPoolKey, BreakInPoolEntry>>,
+    entries: DashMap<BreakInPoolKey, BreakInPoolEntry>,
 }
 
 impl BreakInPool {
     pub fn insert(&self, player_id: i32, entry: BreakInPoolEntry) -> BreakInPoolToken {
         let key = BreakInPoolKey(player_id);
-        self.lock_write().insert(key.clone(), entry);
+        self.entries.insert(key.clone(), entry);
         BreakInPoolToken(self, key)
     }
 
     pub fn get(&self, key: &BreakInPoolKey) -> Option<BreakInPoolEntry> {
-        self.lock_read().get(key).cloned()
+        self.entries.get(key).map(|e| e.clone())
     }
 
     pub fn matches(&self, query: &BreakInPoolQuery) -> Vec<(BreakInPoolKey, BreakInPoolEntry)> {
-        self.lock_read()
+        self.entries
             .iter()
-            .filter(|e| query.matches(e.1))
-            .map(|(a, b)| (a.clone(), b.clone()))
+            .filter(|e| query.matches(e.value()))
+            .map(|e| (e.key().clone(), e.value().clone()))
             .collect()
     }
 
     pub fn remove(&self, key: &BreakInPoolKey) -> Result<(), PoolError> {
-        self.lock_write().remove(key).ok_or(PoolError::NotFound)?;
+        self.entries.remove(key).ok_or(PoolError::NotFound)?;
         Ok(())
     }
 
@@ -46,25 +48,9 @@ impl BreakInPool {
         key: &BreakInPoolKey,
         entry: BreakInPoolEntry,
     ) -> Result<BreakInPoolEntry, PoolError> {
-        self.lock_write()
+        self.entries
             .insert(key.clone(), entry)
             .ok_or(PoolError::NotFound)
-    }
-
-    fn lock_read(&self) -> RwLockReadGuard<'_, HashMap<BreakInPoolKey, BreakInPoolEntry>> {
-        self.entries.read().unwrap_or_else(|p| {
-            log::warn!("Sign pool recovering from mutex poisoning");
-            self.entries.clear_poison();
-            p.into_inner()
-        })
-    }
-
-    fn lock_write(&self) -> RwLockWriteGuard<'_, HashMap<BreakInPoolKey, BreakInPoolEntry>> {
-        self.entries.write().unwrap_or_else(|p| {
-            log::warn!("Sign pool recovering from mutex poisoning");
-            self.entries.clear_poison();
-            p.into_inner()
-        })
     }
 }
 

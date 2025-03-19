@@ -21,6 +21,7 @@ mod visit;
 
 use crate::{
     handler::{HandleRequest, RequestHandler},
+    notification::NotificationChannelPoolToken,
     protocol::ClientSession,
     services::eldenring::{
         breakin::BreakInPoolToken, quickmatch::QuickMatchPoolToken, sign::SignPoolToken,
@@ -37,6 +38,8 @@ pub struct DefaultClientHandler<'a> {
     pub breakin_token: Option<BreakInPoolToken<'a>>,
     pub quickmatch_token: Option<QuickMatchPoolToken<'a>>,
     pub visitor_token: Option<VisitorPoolToken<'a>>,
+
+    _notification_token: NotificationChannelPoolToken<'a>,
 }
 
 impl<'a> DefaultClientHandler<'a> {
@@ -45,6 +48,10 @@ impl<'a> DefaultClientHandler<'a> {
         push_tx: Sender<Vec<u8>>,
         session: ClientSession,
     ) -> Self {
+        let _notification_token = services
+            .notifications
+            .insert(session.player_id, push_tx.clone());
+
         Self {
             services,
             push_tx,
@@ -53,6 +60,7 @@ impl<'a> DefaultClientHandler<'a> {
             breakin_token: Default::default(),
             quickmatch_token: Default::default(),
             visitor_token: Default::default(),
+            _notification_token,
         }
     }
 }
@@ -264,9 +272,9 @@ impl HandleRequest<Box<RequestGetAnnounceMessageListParams>, ResponseGetAnnounce
             changes: vec![],
             notices: vec![ResponseGetAnnounceMessageListParamsEntry {
                 index: 0,
-                order: 0,
                 unk1: 0,
-                title: String::from("You have been banned."),
+                unk2: 0,
+                title: String::from("You have been banned from this server."),
                 body: String::from(
                     "You can no longer log into your characters while connected to this server.",
                 ),

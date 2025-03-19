@@ -1,13 +1,13 @@
 use std::{
-    collections::HashMap,
     sync::{
         atomic::{AtomicI64, Ordering},
         mpsc::Sender,
-        LazyLock, Mutex, MutexGuard, RwLock, RwLockReadGuard, RwLockWriteGuard,
+        LazyLock,
     },
     time::Duration,
 };
 
+use dashmap::DashMap;
 use message::eldenring::PlayRegionArea;
 
 use crate::services::eldenring::PoolError;
@@ -20,59 +20,43 @@ pub const SIGN_ATTEMPT_CLEANUP_TIMEOUT: Duration = Duration::from_secs(30);
 #[derive(Default)]
 pub struct SignPool {
     counter: AtomicI64,
-    entries: RwLock<HashMap<SignPoolKey, SignPoolEntry>>,
+    entries: DashMap<SignPoolKey, SignPoolEntry>,
 }
 
 impl SignPool {
     pub fn insert(&self, entry: SignPoolEntry) -> SignPoolToken {
         let key = SignPoolKey(self.counter.fetch_add(1, Ordering::Relaxed));
-        self.lock_write().insert(key.clone(), entry);
+        self.entries.insert(key.clone(), entry);
         SignPoolToken(self, key)
     }
 
     pub fn get(&self, key: &SignPoolKey) -> Option<SignPoolEntry> {
-        self.lock_read().get(key).cloned()
+        self.entries.get(key).map(|e| e.clone())
     }
 
     pub fn has(&self, key: &SignPoolKey) -> bool {
-        self.lock_read().contains_key(key)
+        self.entries.contains_key(key)
     }
 
     pub fn matches(&self, query: &SignPoolQuery) -> Vec<(SignPoolKey, SignPoolEntry)> {
-        self.lock_read()
+        self.entries
             .iter()
-            .filter(|e| query.matches(e.1))
-            .map(|(a, b)| (a.clone(), b.clone()))
+            .filter(|e| query.matches(e.value()))
+            .map(|e| (e.key().clone(), e.value().clone()))
             .collect()
     }
 
     pub fn matches_puddle(&self, query: &PuddleSignPoolQuery) -> Vec<(SignPoolKey, SignPoolEntry)> {
-        self.lock_read()
+        self.entries
             .iter()
-            .filter(|e| query.matches(e.1))
-            .map(|(a, b)| (a.clone(), b.clone()))
+            .filter(|e| query.matches(e.value()))
+            .map(|e| (e.key().clone(), e.value().clone()))
             .collect()
     }
 
     pub fn remove(&self, key: &SignPoolKey) -> Result<(), PoolError> {
-        self.lock_write().remove(key).ok_or(PoolError::NotFound)?;
+        self.entries.remove(key).ok_or(PoolError::NotFound)?;
         Ok(())
-    }
-
-    fn lock_read(&self) -> RwLockReadGuard<'_, HashMap<SignPoolKey, SignPoolEntry>> {
-        self.entries.read().unwrap_or_else(|p| {
-            log::warn!("Sign pool recovering from mutex poisoning");
-            self.entries.clear_poison();
-            p.into_inner()
-        })
-    }
-
-    fn lock_write(&self) -> RwLockWriteGuard<'_, HashMap<SignPoolKey, SignPoolEntry>> {
-        self.entries.write().unwrap_or_else(|p| {
-            log::warn!("Sign pool recovering from mutex poisoning");
-            self.entries.clear_poison();
-            p.into_inner()
-        })
     }
 }
 
@@ -199,24 +183,16 @@ pub struct SummonAttempt {
 
 #[derive(Default)]
 pub struct SummonAttemptTracker {
-    entries: Mutex<HashMap<(SignPoolKey, i32), SummonAttempt>>,
+    entries: DashMap<(SignPoolKey, i32), SummonAttempt>,
 }
 
 impl SummonAttemptTracker {
     pub fn insert(&'static self, key: (SignPoolKey, i32), attempt: SummonAttempt) {
-        self.lock().insert(key, attempt);
+        self.entries.insert(key, attempt);
     }
 
     pub fn remove(&self, key: &(SignPoolKey, i32)) -> Option<SummonAttempt> {
-        self.lock().remove(key)
-    }
-
-    fn lock(&self) -> MutexGuard<'_, HashMap<(SignPoolKey, i32), SummonAttempt>> {
-        self.entries.lock().unwrap_or_else(|p| {
-            log::warn!("Sign pool recovering from mutex poisoning");
-            self.entries.clear_poison();
-            p.into_inner()
-        })
+        self.entries.remove(key).map(|(_, v)| v)
     }
 }
 

@@ -1,4 +1,7 @@
-use std::{sync::mpsc::{channel, Sender}, time::Duration};
+use std::{
+    sync::mpsc::{channel, Sender},
+    time::Duration,
+};
 
 use steamworks::{Server, SteamAPIInitError, SteamId};
 
@@ -14,7 +17,7 @@ impl SteamServer {
             10901,
             3333,
             steamworks::ServerMode::AuthenticationAndSecure,
-            ""
+            "",
         )?;
 
         let (session_end_tx, session_end_rx) = channel();
@@ -35,10 +38,17 @@ impl SteamServer {
             });
         }
 
-        Ok(Self { server, session_end_tx })
+        Ok(Self {
+            server,
+            session_end_tx,
+        })
     }
 
-    pub fn start_session(&self, steam_id: u64, ticket: &[u8]) -> Result<SteamSession, steamworks::AuthSessionError> {
+    pub fn start_session(
+        &self,
+        steam_id: u64,
+        ticket: &[u8],
+    ) -> Result<SteamSession, steamworks::AuthSessionError> {
         let steam_id = SteamId::from_raw(steam_id);
         self.server.begin_authentication_session(steam_id, ticket)?;
 
@@ -58,7 +68,10 @@ pub struct SteamSession {
 
 impl Drop for SteamSession {
     fn drop(&mut self) {
-        log::info!("Request steam session end. steam_id = {}.", self.steam_id.raw());
+        log::info!(
+            "Request steam session end. steam_id = {}.",
+            self.steam_id.raw()
+        );
         if let Err(e) = self.session_end_tx.send(self.steam_id) {
             log::error!("Could not send session end request to steam server. {e}.");
         }

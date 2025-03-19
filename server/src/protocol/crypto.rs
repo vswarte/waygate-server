@@ -183,9 +183,15 @@ impl ClientProtocolCrypto {
         Ok(())
     }
 
-    /// Decrypt a message once the session is setup.
-    pub fn decrypt<R>(&mut self, mut data: R) -> Result<Vec<u8>, Error> where R: Read {
-        let session_keys = self.session_keys.as_ref().ok_or(Error::SessionNotInitialized)?;
+    /// Decrypt a message from the current session.
+    pub fn decrypt<R>(&mut self, mut data: R) -> Result<Vec<u8>, Error>
+    where
+        R: Read,
+    {
+        let session_keys = self
+            .session_keys
+            .as_ref()
+            .ok_or(Error::SessionNotInitialized)?;
 
         // Split out received buffer
         let mut mac = vec![0; MACBYTES];
@@ -208,21 +214,20 @@ impl ClientProtocolCrypto {
             return Err(Error::SessionDecrypt);
         }
 
-        unsafe {
-            sodium_increment(
-                self.client_nonce.as_mut_ptr(),
-                self.client_nonce.len(),
-            )
-        }
+        unsafe { sodium_increment(self.client_nonce.as_mut_ptr(), self.client_nonce.len()) }
 
         Ok(contents)
     }
 
+    /// Encrypt a message for the current session.
     pub fn encrypt(&mut self, data: &[u8]) -> Result<Vec<u8>, Error> {
         let mut data = data.to_vec();
-        let session_keys = self.session_keys.as_ref().ok_or(Error::SessionNotInitialized)?;
+        let session_keys = self
+            .session_keys
+            .as_ref()
+            .ok_or(Error::SessionNotInitialized)?;
 
-        // Encrypt the data in-place
+        // Encrypt the data.
         let mut mac = [0u8; MACBYTES];
         if unsafe {
             crypto_secretbox_detached(
@@ -243,12 +248,7 @@ impl ClientProtocolCrypto {
         framed.write_all(&mac)?;
         framed.write_all(&data)?;
 
-        unsafe {
-            sodium_increment(
-                self.server_nonce.as_mut_ptr(),
-                self.server_nonce.len(),
-            )
-        }
+        unsafe { sodium_increment(self.server_nonce.as_mut_ptr(), self.server_nonce.len()) }
 
         Ok(framed)
     }

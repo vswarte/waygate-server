@@ -3,6 +3,7 @@
 pub mod reader;
 pub mod builder;
 
+pub mod session;
 pub mod eldenring;
 
 #[repr(u8)]

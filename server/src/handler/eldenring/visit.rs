@@ -3,8 +3,7 @@ use std::time::Duration;
 use message::{
     builder::MessageBuilder,
     eldenring::{
-        JoinParams, JoinPayload, ObjectIdentifier, PushParams, RejectVisitParams,
-        RequestGetVisitorListParams, RequestRejectVisitParams, RequestVisitParams,
+        JoinParams, JoinPayload, ObjectIdentifier, PushParams, RequestGetVisitorListParams, RequestRejectVisitParams, RequestVisitParams,
         ResponseGetVisitorListParams, ResponseGetVisitorListParamsEntry, ResponseRejectVisitParams,
         ResponseVisitParams, VisitParams,
     },
@@ -114,13 +113,13 @@ impl HandleRequest<Box<RequestRejectVisitParams>, ResponseRejectVisitParams>
 {
     async fn handle(
         &mut self,
-        request: &Box<RequestRejectVisitParams>,
+        _request: &Box<RequestRejectVisitParams>,
     ) -> Result<ResponseRejectVisitParams, Box<dyn std::error::Error>> {
-        let pool_key = VisitorPoolKey(request.host_player_id);
+        // let pool_key = VisitorPoolKey(request.host_player_id);
 
-        let attempt = VISIT_ATTEMPTS
-            .remove(&(pool_key, request.host_player_id))
-            .ok_or(Error::VisitAttemptNotFound)?;
+        // let attempt = VISIT_ATTEMPTS
+        //     .remove(&(pool_key, request.host_player_id))
+        //     .ok_or(Error::VisitAttemptNotFound)?;
 
         // attempt.summoner_tx.send(
         //     MessageBuilder::push()

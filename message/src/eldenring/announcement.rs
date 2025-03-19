@@ -10,8 +10,8 @@ pub struct RequestGetAnnounceMessageListParams {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ResponseGetAnnounceMessageListParamsEntry {
     pub index: u32,
-    pub order: u32,
     pub unk1: u32,
+    pub unk2: u32,
     pub title: String,
     pub body: String,
     pub published_at: u64,

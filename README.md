@@ -88,11 +88,11 @@ You can find more about the API as well as examples [here](server/src/api/README
 
 ### Additional configuration
 #### Logging
-The logging setup is specified in `config/logging.yaml`. Under the hood it's log4rs,
+The logging setup is specified in `config/logging.yml`. Under the hood it's log4rs,
 which has its [own manual](https://docs.rs/log4rs/latest/log4rs/config/index.html) on the logging options.
 
 #### Announcements
-The announcements are set in `config/announcement.yaml`.
+The announcements are defined in `config/announcement.yml`.
 
 ## What's working? What needs to be done?
  - [x] Summoning per sign

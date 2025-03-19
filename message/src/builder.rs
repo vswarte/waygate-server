@@ -15,8 +15,7 @@ pub enum Error {
 
 pub struct MessageBuilder {}
 
-impl MessageBuilder
-{
+impl MessageBuilder {
     /// Build a new response message.
     pub fn response<R>() -> ResponseMessageBuilder<R> where R: serde::Serialize {
         ResponseMessageBuilder { sequence: None, error: None, body: None }

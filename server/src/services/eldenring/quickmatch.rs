@@ -1,7 +1,8 @@
-use std::{
-    collections::HashMap,
-    sync::{mpsc::Sender, LazyLock, Mutex, MutexGuard, RwLock, RwLockReadGuard, RwLockWriteGuard},
-};
+use std::
+    sync::{mpsc::Sender, LazyLock}
+;
+
+use dashmap::DashMap;
 
 use crate::services::eldenring::PoolError;
 
@@ -10,7 +11,7 @@ use super::weapon;
 /// Pool for summon signs. Both coop and duelist.
 #[derive(Default)]
 pub struct QuickMatchPool {
-    entries: RwLock<HashMap<QuickMatchPoolKey, QuickMatchPoolEntry>>,
+    entries: DashMap<QuickMatchPoolKey, QuickMatchPoolEntry>,
 }
 
 impl QuickMatchPool {
@@ -20,52 +21,36 @@ impl QuickMatchPool {
         entry: QuickMatchPoolEntry,
     ) -> QuickMatchPoolToken {
         let key = QuickMatchPoolKey(player_id);
-        self.lock_write().insert(key.clone(), entry);
+        self.entries.insert(key.clone(), entry);
         QuickMatchPoolToken(self, key)
     }
 
     pub fn get(&self, key: &QuickMatchPoolKey) -> Option<QuickMatchPoolEntry> {
-        self.lock_read().get(key).cloned()
+        self.entries.get(key).map(|e| e.clone())
     }
 
     pub fn matches(
         &self,
         query: &QuickMatchPoolQuery,
     ) -> Vec<(QuickMatchPoolKey, QuickMatchPoolEntry)> {
-        self.lock_read()
+        self.entries
             .iter()
-            .filter(|e| query.matches(e.1))
-            .map(|(a, b)| (a.clone(), b.clone()))
+            .filter(|e| query.matches(e.value()))
+            .map(|e| (e.key().clone(), e.value().clone()))
             .collect()
     }
 
     pub fn remove(&self, key: &QuickMatchPoolKey) -> Result<(), PoolError> {
-        self.lock_write().remove(key).ok_or(PoolError::NotFound)?;
+        self.entries.remove(key).ok_or(PoolError::NotFound)?;
         Ok(())
     }
 
     pub fn merge(&self, key: &QuickMatchPoolKey, merger: impl Fn(&mut QuickMatchPoolEntry)) -> Result<(), PoolError> {
-        match self.lock_write().get_mut(key) {
-            Some(e) => merger(e),
+        match self.entries.get_mut(key) {
+            Some(mut e) => merger(e.value_mut()),
             None => return Err(PoolError::NotFound),
         };
         Ok(())
-    }
-
-    fn lock_read(&self) -> RwLockReadGuard<'_, HashMap<QuickMatchPoolKey, QuickMatchPoolEntry>> {
-        self.entries.read().unwrap_or_else(|p| {
-            log::warn!("QuickMatch pool recovering from mutex poisoning");
-            self.entries.clear_poison();
-            p.into_inner()
-        })
-    }
-
-    fn lock_write(&self) -> RwLockWriteGuard<'_, HashMap<QuickMatchPoolKey, QuickMatchPoolEntry>> {
-        self.entries.write().unwrap_or_else(|p| {
-            log::warn!("QuickMatch pool recovering from mutex poisoning");
-            self.entries.clear_poison();
-            p.into_inner()
-        })
     }
 }
 
@@ -145,24 +130,16 @@ pub struct QuickMatchJoinAttempt {
 
 #[derive(Default)]
 pub struct QuickMatchJoinAttemptTracker {
-    entries: Mutex<HashMap<(QuickMatchPoolKey, i32), QuickMatchJoinAttempt>>,
+    entries: DashMap<(QuickMatchPoolKey, i32), QuickMatchJoinAttempt>,
 }
 
 impl QuickMatchJoinAttemptTracker {
     pub fn insert(&'static self, key: (QuickMatchPoolKey, i32), attempt: QuickMatchJoinAttempt) {
-        self.lock().insert(key, attempt);
+        self.entries.insert(key, attempt);
     }
 
     pub fn remove(&self, key: &(QuickMatchPoolKey, i32)) -> Option<QuickMatchJoinAttempt> {
-        self.lock().remove(key)
-    }
-
-    fn lock(&self) -> MutexGuard<'_, HashMap<(QuickMatchPoolKey, i32), QuickMatchJoinAttempt>> {
-        self.entries.lock().unwrap_or_else(|p| {
-            log::warn!("QuickMatch lobby pool recovering from mutex poisoning");
-            self.entries.clear_poison();
-            p.into_inner()
-        })
+        self.entries.remove(key).map(|(_, v)| v)
     }
 }
 

@@ -6,7 +6,7 @@ use quickmatch::QuickMatchPool;
 use sign::SignPool;
 use visit::VisitorPool;
 
-use crate::steam::SteamServer;
+use crate::{notification::NotificationChannelPool, steam::SteamServer};
 
 pub mod area;
 pub mod breakin;
@@ -22,6 +22,7 @@ pub struct GameServices {
     pub pool_breakin: BreakInPool,
     pub pool_visitor: VisitorPool,
     pub pool_quickmatch: QuickMatchPool,
+    pub notifications: NotificationChannelPool,
 }
 
 impl GameServices {
@@ -33,6 +34,7 @@ impl GameServices {
             pool_breakin: BreakInPool::default(),
             pool_visitor: VisitorPool::default(),
             pool_quickmatch: QuickMatchPool::default(),
+            notifications: NotificationChannelPool::default(),
         })
     }
 }

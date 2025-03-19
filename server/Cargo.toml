@@ -32,6 +32,10 @@ base64 = "0.22"
 libsodium-sys = "0.2"
 rand = "0.9"
 steamworks = "0.11"
+serde = "1.0"
+serde_yaml = "0.9"
+actix-web = "4"
+dashmap = "6"
 
 [features]
 packet-dump = []

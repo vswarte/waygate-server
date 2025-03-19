@@ -1,13 +1,15 @@
 use serde::{Serialize, Deserialize};
 
+use crate::session::{RequestCreateSessionParams, RequestRestoreSessionParams};
+
 use super::*;
 
 #[derive(Serialize, Deserialize, Debug)]
 #[repr(u32)]
 pub enum RequestParams {
-    CreateSession(Box<session::RequestCreateSessionParams>),
+    CreateSession(Box<RequestCreateSessionParams>),
     DeleteSession,
-    RestoreSession(Box<session::RequestRestoreSessionParams>),
+    RestoreSession(Box<RequestRestoreSessionParams>),
     DebugCommand,
     ServerPing,
     CheckAlive,

@@ -1,8 +1,11 @@
+use std::fs::File;
+
 use crate::handler::HandleRequest;
 use message::eldenring::{
     RequestGetAnnounceMessageListParams, ResponseGetAnnounceMessageListParams,
     ResponseGetAnnounceMessageListParamsEntry,
 };
+use serde::{Deserialize, Serialize};
 
 use super::DefaultClientHandler;
 
@@ -13,16 +16,48 @@ impl HandleRequest<Box<RequestGetAnnounceMessageListParams>, ResponseGetAnnounce
         &mut self,
         _request: &Box<RequestGetAnnounceMessageListParams>,
     ) -> Result<ResponseGetAnnounceMessageListParams, Box<dyn std::error::Error>> {
+        let announcements = serde_yaml::from_reader::<_, AnnouncementConfig>(File::open(
+            "config/announcement.yml",
+        )?)?;
+
         Ok(ResponseGetAnnounceMessageListParams {
-            changes: vec![ResponseGetAnnounceMessageListParamsEntry {
-                index: 0,
-                order: 0,
-                unk1: 0,
-                title: String::from("Welcome to cum"),
-                body: String::from("Yes, cum."),
-                published_at: 0,
-            }],
-            notices: vec![],
+            changes: announcements
+                .changes
+                .iter()
+                .map(ResponseGetAnnounceMessageListParamsEntry::from)
+                .collect(),
+            notices: announcements
+                .notices
+                .iter()
+                .map(ResponseGetAnnounceMessageListParamsEntry::from)
+                .collect(),
         })
+    }
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct AnnouncementConfig {
+    changes: Vec<AnnouncementItem>,
+    notices: Vec<AnnouncementItem>,
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct AnnouncementItem {
+    index: u32,
+    published_at: u64,
+    title: String,
+    body: String,
+}
+
+impl From<&AnnouncementItem> for ResponseGetAnnounceMessageListParamsEntry {
+    fn from(value: &AnnouncementItem) -> Self {
+        ResponseGetAnnounceMessageListParamsEntry {
+            index: value.index,
+            unk1: 0,
+            unk2: 0,
+            title: value.title.clone(),
+            body: value.body.clone(),
+            published_at: value.published_at,
+        }
     }
 }

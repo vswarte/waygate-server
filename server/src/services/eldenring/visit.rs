@@ -1,4 +1,6 @@
-use std::{collections::HashMap, sync::{mpsc::Sender, LazyLock, Mutex, MutexGuard, RwLock, RwLockReadGuard, RwLockWriteGuard}};
+use std::{collections::HashMap, sync::{mpsc::Sender, LazyLock, Mutex, MutexGuard}};
+
+use dashmap::DashMap;
 
 use crate::services::eldenring::PoolError;
 
@@ -7,47 +9,30 @@ use super::weapon;
 /// Pool for summon signs. Both coop and duelist.
 #[derive(Default)]
 pub struct VisitorPool {
-    entries: RwLock<HashMap<VisitorPoolKey, VisitorPoolEntry>>,
+    entries: DashMap<VisitorPoolKey, VisitorPoolEntry>,
 }
 
 impl VisitorPool {
     pub fn insert(&self, player_id: i32, entry: VisitorPoolEntry) -> VisitorPoolToken {
         let key = VisitorPoolKey(player_id);
-        self.lock_write().insert(key.clone(), entry);
+        self.entries.insert(key.clone(), entry);
         VisitorPoolToken(self, key)
     }
 
     pub fn get(&self, key: &VisitorPoolKey) -> Option<VisitorPoolEntry> {
-        self.lock_read().get(key).cloned()
+        self.entries.get(key).map(|i| i.clone())
     }
 
     pub fn matches(&self, query: &VisitorPoolQuery) -> Vec<(VisitorPoolKey, VisitorPoolEntry)> {
-        self.lock_read()
-            .iter()
-            .filter(|e| query.matches(e.1))
-            .map(|(a, b)| (a.clone(), b.clone()))
+        self.entries.iter()
+            .filter(|e| query.matches(e.value()))
+            .map(|e| (e.key().clone(), e.value().clone()))
             .collect()
     }
 
     pub fn remove(&self, key: &VisitorPoolKey) -> Result<(), PoolError> {
-        self.lock_write().remove(key).ok_or(PoolError::NotFound)?;
+        self.entries.remove(key).ok_or(PoolError::NotFound)?;
         Ok(())
-    }
-
-    fn lock_read(&self) -> RwLockReadGuard<'_, HashMap<VisitorPoolKey, VisitorPoolEntry>> {
-        self.entries.read().unwrap_or_else(|p| {
-            log::warn!("Sign pool recovering from mutex poisoning");
-            self.entries.clear_poison();
-            p.into_inner()
-        })
-    }
-
-    fn lock_write(&self) -> RwLockWriteGuard<'_, HashMap<VisitorPoolKey, VisitorPoolEntry>> {
-        self.entries.write().unwrap_or_else(|p| {
-            log::warn!("Sign pool recovering from mutex poisoning");
-            self.entries.clear_poison();
-            p.into_inner()
-        })
     }
 }
 

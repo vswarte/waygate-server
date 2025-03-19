@@ -1,0 +1,44 @@
+# Tell people they're not banned yet.
+notices:
+  - index: 1
+    order: 1
+    title: '<font color="#00FF00">You are connected to a Waygate server.</font>'
+    body: |
+      Online activity whilst connected will not affect your official multiplayer status.
+      <font color="#FF0000">Make sure to keep your save files seperate!</font>
+    published_at: 1645681378
+
+# Any waygate or modded regbin changes.
+changes:
+  - index: 1
+    title: "[Changelog 0.2.0]"
+    body: |
+      - (ER/AC6) Hardened client against vanilla oversights allowing steam ID spoofing and blocklist bypassing.
+      - (ER/AC6) Various client handling improvements.
+      - (ER/AC6) Various pooling improvements.
+    published_at: 1645681378
+
+  - index: 1
+    title: "[Changelog 0.1.2]"
+    body: |
+      - (ER) Added fia and warrior jar pools.
+      - (ER) Added group passwords for messages, bloodstains and ghosts.
+    published_at: 1645681378
+
+  - index: 2
+    title: "[Changelog 0.1.1]"
+    body: |
+      - (ER/AC6) Reworked the games p2p to improve latency.
+      - (ER/AC6) Implemented client mod versioning.
+      - (ER) Added sign puddles.
+      - (ER/AC6) Fixed some stability issues with quickmatches.
+    published_at: 1645681378
+
+  - index: 3
+    title: "[Changelog 0.1.0]"
+    body: |
+      - (ER/AC6) Added changelog.
+      - (ER/AC6) Moved away persistence from diesel to sqlx.
+      - (ER) Sign/invasion pooling now works off of in-memory pools.
+      - (ER) Passwords now work for signs.
+    published_at: 1645681378

@@ -6,13 +6,7 @@ use base64::{prelude::BASE64_STANDARD, Engine};
 use crypto::ClientProtocolCrypto;
 
 use message::{
-    builder::MessageBuilder,
-    eldenring::{
-        RequestParams, ResponseCreateSessionParams, ResponseParams, ResponseRestoreSessionParams,
-        SessionData,
-    },
-    reader::MessageReader,
-    MessageType,
+    builder::MessageBuilder, eldenring::{RequestParams, ResponseParams}, reader::MessageReader, session::{ResponseCreateSessionParams, ResponseRestoreSessionParams, SessionData}, MessageType
 };
 use rand::prelude::*;
 use sqlx::{Pool, Postgres, Row};
@@ -82,8 +76,7 @@ impl ClientProtocol {
         })
     }
 
-    /// Takes in client-supplied buffer and produces a response or returns an error in case of
-    /// protocol violations.
+    /// Takes in client-supplied buffer and produces a response if possible.
     pub async fn transition(&mut self, data: &[u8]) -> Result<Option<Vec<u8>>, Error> {
         match self.state {
             ClientProtocolState::AwaitingHello => {
@@ -113,7 +106,6 @@ impl ClientProtocol {
                     ));
                 }
 
-                // TODO: fetch from DB
                 let player_id = self
                     .acquire_player_id(&self.external_id)
                     .await
