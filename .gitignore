@@ -1,3 +1,7 @@
 log/
 target/
 dump/
+
+docker-compose.override.y*ml
+compose.override.y*ml
+*.env
