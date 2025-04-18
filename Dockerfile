@@ -1,4 +1,4 @@
-FROM rust:slim-bookworm AS builder
+FROM rust:latest AS builder
 
 WORKDIR /waygate
 
