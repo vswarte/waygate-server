@@ -22,6 +22,7 @@ pub struct NotificationChannelPool {
 
 impl NotificationChannelPool {
     /// Send a notification push message to a specific player.
+    #[allow(dead_code)]
     pub fn notify_player(
         &self,
         player: i32,

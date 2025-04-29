@@ -25,6 +25,7 @@ use super::DefaultClientHandler;
 enum Error {
     #[error("Visitor could not be found.")]
     VisitorNotFound,
+    #[allow(dead_code)]
     #[error("Visit attempt could not be found.")]
     VisitAttemptNotFound,
 }

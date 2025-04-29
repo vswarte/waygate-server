@@ -109,6 +109,7 @@ pub static VISIT_ATTEMPTS: LazyLock<VisitorAttemptTracker> = LazyLock::new(Defau
 #[derive(Clone)]
 pub struct VisitorAttempt {
     /// Summoners notification channel
+    #[allow(dead_code)]
     pub summoner_tx: Sender<Vec<u8>>,
 }
 

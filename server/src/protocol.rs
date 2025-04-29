@@ -273,7 +273,7 @@ impl ClientProtocol {
     async fn retrieve_session(
         &self,
         session_id: i64,
-        cookie: &str,
+        _cookie: &str,
     ) -> Result<SessionRecord, Box<dyn std::error::Error>> {
         Ok(sqlx::query_as::<_, SessionRecord>(
             "SELECT * FROM sessions WHERE session_id = $1 -- AND cookie = $2",
@@ -314,7 +314,7 @@ fn generate_session_cookie() -> String {
 }
 
 fn encode_session_cookie(cookie: &[u8]) -> String {
-    format!("{:02x?}", cookie)
+    format!("{cookie:02x?}")
         .replace(['[', ']', ' ', ','], "")
         .replace("0x", "")
 }
