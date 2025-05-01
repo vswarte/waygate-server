@@ -1,0 +1,3 @@
+ALTER TABLE bans ADD CONSTRAINT unique_external_id UNIQUE (external_id);
+
+ALTER TABLE bans ADD COLUMN banned_at BIGINT NOT NULL DEFAULT EXTRACT(EPOCH FROM NOW());

@@ -1,12 +1,12 @@
-use thiserror::Error;
 use sqlx::{Pool, Postgres};
+use thiserror::Error;
 
 use breakin::BreakInPool;
 use quickmatch::QuickMatchPool;
 use sign::SignPool;
 use visit::VisitorPool;
 
-use crate::{notification::NotificationChannelPool, steam::SteamServer};
+use crate::{bans::BanService, notification::NotificationChannelPool, steam::SteamServer};
 
 pub mod area;
 pub mod breakin;
@@ -18,6 +18,7 @@ pub mod weapon;
 pub struct GameServices {
     pub database: Pool<Postgres>,
     pub steam: SteamServer,
+    pub bans: BanService,
     pub pool_sign: SignPool,
     pub pool_breakin: BreakInPool,
     pub pool_visitor: VisitorPool,
@@ -28,6 +29,7 @@ pub struct GameServices {
 impl GameServices {
     pub fn new(database: Pool<Postgres>) -> Result<GameServices, Box<dyn std::error::Error>> {
         Ok(GameServices {
+            bans: BanService::new(database.clone()),
             database,
             steam: SteamServer::init()?,
             pool_sign: SignPool::default(),

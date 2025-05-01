@@ -291,3 +291,8 @@ impl HandleRequest<Box<RequestGetAnnounceMessageListParams>, ResponseGetAnnounce
         })
     }
 }
+
+pub enum ActiveHandler<'a> {
+    Default(DefaultClientHandler<'a>),
+    Banned(BannedClientHandler),
+}

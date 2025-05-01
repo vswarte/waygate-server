@@ -285,6 +285,8 @@ impl ClientProtocol {
 pub struct ClientSession {
     pub player_id: i32,
     pub session_id: i64,
+    /// External ID of the player's account.
+    /// In case of steam, this will be hex-encoded steam ID.
     pub external_id: String,
     pub peer_address: String,
 }

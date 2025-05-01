@@ -2,13 +2,24 @@ use std::{
     error::Error,
     net::SocketAddr,
     sync::{mpsc::channel, Arc, OnceLock},
+    time::UNIX_EPOCH,
 };
 
 use actix_web::{web, App, HttpServer};
-use api::{auth::CheckKey, ban::{delete_ban, get_ban, post_ban}, health::healthcheck, notification::announcement, AppState};
+use api::{
+    auth::CheckKey,
+    ban::{delete_ban, get_ban, get_ban_by_id, post_ban},
+    health::healthcheck,
+    notification::announcement,
+    whitelist::{delete_whitelist, get_whitelist, post_whitelist},
+    AppState,
+};
 use clap::Parser;
 use futures_util::{SinkExt, StreamExt};
-use handler::{eldenring::DefaultClientHandler, RequestHandler};
+use handler::{
+    eldenring::{ActiveHandler, BannedClientHandler, DefaultClientHandler},
+    RequestHandler,
+};
 use message::{builder::MessageBuilder, reader::MessageReader, MessageType};
 use protocol::ClientProtocol;
 use services::eldenring::GameServices;
@@ -18,12 +29,13 @@ use tokio::net::{TcpListener, TcpStream};
 use tokio_tungstenite::tungstenite::handshake::server::{Request, Response};
 use tokio_tungstenite::tungstenite::Message;
 
+mod api;
+mod bans;
 mod handler;
+mod notification;
 mod protocol;
 mod services;
 mod steam;
-mod api;
-mod notification;
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
@@ -120,10 +132,7 @@ async fn serve_api(
 ) -> Result<(), Box<dyn Error>> {
     {
         let config = config.clone();
-        let state = web::Data::new(AppState {
-            database,
-            services,
-        });
+        let state = web::Data::new(AppState { database, services });
 
         HttpServer::new(move || {
             App::new()
@@ -133,13 +142,14 @@ async fn serve_api(
                 .service(get_ban)
                 .service(post_ban)
                 .service(delete_ban)
+                .service(get_ban_by_id)
                 .service(announcement)
 
         })
     }
-        .bind(&config.api_bind)?
-        .run()
-        .await?;
+    .bind(&config.api_bind)?
+    .run()
+    .await?;
 
     Ok(())
 }
@@ -174,17 +184,23 @@ async fn serve_client(
         move |req: &Request, response: Response| {
             for (header, value) in req.headers() {
                 if header.as_str() == "x-steam-id" {
-                    let value = value.to_str().expect("Upgrade request missing X-STEAM-ID header");
+                    let value = value
+                        .to_str()
+                        .expect("Upgrade request missing X-STEAM-ID header");
                     external_id.set(value.to_string()).unwrap();
                 }
 
                 if header.as_str() == "x-steam-session-ticket" {
-                    let value = value.to_str().expect("Upgrade request missing X-STEAM-SESSION-TICKET header");
+                    let value = value
+                        .to_str()
+                        .expect("Upgrade request missing X-STEAM-SESSION-TICKET header");
                     session_ticket.set(value.to_string()).unwrap();
                 }
 
                 if header.as_str() == "x-waygate-client-version" {
-                    let value = value.to_str().expect("Upgrade request missing X-WAYGATE-CLIENT-VERSION header");
+                    let value = value
+                        .to_str()
+                        .expect("Upgrade request missing X-WAYGATE-CLIENT-VERSION header");
                     waygate_version.set(value.to_string()).unwrap();
                 }
             }
@@ -203,6 +219,25 @@ async fn serve_client(
     let _waygate_version = waygate_version.get().unwrap();
 
     let parsed_external_id = external_id.parse::<u64>()?;
+
+    let is_banned = match services
+        .bans
+        .get_ban(&format!("{parsed_external_id}"))
+        .await?
+    {
+        Some(ban_record) => {
+            let banned_at = UNIX_EPOCH
+                .checked_add(std::time::Duration::from_secs(ban_record.banned_at as u64))
+                .ok_or("Time overflow when calculating ban timestamp")?;
+            // reject all connections for 40 seconds from the time of the ban to prevent reconnection
+            if banned_at.elapsed().unwrap_or_default() < std::time::Duration::from_secs(60) {
+                log::info!("Banned client reconnection attempt. remote = {peer_address}, external_id = {parsed_external_id}, disconnecting.");
+                return Ok(());
+            }
+            true
+        }
+        None => false,
+    };
 
     // Handle protocol stuff first like exchanging keys and shit
     let mut protocol = ClientProtocol::new(
@@ -235,13 +270,28 @@ async fn serve_client(
 
     // Start serving the, at this point, fully authenticated client.
     let (push_tx, push_rx) = channel::<Vec<u8>>();
-    let mut handler = DefaultClientHandler::new(
-        services.as_ref(),
-        push_tx,
-        protocol.session_details().unwrap(),
-    );
+    let mut handler = if is_banned {
+        ActiveHandler::Banned(BannedClientHandler::default())
+    } else {
+        ActiveHandler::Default(DefaultClientHandler::new(
+            services.as_ref(),
+            push_tx,
+            protocol.session_details().unwrap(),
+        ))
+    };
 
     while let Some(event) = stream.next().await {
+        if let ActiveHandler::Default(_) = handler {
+            if (services
+                .bans
+                .get_ban(&format!("{parsed_external_id}"))
+                .await?)
+                .is_some()
+            {
+                log::info!("Client was banned while connected. remote = {peer_address}, external_id = {parsed_external_id}, disconnecting.");
+                return Ok(());
+            }
+        }
         match event {
             Ok(Message::Close(_)) => {
                 log::debug!("Close message. remote = {peer_address}.");
@@ -283,7 +333,10 @@ async fn serve_client(
                         }
 
                         // Dispatch request to handler for specific message type.
-                        let response = match handler.dispatch_request(deserialized).await {
+                        let response = match match &mut handler {
+                            ActiveHandler::Default(h) => h.dispatch_request(deserialized).await,
+                            ActiveHandler::Banned(h) => h.dispatch_request(deserialized).await,
+                        } {
                             Ok(Some(response)) => builder.body(response).build()?,
                             Err(e) => {
                                 log::error!("Error while processing request. remote = {peer_address}. error = {e}");
@@ -300,7 +353,11 @@ async fn serve_client(
                     // Clients send a push message type to confirm that they've received some
                     // server-originating push message.
                     MessageType::Push => {
-                        log::debug!("Push confirmation from {}", handler.session.peer_address);
+                        let peer_address = match &handler {
+                            ActiveHandler::Default(h) => &h.session.peer_address,
+                            ActiveHandler::Banned(_) => &peer_address.to_string(),
+                        };
+                        log::debug!("Push confirmation from {}", peer_address);
                     }
 
                     // Clients periodically send these. Client will disconnect if we dont
