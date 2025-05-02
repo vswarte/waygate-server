@@ -229,8 +229,8 @@ async fn serve_client(
             let banned_at = UNIX_EPOCH
                 .checked_add(std::time::Duration::from_secs(ban_record.banned_at as u64))
                 .ok_or("Time overflow when calculating ban timestamp")?;
-            // reject all connections for 40 seconds from the time of the ban to prevent reconnection
-            if banned_at.elapsed().unwrap_or_default() < std::time::Duration::from_secs(60) {
+            // reject all connections for 120 seconds from the time of the ban to prevent reconnection
+            if banned_at.elapsed().unwrap_or_default() < std::time::Duration::from_secs(120) {
                 log::info!("Banned client reconnection attempt. remote = {peer_address}, external_id = {parsed_external_id}, disconnecting.");
                 return Ok(());
             }
