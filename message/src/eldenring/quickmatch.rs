@@ -10,7 +10,6 @@ pub struct RequestSearchQuickMatchParams {
     pub unk2: u32,
     pub matching_parameters: MatchingParameters,
     pub unk3: u32,
-    pub unk4: u32,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
