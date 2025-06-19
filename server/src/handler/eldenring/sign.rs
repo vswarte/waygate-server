@@ -1,8 +1,8 @@
 use message::{
     builder::MessageBuilder,
     eldenring::{
-        JoinParams, JoinPayload, ObjectIdentifier, PlayRegionArea, PushParams, RejectSignParams,
-        RequestCreateMatchAreaSignParams, RequestCreateSignParams,
+        JoinParams, JoinPayload, ObjectIdentifier, PlayRegionArea, PuddleArea, PushParams,
+        RejectSignParams, RequestCreateMatchAreaSignParams, RequestCreateSignParams,
         RequestGetMatchAreaSignListParams, RequestGetSignListParams, RequestRejectSignParams,
         RequestRemoveSignParams, RequestSummonSignParams, RequestUpdateSignParams,
         ResponseCreateMatchAreaSignParams, ResponseCreateSignParams,
@@ -17,9 +17,12 @@ use thiserror::Error;
 
 use crate::{
     handler::HandleRequest,
-    services::eldenring::sign::{
-        PuddleSignPoolQuery, SignLocation, SignPoolEntry, SignPoolKey, SignPoolQuery,
-        SummonAttempt, SIGN_ATTEMPT_CLEANUP_TIMEOUT, SUMMON_ATTEMPTS,
+    services::eldenring::{
+        area::MatchingArea,
+        sign::{
+            PuddleSignPoolQuery, SignPoolEntry, SignPoolKey, SignPoolQuery, SummonAttempt,
+            SIGN_ATTEMPT_CLEANUP_TIMEOUT, SUMMON_ATTEMPTS,
+        },
     },
 };
 
@@ -45,7 +48,7 @@ impl HandleRequest<Box<RequestCreateSignParams>, ResponseCreateSignParams>
             external_id: self.session.external_id.clone(),
             character_level: request.matching_parameters.character_level as u32,
             weapon_level: request.matching_parameters.max_reinforce as u32,
-            location: crate::services::eldenring::sign::SignLocation::Area(PlayRegionArea {
+            location: MatchingArea::PlayRegion(PlayRegionArea {
                 area: request.area.area,
                 play_region: request.area.play_region,
             }),
@@ -76,7 +79,7 @@ impl HandleRequest<Box<RequestCreateMatchAreaSignParams>, ResponseCreateMatchAre
             external_id: self.session.external_id.clone(),
             character_level: request.matching_parameters.character_level as u32,
             weapon_level: request.matching_parameters.max_reinforce as u32,
-            location: SignLocation::Puddle(request.area.match_area.0),
+            location: MatchingArea::Puddle(request.area),
             password: request.matching_parameters.password.clone(),
             group_passwords: request.group_passwords.clone(),
             data: request.data.clone(),
@@ -144,8 +147,8 @@ impl HandleRequest<Box<RequestGetSignListParams>, ResponseGetSignListParams>
             known_signs,
             entries: pool_matches
                 .iter()
-                .map(|e|{
-                    let SignLocation::Area(area) = e.1.location.clone() else {
+                .map(|e| {
+                    let MatchingArea::PlayRegion(area) = e.1.location.clone() else {
                         panic!("Filter tried passing puddle sign to GetSignList response.");
                     };
 
@@ -179,7 +182,10 @@ impl HandleRequest<Box<RequestGetMatchAreaSignListParams>, ResponseGetMatchAreaS
             .matches_puddle(&PuddleSignPoolQuery {
                 character_level: request.matching_parameters.character_level as u32,
                 weapon_level: request.matching_parameters.max_reinforce as u32,
-                puddle: request.puddle,
+                puddle: PuddleArea {
+                    puddle_id: request.puddle,
+                    area: -1,
+                },
                 password: &request.matching_parameters.password,
             });
 
@@ -202,7 +208,7 @@ impl HandleRequest<Box<RequestGetMatchAreaSignListParams>, ResponseGetMatchAreaS
             entries: pool_matches
                 .iter()
                 .map(|e| {
-                    let SignLocation::Puddle(puddle) = e.1.location else {
+                    let MatchingArea::Puddle(puddle) = e.1.location else {
                         panic!("Filter tried passing non-puddle sign to GetMatchAreaSignList response.");
                     };
 
@@ -210,11 +216,10 @@ impl HandleRequest<Box<RequestGetMatchAreaSignListParams>, ResponseGetMatchAreaS
                         player_id: e.1.player_id,
                         identifier: ObjectIdentifier(e.0 .0),
                         puddle,
-                        unk1: 1,
-                        unk2: 0,
+                        unk1: 0,
                         data: e.1.data.clone(),
                         external_id: e.1.external_id.clone(),
-                        unk3: 0,
+                        unk2: 0,
                         group_passwords: e.1.group_passwords.clone(),
                     }
                 })

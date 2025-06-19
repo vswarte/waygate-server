@@ -1,4 +1,4 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 use super::shared::*;
 
@@ -49,8 +49,7 @@ pub struct RequestSummonSignParams {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct ResponseSummonSignParams {
-}
+pub struct ResponseSummonSignParams {}
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct RequestRejectSignParams {
@@ -60,8 +59,7 @@ pub struct RequestRejectSignParams {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct ResponseRejectSignParams {
-}
+pub struct ResponseRejectSignParams {}
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct RequestRemoveSignParams {
@@ -101,13 +99,11 @@ pub struct RequestGetMatchAreaSignListParams {
 pub struct ResponseGetMatchAreaSignListParamsEntry {
     pub player_id: i32,
     pub identifier: ObjectIdentifier,
-    pub puddle: i32,
-    // Technically this should be a u64
+    pub puddle: PuddleArea,
     pub unk1: i32,
-    pub unk2: i32,
     pub data: Vec<u8>,
     pub external_id: String,
-    pub unk3: u32,
+    pub unk2: u32,
     pub group_passwords: Vec<String>,
 }
 
@@ -118,14 +114,8 @@ pub struct ResponseGetMatchAreaSignListParams {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct RequestCreateMatchAreaSignParamsArea {
-    pub match_area: PuddleArea,
-    pub area: i32,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
 pub struct RequestCreateMatchAreaSignParams {
-    pub area: RequestCreateMatchAreaSignParamsArea,
+    pub area: PuddleArea,
     pub unk1: i32,
     pub matching_parameters: MatchingParameters,
     pub unk2: i32,
@@ -140,27 +130,22 @@ pub struct ResponseCreateMatchAreaSignParams {
 
 #[cfg(test)]
 mod test {
-    use wire::deserialize;
     use super::{ObjectIdentifier, RequestGetSignListParams, RequestUpdateSignParams};
+    use wire::deserialize;
 
     #[test]
     fn deserialize_update_sign() {
-        let deserialized: RequestUpdateSignParams = deserialize(
-            include_bytes!("../../test/data/RequestUpdateSign.bin"),
-        ).unwrap();
+        let deserialized: RequestUpdateSignParams =
+            deserialize(include_bytes!("../../test/data/RequestUpdateSign.bin")).unwrap();
 
-        assert_eq!(
-            deserialized.identifier,
-            ObjectIdentifier(0),
-        );
+        assert_eq!(deserialized.identifier, ObjectIdentifier(0),);
         assert_eq!(deserialized.unk0, 0);
     }
 
     #[test]
     fn deserialize_get_sign_list() {
-        let deserialized: RequestGetSignListParams = deserialize(
-            include_bytes!("../../test/data/RequestGetSignList.bin"),
-        ).unwrap();
+        let deserialized: RequestGetSignListParams =
+            deserialize(include_bytes!("../../test/data/RequestGetSignList.bin")).unwrap();
 
         assert_eq!(deserialized.known_signs.len(), 0);
         assert_eq!(deserialized.search_areas.len(), 2);
@@ -168,9 +153,17 @@ mod test {
         assert_eq!(deserialized.search_areas[0].area, 1100000);
         assert_eq!(deserialized.search_areas[1].play_region, 1100001);
         assert_eq!(deserialized.search_areas[1].area, 1100001);
-        assert_eq!(deserialized.matching_parameters.regulation_version, 11001000);
+        assert_eq!(
+            deserialized.matching_parameters.regulation_version,
+            11001000
+        );
         assert_eq!(deserialized.matching_parameters.unk_region_flag, 5);
-        assert_eq!(deserialized.matching_parameters.cross_region_matchmaking_disabled, 256);
+        assert_eq!(
+            deserialized
+                .matching_parameters
+                .cross_region_matchmaking_disabled,
+            256
+        );
         assert_eq!(deserialized.matching_parameters.unk2, 0);
         assert_eq!(deserialized.matching_parameters.character_level, 99);
         assert_eq!(deserialized.matching_parameters.unk3, 0);
