@@ -8,9 +8,9 @@ use std::{
 };
 
 use dashmap::DashMap;
-use message::eldenring::PlayRegionArea;
+use message::eldenring::{PlayRegionArea, PuddleArea};
 
-use crate::services::eldenring::PoolError;
+use crate::services::eldenring::{area::MatchingArea, PoolError};
 
 use super::weapon;
 
@@ -66,17 +66,11 @@ pub struct SignPoolEntry {
     pub external_id: String,
     pub character_level: u32,
     pub weapon_level: u32,
-    pub location: SignLocation,
+    pub location: MatchingArea,
     pub password: String,
     pub group_passwords: Vec<String>,
     pub data: Vec<u8>,
     pub summonee_tx: Sender<Vec<u8>>,
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum SignLocation {
-    Puddle(i32),
-    Area(PlayRegionArea),
 }
 
 #[derive(Clone, Debug)]
@@ -92,9 +86,7 @@ impl SignPoolQuery<'_> {
         if !self
             .areas
             .iter()
-            .map(|a| SignLocation::Area((*a).clone()))
-            .collect::<Vec<_>>()
-            .contains(&entry.location)
+            .any(|a| entry.location.matches(&MatchingArea::PlayRegion(*a)))
         {
             return false;
         }
@@ -127,13 +119,13 @@ impl SignPoolQuery<'_> {
 pub struct PuddleSignPoolQuery<'a> {
     pub character_level: u32,
     pub weapon_level: u32,
-    pub puddle: i32,
+    pub puddle: PuddleArea,
     pub password: &'a str,
 }
 
 impl PuddleSignPoolQuery<'_> {
     pub fn matches(&self, entry: &SignPoolEntry) -> bool {
-        if SignLocation::Puddle(self.puddle) != entry.location {
+        if !entry.location.matches(&self.puddle.into()) {
             return false;
         }
 
@@ -202,7 +194,7 @@ mod test {
 
     use message::eldenring::PlayRegionArea;
 
-    use crate::services::eldenring::sign::SignLocation;
+    use crate::services::eldenring::sign::MatchingArea;
 
     use super::{SignPoolEntry, SignPoolQuery};
 
@@ -230,7 +222,7 @@ mod test {
             player_id: 1,
             character_level: 1,
             weapon_level: 1,
-            location: SignLocation::Area(PlayRegionArea {
+            location: MatchingArea::PlayRegion(PlayRegionArea {
                 area: 1,
                 play_region: 1,
             }),
@@ -261,7 +253,7 @@ mod test {
             external_id: String::new(),
             character_level: 1,
             weapon_level: 1,
-            location: SignLocation::Area(PlayRegionArea {
+            location: MatchingArea::PlayRegion(PlayRegionArea {
                 area: 1,
                 play_region: 1,
             }),
@@ -292,7 +284,7 @@ mod test {
             external_id: String::new(),
             character_level: 1,
             weapon_level: 1,
-            location: SignLocation::Area(PlayRegionArea {
+            location: MatchingArea::PlayRegion(PlayRegionArea {
                 area: 1,
                 play_region: 1,
             }),
@@ -323,7 +315,7 @@ mod test {
             external_id: String::new(),
             character_level: 1,
             weapon_level: 1,
-            location: SignLocation::Area(PlayRegionArea {
+            location: MatchingArea::PlayRegion(PlayRegionArea {
                 area: 1,
                 play_region: 1,
             }),
@@ -354,7 +346,7 @@ mod test {
             external_id: String::new(),
             character_level: 1,
             weapon_level: 1,
-            location: SignLocation::Area(PlayRegionArea {
+            location: MatchingArea::PlayRegion(PlayRegionArea {
                 area: 1,
                 play_region: 1,
             }),
@@ -385,7 +377,7 @@ mod test {
             external_id: String::new(),
             character_level: 1,
             weapon_level: 1,
-            location: SignLocation::Area(PlayRegionArea {
+            location: MatchingArea::PlayRegion(PlayRegionArea {
                 area: 1,
                 play_region: 1,
             }),

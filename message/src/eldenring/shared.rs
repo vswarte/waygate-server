@@ -1,14 +1,17 @@
-use std::fmt;
 use serde::{Deserialize, Serialize};
+use std::fmt;
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq)]
 pub struct PlayRegionArea {
     pub play_region: i32,
     pub area: i32,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct PuddleArea(pub i32);
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq)]
+pub struct PuddleArea {
+    pub puddle_id: i32,
+    pub area: i32,
+}
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Hash, Eq, Clone, Copy)]
 pub struct ObjectIdentifier(pub i64);

@@ -2,10 +2,11 @@ use message::{
     builder::MessageBuilder,
     eldenring::{
         AcceptQuickMatchParams, JoinParams, JoinPayload, JoinQuickMatchParams, ObjectIdentifier,
-        PushParams, RequestAcceptQuickMatchParams, RequestJoinQuickMatchParams,
-        RequestRegisterQuickMatchParams, RequestSearchQuickMatchParams,
-        RequestUnregisterQuickMatchParams, RequestUpdateQuickMatchParams,
-        ResponseAcceptQuickMatchParams, ResponseJoinQuickMatchParams,
+        PushParams, RequestAcceptQuickMatchParams, RequestCreateBattleSessionParams,
+        RequestJoinQuickMatchParams, RequestRegisterQuickMatchParams,
+        RequestSearchQuickMatchParams, RequestUnregisterQuickMatchParams,
+        RequestUpdateQuickMatchParams, ResponseAcceptQuickMatchParams,
+        ResponseCreateBattleSessionParams, ResponseJoinQuickMatchParams,
         ResponseRegisterQuickMatchParams, ResponseSearchQuickMatchParams,
         ResponseSearchQuickMatchParamsEntry, ResponseUnregisterQuickMatchParams,
         ResponseUpdateQuickMatchParams,
@@ -207,5 +208,23 @@ impl HandleRequest<Box<RequestAcceptQuickMatchParams>, ResponseAcceptQuickMatchP
         )?;
 
         Ok(ResponseAcceptQuickMatchParams {})
+    }
+}
+
+impl HandleRequest<Box<RequestCreateBattleSessionParams>, ResponseCreateBattleSessionParams>
+    for DefaultClientHandler<'_>
+{
+    async fn handle(
+        &mut self,
+        _request: &Box<RequestCreateBattleSessionParams>,
+    ) -> Result<ResponseCreateBattleSessionParams, Box<dyn std::error::Error>> {
+        Ok(ResponseCreateBattleSessionParams {
+            unk1: 0,
+            unk2: 0,
+            unk3: 0,
+            unk4: 0,
+            unk5: 0,
+            unk6: 0,
+        })
     }
 }

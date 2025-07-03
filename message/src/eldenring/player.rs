@@ -180,10 +180,10 @@ pub struct ResponseUpdatePlayerStatusParams {}
 pub struct RequestJoinMultiplayParams {
     pub unk1: u32,
     pub unk2: u32,
-    pub unk3: u32,
+    pub level: u32,
     pub unk4: u32,
     pub unk5: u32,
-    pub unk6: u32,
+    pub max_reinforce_level: u32,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

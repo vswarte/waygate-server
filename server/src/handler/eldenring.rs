@@ -217,6 +217,14 @@ impl RequestHandler<RequestParams, ResponseParams> for DefaultClientHandler<'_> 
                 ResponseParams::AcceptQuickMatch(self.handle(request).await?)
             }
 
+            RequestParams::QuickMatchResultLog => ResponseParams::QuickMatchResultLog,
+
+            RequestParams::QuickMatchEndLog => ResponseParams::QuickMatchEndLog,
+
+            RequestParams::CreateBattleSession(request) => {
+                ResponseParams::CreateBattleSession(self.handle(request).await?)
+            }
+
             RequestParams::GetMatchDensity(request) => {
                 ResponseParams::GetMatchDensity(self.handle(request).await?)
             }
