@@ -22,6 +22,7 @@ mod visit;
 use crate::{
     handler::eldenring::announcement::AnnouncementConfig,
     handler::{HandleRequest, RequestHandler},
+    logging::LogContext,
     notification::NotificationChannelPoolToken,
     protocol::ClientSession,
     services::eldenring::{
@@ -71,7 +72,9 @@ impl RequestHandler<RequestParams, ResponseParams> for DefaultClientHandler<'_> 
         &mut self,
         request: &RequestParams,
     ) -> Result<Option<ResponseParams>, Box<dyn std::error::Error>> {
-        Ok(Some(match request {
+        LogContext::insert("player_id", self.session.player_id.to_string());
+
+        let result = match request {
             RequestParams::DeleteSession => ResponseParams::DeleteSession,
 
             RequestParams::GetAnnounceMessageList(request) => {
@@ -241,11 +244,24 @@ impl RequestHandler<RequestParams, ResponseParams> for DefaultClientHandler<'_> 
             }
 
             _ => {
-                log::warn!("Request without handler fn. request = {request:?}");
+                log::warn!(
+                    context:serde = LogContext::current(),
+                    request_type = request.name(),
+                    request:serde = request;
+                    "Request without handler fn. request = {}", request.name()
+                );
 
                 return Ok(None);
             }
-        }))
+        };
+        log::info!(
+            context:serde = LogContext::current(),
+            request_type = request.name(),
+            request:serde = request,
+            response:serde = result;
+            "Request processed successfully.",
+        );
+        Ok(Some(result))
     }
 }
 

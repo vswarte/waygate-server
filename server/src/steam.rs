@@ -5,6 +5,8 @@ use std::{
 
 use steamworks::{Server, SteamAPIInitError, SteamId};
 
+use crate::logging::LogContext;
+
 pub struct SteamServer {
     server: Server,
     session_end_tx: Sender<SteamId>,
@@ -75,11 +77,16 @@ pub struct SteamSession {
 impl Drop for SteamSession {
     fn drop(&mut self) {
         log::info!(
-            "Request steam session end. steam_id = {}.",
-            self.steam_id.raw()
+            context:serde = LogContext::current(),
+            steam_id = self.steam_id.raw();
+            "Request steam session end."
         );
         if let Err(e) = self.session_end_tx.send(self.steam_id) {
-            log::error!("Could not send session end request to steam server. {e}.");
+            log::error!(
+                context:serde = LogContext::current(),
+                error:? = e;
+                "Could not send session end request to steam server."
+            );
         }
     }
 }

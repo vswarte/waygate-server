@@ -75,7 +75,6 @@ impl HandleRequest<Box<RequestRegisterQuickMatchParams>, ResponseRegisterQuickMa
         &mut self,
         request: &Box<RequestRegisterQuickMatchParams>,
     ) -> Result<ResponseRegisterQuickMatchParams, Box<dyn std::error::Error>> {
-        log::info!("Register {request:#?}");
         let token = self.services.pool_quickmatch.insert(
             self.session.player_id,
             QuickMatchPoolEntry {

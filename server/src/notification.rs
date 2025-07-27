@@ -1,8 +1,9 @@
-
 use std::sync::mpsc::Sender;
 
 use dashmap::DashMap;
 use thiserror::Error;
+
+use crate::logging::LogContext;
 
 #[derive(Debug, Error)]
 pub enum NotificationChannelPoolError {
@@ -21,12 +22,18 @@ pub struct NotificationChannelPool {
 
 impl NotificationChannelPool {
     /// Send a notification push message to a specific player.
-    pub fn notify_player(&self, player: i32, message: Vec<u8>) -> Result<(), NotificationChannelPoolError> {
+    pub fn notify_player(
+        &self,
+        player: i32,
+        message: Vec<u8>,
+    ) -> Result<(), NotificationChannelPoolError> {
         let Some(channel) = self.entries.get(&player).map(|i| i.clone()) else {
             return Err(NotificationChannelPoolError::MissingPlayer);
         };
 
-        channel.send(message).map_err(|_| NotificationChannelPoolError::SendError)?;
+        channel
+            .send(message)
+            .map_err(|_| NotificationChannelPoolError::SendError)?;
         Ok(())
     }
 
@@ -34,7 +41,11 @@ impl NotificationChannelPool {
     pub fn broadcast(&self, message: Vec<u8>) -> Result<(), NotificationChannelPoolError> {
         self.entries.iter().for_each(|e| {
             if let Err(e) = e.value().send(message.clone()) {
-                log::error!("Could not broadcast message to user {e}.")
+                log::error!(
+                    context:serde = LogContext::current(),
+                    error:? = e;
+                    "Could not broadcast message to user."
+                );
             }
         });
 
@@ -46,9 +57,10 @@ impl NotificationChannelPool {
         NotificationChannelPoolToken(self, player_id)
     }
 
-
     pub fn remove(&self, player: i32) -> Result<(), NotificationChannelPoolError> {
-        self.entries.remove(&player).ok_or(NotificationChannelPoolError::MissingPlayer)?;
+        self.entries
+            .remove(&player)
+            .ok_or(NotificationChannelPoolError::MissingPlayer)?;
         Ok(())
     }
 }
@@ -58,7 +70,10 @@ pub struct NotificationChannelPoolToken<'a>(&'a NotificationChannelPool, pub i32
 
 impl Drop for NotificationChannelPoolToken<'_> {
     fn drop(&mut self) {
-        log::info!("Destroying notification channel pool token");
+        log::info!(
+            context:serde = LogContext::current();
+            "Destroying notification channel pool token"
+        );
         let _ = self.0.remove(self.1);
     }
 }

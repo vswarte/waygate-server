@@ -176,8 +176,6 @@ impl HandleRequest<Box<RequestGetMatchAreaSignListParams>, ResponseGetMatchAreaS
         &mut self,
         request: &Box<RequestGetMatchAreaSignListParams>,
     ) -> Result<ResponseGetMatchAreaSignListParams, Box<dyn std::error::Error>> {
-        log::info!("GetMatchAreaSignList {:?}", request.puddles);
-
         let mut pool_matches = self
             .services
             .pool_sign

@@ -28,9 +28,12 @@ use tokio::net::{TcpListener, TcpStream};
 use tokio_tungstenite::tungstenite::handshake::server::{Request, Response};
 use tokio_tungstenite::tungstenite::Message;
 
+use crate::logging::LogContext;
+
 mod api;
 mod bans;
 mod handler;
+mod logging;
 mod notification;
 mod protocol;
 mod services;
@@ -106,16 +109,28 @@ async fn serve_websockets(
         let database = database.clone();
         let services = services.clone();
 
-        tokio::spawn(async move {
-            log::info!("Started serving client. remote = {peer_address}.");
+        tokio::spawn(LogContext::with(async move {
+            LogContext::insert("peer_address", peer_address.to_string());
+
+            log::info!(
+                context:serde = LogContext::current();
+                "Started serving client. remote = {peer_address}."
+            );
 
             match serve_client(stream, peer_address, config, database, services).await {
-                Ok(_) => log::info!("Client closed connection. remote = {peer_address}."),
+                Ok(_) => {
+                    log::info!(
+                        context:serde = LogContext::current();
+                        "Client closed connection."
+                    )
+                }
                 Err(e) => log::error!(
-                    "Caught error while serving client. remote = {peer_address}. e = {e:?}."
+                    context:serde = LogContext::current(),
+                    error:? = e;
+                    "Caught error while serving client."
                 ),
             };
-        });
+        }));
 
         log::info!("Incoming connection from: {peer_address}");
     }
@@ -214,7 +229,10 @@ async fn serve_client(
 
     let external_id = external_id.get().unwrap();
     let session_ticket = session_ticket.get().unwrap();
-    let _waygate_version = waygate_version.get().unwrap();
+    let waygate_version = waygate_version.get().unwrap();
+
+    LogContext::insert("external_id", external_id);
+    LogContext::insert("waygate_version", waygate_version);
 
     let parsed_external_id = external_id.parse::<u64>()?;
 
@@ -229,7 +247,10 @@ async fn serve_client(
                 .ok_or("Time overflow when calculating ban timestamp")?;
             // reject all connections for 120 seconds from the time of the ban to prevent reconnection
             if banned_at.elapsed().unwrap_or_default() < std::time::Duration::from_secs(120) {
-                log::info!("Banned client reconnection attempt. remote = {peer_address}, external_id = {parsed_external_id}, disconnecting.");
+                log::info!(
+                    context:serde = LogContext::current();
+                    "Banned client reconnection attempt, disconnecting..."
+                );
                 return Ok(());
             }
             true
@@ -240,7 +261,7 @@ async fn serve_client(
     // Handle protocol stuff first like exchanging keys and shit
     let mut protocol = ClientProtocol::new(
         database.clone(),
-        format!("{:x?}", parsed_external_id),
+        format!("{parsed_external_id:x?}"),
         peer_address.to_string(),
         config.as_ref().try_into()?,
     )?;
@@ -286,13 +307,19 @@ async fn serve_client(
                 .await?)
                 .is_some()
             {
-                log::info!("Client was banned while connected. remote = {peer_address}, external_id = {parsed_external_id}, disconnecting.");
+                log::info!(
+                    context:serde = LogContext::current();
+                    "Client was banned while connected, disconnecting..."
+                );
                 return Ok(());
             }
         }
         match event {
             Ok(Message::Close(_)) => {
-                log::debug!("Close message. remote = {peer_address}.");
+                log::debug!(
+                    context:serde = LogContext::current();
+                    "Close message."
+                );
                 return Ok(());
             }
             Ok(Message::Binary(data)) => {
@@ -337,7 +364,11 @@ async fn serve_client(
                         } {
                             Ok(Some(response)) => builder.body(response).build()?,
                             Err(e) => {
-                                log::error!("Error while processing request. remote = {peer_address}. error = {e}");
+                                log::error!(
+                                    context:serde = LogContext::current(),
+                                    error:? = e;
+                                    "Error while processing request"
+                                );
                                 builder.error(0).build()?
                             }
                             Ok(None) => builder.error(0).build()?,
@@ -351,11 +382,10 @@ async fn serve_client(
                     // Clients send a push message type to confirm that they've received some
                     // server-originating push message.
                     MessageType::Push => {
-                        let peer_address = match &handler {
-                            ActiveHandler::Default(h) => &h.session.peer_address,
-                            ActiveHandler::Banned(_) => &peer_address.to_string(),
-                        };
-                        log::debug!("Push confirmation from {}", peer_address);
+                        log::debug!(
+                            context:serde = LogContext::current();
+                            "Handled push confirmation"
+                        );
                     }
 
                     // Clients periodically send these. Client will disconnect if we dont
@@ -368,7 +398,10 @@ async fn serve_client(
                     _ => {}
                 }
             }
-            _ => log::warn!("Unknown websocket message type {event:#?}"),
+            _ => log::warn!(
+                context:serde = LogContext::current();
+                "Unknown websocket message type {event:#?}"
+            ),
         }
     }
 
@@ -376,7 +409,7 @@ async fn serve_client(
 }
 
 fn hex_to_bytes(s: &str) -> Option<Vec<u8>> {
-    if s.len() % 2 == 0 {
+    if s.len().is_multiple_of(2) {
         (0..s.len())
             .step_by(2)
             .map(|i| {

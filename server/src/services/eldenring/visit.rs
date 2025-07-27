@@ -1,9 +1,12 @@
-use std::{collections::HashMap, sync::{mpsc::Sender, LazyLock, Mutex, MutexGuard}};
+use std::{
+    collections::HashMap,
+    sync::{mpsc::Sender, LazyLock, Mutex, MutexGuard},
+};
 
 use dashmap::DashMap;
 use message::eldenring::VisitType;
 
-use crate::services::eldenring::PoolError;
+use crate::{logging::LogContext, services::eldenring::PoolError};
 
 use super::weapon;
 
@@ -25,7 +28,8 @@ impl VisitorPool {
     }
 
     pub fn matches(&self, query: &VisitorPoolQuery) -> Vec<(VisitorPoolKey, VisitorPoolEntry)> {
-        self.entries.iter()
+        self.entries
+            .iter()
             .filter(|e| query.matches(e.value()))
             .map(|e| (e.key().clone(), e.value().clone()))
             .collect()
@@ -124,7 +128,10 @@ impl VisitorAttemptTracker {
 
     fn lock(&self) -> MutexGuard<'_, HashMap<(VisitorPoolKey, i32), VisitorAttempt>> {
         self.entries.lock().unwrap_or_else(|p| {
-            log::warn!("Sign pool recovering from mutex poisoning");
+            log::warn!(
+                context:serde = LogContext::current();
+                "Sign pool recovering from mutex poisoning"
+            );
             self.entries.clear_poison();
             p.into_inner()
         })

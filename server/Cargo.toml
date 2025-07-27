@@ -20,9 +20,19 @@ features = [
     "macros",
 ]
 
+[dependencies.log]
+version = "0.4"
+features = ["kv", "kv_serde"]
+
+[dependencies.log4rs]
+# version = "1.4.0-rc2"
+git = "https://github.com/FeeeeK/log4rs.git"
+branch = "feat/kv-serde"
+revision = "7355a368b755681bac9020c5373bb34a7eac471d"
+features = ["log_kv"]
+
+
 [dependencies]
-log = "0.4"
-log4rs = "1.3"
 tokio-tungstenite = "*"
 futures-util = "0.3"
 thiserror.workspace = true

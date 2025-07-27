@@ -6,7 +6,7 @@ use std::{
 
 use dashmap::DashMap;
 
-use crate::services::eldenring::PoolError;
+use crate::{logging::LogContext, services::eldenring::PoolError};
 
 use super::weapon;
 
@@ -138,7 +138,10 @@ impl BreakInAttemptTracker {
 
     fn lock(&self) -> MutexGuard<'_, HashMap<(BreakInPoolKey, i32), BreakInAttempt>> {
         self.entries.lock().unwrap_or_else(|p| {
-            log::warn!("Sign pool recovering from mutex poisoning");
+            log::warn!(
+                context:serde = LogContext::current();
+                "Sign pool recovering from mutex poisoning"
+            );
             self.entries.clear_poison();
             p.into_inner()
         })
