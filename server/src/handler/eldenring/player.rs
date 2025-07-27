@@ -39,7 +39,7 @@ impl HandleRequest<Box<RequestUpdatePlayerStatusParams>, ResponseUpdatePlayerSta
         &mut self,
         request: &Box<RequestUpdatePlayerStatusParams>,
     ) -> Result<ResponseUpdatePlayerStatusParams, Box<dyn std::error::Error>> {
-        if request.character.blue_ring_active && self.visitor_token.is_none() {
+        if request.character.multiplayer_data.can_be_hunter && self.visitor_token.is_none() {
             let token = self.services.pool_visitor.insert(
                 self.session.player_id,
                 VisitorPoolEntry {
@@ -53,13 +53,13 @@ impl HandleRequest<Box<RequestUpdatePlayerStatusParams>, ResponseUpdatePlayerSta
             );
 
             self.visitor_token = Some(token);
-        } else if !request.character.blue_ring_active && self.visitor_token.is_some() {
+        } else if !request.character.multiplayer_data.can_be_hunter && self.visitor_token.is_some()
+        {
             let _ = self.visitor_token.take();
         }
 
-        let is_invadeable = request.character.furled_finger_enabled == 1
-            && (request.character.taunters_tongue_active
-                || request.character.hosting_chr_types.contains(&1));
+        let is_invadeable = request.character.multiplayer_data.is_invadeable
+            || request.character.multiplayer_data.can_be_invaded_by_hunters;
 
         match self.breakin_token.as_ref() {
             Some(token) if is_invadeable => {

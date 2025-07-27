@@ -130,6 +130,8 @@ pub struct ResponseCreateMatchAreaSignParams {
 
 #[cfg(test)]
 mod test {
+    use crate::eldenring::SellRegion;
+
     use super::{ObjectIdentifier, RequestGetSignListParams, RequestUpdateSignParams};
     use wire::deserialize;
 
@@ -157,21 +159,23 @@ mod test {
             deserialized.matching_parameters.regulation_version,
             11001000
         );
-        assert_eq!(deserialized.matching_parameters.unk_region_flag, 5);
         assert_eq!(
-            deserialized
-                .matching_parameters
-                .cross_region_matchmaking_disabled,
-            256
+            deserialized.matching_parameters.sell_region,
+            SellRegion::Global
         );
-        assert_eq!(deserialized.matching_parameters.unk2, 0);
+        assert!(
+            !deserialized
+                .matching_parameters
+                .cross_region_matchmaking_disabled
+        );
+        assert_eq!(deserialized.matching_parameters.unk2, 1);
+        assert_eq!(deserialized.matching_parameters.platform, 0);
         assert_eq!(deserialized.matching_parameters.character_level, 99);
         assert_eq!(deserialized.matching_parameters.unk3, 0);
-        assert_eq!(deserialized.matching_parameters.unk4, 0);
         assert_eq!(deserialized.matching_parameters.game_clear_count, 0);
         assert_eq!(deserialized.matching_parameters.password, "");
         assert_eq!(deserialized.matching_parameters.vow_type, 0);
         assert_eq!(deserialized.matching_parameters.max_reinforce, 22);
-        assert_eq!(deserialized.matching_parameters.unk6, 5);
+        assert_eq!(deserialized.matching_parameters.max_spirit_ash_reinforce, 5);
     }
 }

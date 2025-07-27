@@ -323,7 +323,7 @@ async fn serve_client(
                                     .duration_since(std::time::UNIX_EPOCH)
                                     .expect("Time went backwards")
                                     .as_millis(),
-                                handler.session.external_id,
+                                external_id,
                                 sequence,
                                 label,
                             );

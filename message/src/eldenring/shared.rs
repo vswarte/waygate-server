@@ -17,34 +17,44 @@ pub struct PuddleArea {
 #[derive(Debug, Serialize, Deserialize, PartialEq, Hash, Eq, Clone, Copy)]
 pub struct ObjectIdentifier(pub i64);
 
+#[repr(u32)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
+pub enum SellRegion {
+    None = 0,
+    Asia = 1,
+    Japan = 2,
+    NorthAmerica = 3,
+    UnitedKingdom = 4,
+    Global = 5,
+}
+
 /// Player stats used for matching to other players.
-#[derive(Serialize, Deserialize, Debug, PartialEq, Default)]
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub struct MatchingParameters {
     /// Regulation version, used to be the game version.
     pub regulation_version: u32,
-    /// Some result from a lookup table based on the region.
-    pub unk_region_flag: u32,
+    /// Sell region
+    pub sell_region: SellRegion,
     /// Indicates if cross-region matchmaking is disallowed.
-    pub cross_region_matchmaking_disabled: u32,
+    pub cross_region_matchmaking_disabled: bool,
     /// CSNetMan->0xC
-    pub unk2: u8,
+    pub unk2: u32,
     /// Calls static method on PlatformNetworkMan, returns 0 for PC builds.
     pub platform: u8,
     /// Boring old character rune level.
-    pub character_level: u16,
-    /// NetPlayerWatcher->0x10
+    pub character_level: u32,
+    /// NetPlayerWatcher->0x10, always 0 for PC builds.
     pub unk3: u32,
-    pub unk4: u32,
     /// NG cycle.
-    pub game_clear_count: u16,
+    pub game_clear_count: u32,
     /// Main password in the multiplayer settings menu.
     pub password: ShiftJisString,
     /// Yes its still in here.
     pub vow_type: u32,
     /// Maximum reinforcement level for matching.
     pub max_reinforce: u16,
-    /// PlayerGameData->0xC7
-    pub unk6: u16,
+    /// Maximum spirit ash reinforcement level for matching.
+    pub max_spirit_ash_reinforce: u16,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
