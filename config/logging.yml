@@ -3,15 +3,13 @@ appenders:
   stdout:
     kind: console
     encoder:
-      pattern: "{d(%+)(utc)} [{f}:{L}] {h({l})} {M}:{m}{n}"
-  file:
-    kind: file
-    path: "log/waygate.log"
-    encoder:
-      pattern: "{d(%Y-%m-%d %H:%M:%S)(utc)} - {h({l})}: {m}{n}"
+      kind: json
 
 root:
   level: info
   appenders:
     - stdout
-    - file
+
+loggers:
+  sqlx:
+    level: off
