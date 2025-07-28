@@ -29,16 +29,30 @@ impl<'a> MessageReader<'a> {
         reader.read_u8()?.try_into()
     }
 
-    /// Read sequence # of the contained message, returns None if the contained message
-    /// if the message is not a request or a response.
+    /// Read sequence # of the contained message, returns None if the contained message is malformed
+    /// or if the message is not a request or a response.
     pub fn sequence(&self) -> Result<Option<u32>, Error> {
         let mut reader = self.0;
 
         Ok(match reader.read_u8()?.try_into()? {
+            MessageType::Request | MessageType::Response => Some(reader.read_u32::<LE>()?),
+            _ => None,
+        })
+    }
+
+    /// Read variant of the contained message, returns None if the contained message is malformed
+    /// or if the message is not a request or a response.
+    pub fn peek_variant(&self) -> Result<Option<u32>, Error> {
+        let mut reader = self.0;
+
+        Ok(match reader.read_u8()?.try_into()? {
             MessageType::Request | MessageType::Response => {
+                // Skip the sequence number
+                reader.read_u32::<LE>()?;
+                // Read the variant
                 Some(reader.read_u32::<LE>()?)
-            },
-            _ => None
+            }
+            _ => None,
         })
     }
 
@@ -56,9 +70,7 @@ impl<'a> MessageReader<'a> {
     }
 }
 
-pub enum MessageContents {
-
-}
+pub enum MessageContents {}
 
 impl TryFrom<u8> for MessageType {
     type Error = Error;

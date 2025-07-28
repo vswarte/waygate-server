@@ -338,12 +338,19 @@ async fn serve_client(
                     MessageType::Request => {
                         let sequence = reader.sequence()?.unwrap();
                         let builder = MessageBuilder::response().sequence(sequence);
-                        let deserialized = &reader.deserialize_request()?;
+
+                        let message_variant = reader
+                            .peek_variant()?
+                            .map_or("unknown".to_string(), |v| v.to_string());
+
+                        LogContext::insert("message_variant", message_variant);
 
                         // Dump packets if required
                         #[cfg(feature = "packet-dump")]
                         {
-                            let label = deserialized.name();
+                            let label = reader
+                                .peek_variant()?
+                                .map_or("unknown".to_string(), |v| v.to_string());
                             let file_name = format!(
                                 "dump/{}_{}_{}_{}.mmbin",
                                 std::time::SystemTime::now()
@@ -354,8 +361,10 @@ async fn serve_client(
                                 sequence,
                                 label,
                             );
-                            std::fs::write(file_name, decrypted).unwrap();
+                            std::fs::write(file_name, &decrypted).unwrap();
                         }
+
+                        let deserialized = &reader.deserialize_request()?;
 
                         // Dispatch request to handler for specific message type.
                         let response = match match &mut handler {
