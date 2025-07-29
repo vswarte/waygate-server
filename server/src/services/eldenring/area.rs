@@ -6,15 +6,6 @@ pub enum MatchingArea {
     Puddle(PuddleArea),
 }
 
-impl Default for MatchingArea {
-    fn default() -> Self {
-        Self::PlayRegion(PlayRegionArea {
-            area: -1,
-            play_region: -1,
-        })
-    }
-}
-
 impl MatchingArea {
     pub fn matches(&self, other: &Self) -> bool {
         match (self, other) {

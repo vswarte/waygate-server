@@ -124,7 +124,7 @@ pub struct PuddleSignPoolQuery<'a> {
     pub player_id: i32,
     pub character_level: u32,
     pub weapon_level: u32,
-    pub puddle: PuddleArea,
+    pub puddles: Vec<PuddleArea>,
     pub password: &'a str,
 }
 
@@ -133,7 +133,12 @@ impl PuddleSignPoolQuery<'_> {
         if entry.player_id == self.player_id {
             return false;
         }
-        if !entry.location.matches(&self.puddle.into()) {
+        if !self.puddles.iter().any(|puddle| {
+            let MatchingArea::Puddle(ref puddle_area) = entry.location else {
+                return false;
+            };
+            puddle_area.puddle_id == puddle.puddle_id
+        }) {
             return false;
         }
 

@@ -84,14 +84,11 @@ pub struct ResponseUpdateSignParams {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct RequestGetMatchAreaSignListParams {
     pub known_signs: Vec<ObjectIdentifier>,
-    pub unk1: u32,
-    pub puddle: i32,
-    pub unk2: u32,
-    pub unk3: u8,
+    pub puddles: Vec<PuddleArea>,
     pub matching_parameters: MatchingParameters,
-    pub unk4: u8,
     pub unk5: u8,
     pub unk6: u8,
+    pub unk7: u8,
     pub group_passwords: Vec<String>,
 }
 
@@ -115,9 +112,11 @@ pub struct ResponseGetMatchAreaSignListParams {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct RequestCreateMatchAreaSignParams {
-    pub area: PuddleArea,
-    pub unk1: i32,
+    pub puddle_id: u32,
+    // This request uses a fixed-size array for flags, but all other requests use a Vec<u8>
+    pub puddle_flags: [u8; 8],
     pub matching_parameters: MatchingParameters,
+    // MultiplayProperties + 0x10
     pub unk2: i32,
     pub data: Vec<u8>,
     pub group_passwords: Vec<String>,
@@ -168,10 +167,10 @@ mod test {
                 .matching_parameters
                 .cross_region_matchmaking_disabled
         );
-        assert_eq!(deserialized.matching_parameters.unk2, 1);
+        assert_eq!(deserialized.matching_parameters.unk1, 1);
         assert_eq!(deserialized.matching_parameters.platform, 0);
         assert_eq!(deserialized.matching_parameters.character_level, 99);
-        assert_eq!(deserialized.matching_parameters.unk3, 0);
+        assert_eq!(deserialized.matching_parameters.unk2, 0);
         assert_eq!(deserialized.matching_parameters.game_clear_count, 0);
         assert_eq!(deserialized.matching_parameters.password, "");
         assert_eq!(deserialized.matching_parameters.vow_type, 0);

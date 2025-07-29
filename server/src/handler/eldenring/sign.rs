@@ -46,7 +46,7 @@ impl HandleRequest<Box<RequestCreateSignParams>, ResponseCreateSignParams>
         let token = self.services.pool_sign.insert(SignPoolEntry {
             player_id: self.session.player_id,
             external_id: self.session.external_id.clone(),
-            character_level: request.matching_parameters.character_level as u32,
+            character_level: request.matching_parameters.character_level,
             weapon_level: request.matching_parameters.max_reinforce as u32,
             location: MatchingArea::PlayRegion(PlayRegionArea {
                 area: request.area.area,
@@ -77,9 +77,12 @@ impl HandleRequest<Box<RequestCreateMatchAreaSignParams>, ResponseCreateMatchAre
         let token = self.services.pool_sign.insert(SignPoolEntry {
             player_id: self.session.player_id,
             external_id: self.session.external_id.clone(),
-            character_level: request.matching_parameters.character_level as u32,
+            character_level: request.matching_parameters.character_level,
             weapon_level: request.matching_parameters.max_reinforce as u32,
-            location: MatchingArea::Puddle(request.area),
+            location: MatchingArea::Puddle(PuddleArea {
+                puddle_id: request.puddle_id,
+                flags: request.puddle_flags.to_vec(),
+            }),
             password: request.matching_parameters.password.clone().into(),
             group_passwords: request.group_passwords.clone(),
             data: request.data.clone(),
@@ -124,7 +127,7 @@ impl HandleRequest<Box<RequestGetSignListParams>, ResponseGetSignListParams>
     ) -> Result<ResponseGetSignListParams, Box<dyn std::error::Error>> {
         let mut pool_matches = self.services.pool_sign.matches(&SignPoolQuery {
             player_id: self.session.player_id,
-            character_level: request.matching_parameters.character_level as u32,
+            character_level: request.matching_parameters.character_level,
             weapon_level: request.matching_parameters.max_reinforce as u32,
             areas: &request.search_areas,
             password: &request.matching_parameters.password,
@@ -182,12 +185,9 @@ impl HandleRequest<Box<RequestGetMatchAreaSignListParams>, ResponseGetMatchAreaS
             .pool_sign
             .matches_puddle(&PuddleSignPoolQuery {
                 player_id: self.session.player_id,
-                character_level: request.matching_parameters.character_level as u32,
+                character_level: request.matching_parameters.character_level,
                 weapon_level: request.matching_parameters.max_reinforce as u32,
-                puddle: PuddleArea {
-                    puddle_id: request.puddle,
-                    area: -1,
-                },
+                puddles: request.puddles.clone(),
                 password: &request.matching_parameters.password,
             });
 
@@ -210,14 +210,14 @@ impl HandleRequest<Box<RequestGetMatchAreaSignListParams>, ResponseGetMatchAreaS
             entries: pool_matches
                 .iter()
                 .map(|e| {
-                    let MatchingArea::Puddle(puddle) = e.1.location else {
+                    let MatchingArea::Puddle(ref puddle) = e.1.location else {
                         panic!("Filter tried passing non-puddle sign to GetMatchAreaSignList response.");
                     };
 
                     ResponseGetMatchAreaSignListParamsEntry {
                         player_id: e.1.player_id,
                         identifier: ObjectIdentifier(e.0 .0),
-                        puddle,
+                        puddle: puddle.clone(),
                         unk1: 0,
                         data: e.1.data.clone(),
                         external_id: e.1.external_id.clone(),

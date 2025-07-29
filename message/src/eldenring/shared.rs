@@ -4,14 +4,14 @@ use wire::ShiftJisString;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq)]
 pub struct PlayRegionArea {
-    pub play_region: i32,
-    pub area: i32,
+    pub play_region: u32,
+    pub area: u32,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct PuddleArea {
-    pub puddle_id: i32,
-    pub area: i32,
+    pub puddle_id: u32,
+    pub flags: Vec<u8>,
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Hash, Eq, Clone, Copy)]
@@ -38,13 +38,13 @@ pub struct MatchingParameters {
     /// Indicates if cross-region matchmaking is disallowed.
     pub cross_region_matchmaking_disabled: bool,
     /// CSNetMan->0xC
-    pub unk2: u32,
+    pub unk1: u32,
     /// Calls static method on PlatformNetworkMan, returns 0 for PC builds.
     pub platform: u8,
     /// Boring old character rune level.
     pub character_level: u32,
     /// NetPlayerWatcher->0x10, always 0 for PC builds.
-    pub unk3: u32,
+    pub unk2: u32,
     /// NG cycle.
     pub game_clear_count: u32,
     /// Main password in the multiplayer settings menu.

@@ -47,8 +47,8 @@ impl HandleRequest<Box<RequestCreateBloodMessageParams>, ResponseCreateBloodMess
         .bind(request.character_id)
         .bind(self.session.session_id)
         .bind(&request.data)
-        .bind(request.area.area)
-        .bind(request.area.play_region)
+        .bind(request.area.area as i32)
+        .bind(request.area.play_region as i32)
         .bind(&request.group_passwords)
         .fetch_one(&self.services.database)
         .await?
@@ -70,7 +70,7 @@ impl HandleRequest<Box<RequestGetBloodMessageListParams>, ResponseGetBloodMessag
         let play_regions = request
             .search_areas
             .iter()
-            .map(|a| a.play_region)
+            .map(|a| a.play_region as i32)
             .collect::<Vec<i32>>();
 
         let entries = sqlx::query_as::<_, BloodMessageRecord>(
@@ -88,8 +88,8 @@ impl HandleRequest<Box<RequestGetBloodMessageListParams>, ResponseGetBloodMessag
             rating_bad: e.rating_bad,
             data: e.data,
             area: PlayRegionArea {
-                play_region: e.play_region,
-                area: e.area,
+                play_region: e.play_region as u32,
+                area: e.area as u32,
             },
             group_passwords: e.group_passwords,
         })
