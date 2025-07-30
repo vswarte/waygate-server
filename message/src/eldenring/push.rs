@@ -88,18 +88,18 @@ pub struct RejectVisitParams {
 
 #[derive(Serialize, Debug)]
 pub struct JoinQuickMatchParams {
-    pub quickmatch_settings: i32,
+    pub quickmatch_settings: u32,
     pub joining_player_id: i32,
     pub joining_player_external_id: String,
     pub unk2: i32,
-    pub arena_id: i32,
+    pub arena_id: u32,
     pub unk3: u8,
     pub password: String,
 }
 
 #[derive(Serialize, Debug)]
 pub struct AcceptQuickMatchParams {
-    pub quickmatch_settings: i32,
+    pub quickmatch_settings: u32,
     pub host_player_id: i32,
     pub host_external_id: String,
     pub join_data: Vec<u8>,

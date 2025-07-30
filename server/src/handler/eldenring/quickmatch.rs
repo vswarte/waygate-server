@@ -45,8 +45,8 @@ impl HandleRequest<Box<RequestSearchQuickMatchParams>, ResponseSearchQuickMatchP
     ) -> Result<ResponseSearchQuickMatchParams, Box<dyn std::error::Error>> {
         let mut pool_matches = self.services.pool_quickmatch.matches(&QuickMatchPoolQuery {
             player_id: self.session.player_id,
-            arena_id: request.arena_id,
-            character_level: request.matching_parameters.character_level as u32,
+            arenas: request.arenas.clone(),
+            character_level: request.matching_parameters.character_level,
             weapon_level: request.matching_parameters.max_reinforce as u32,
             password: request.matching_parameters.password.0.clone(),
             quickmatch_settings: request.quickmatch_settings,
@@ -81,7 +81,7 @@ impl HandleRequest<Box<RequestRegisterQuickMatchParams>, ResponseRegisterQuickMa
             QuickMatchPoolEntry {
                 host_player_id: self.session.player_id,
                 host_external_id: self.session.external_id.clone(),
-                character_level: request.matching_parameters.character_level as u32,
+                character_level: request.matching_parameters.character_level,
                 weapon_level: request.matching_parameters.max_reinforce as u32,
                 arena_id: request.arena_id,
                 password: request.matching_parameters.password.clone().into(),

@@ -70,20 +70,20 @@ pub struct QuickMatchPoolEntry {
     pub host_external_id: String,
     pub character_level: u32,
     pub weapon_level: u32,
-    pub arena_id: i32,
+    pub arena_id: u32,
     pub password: String,
-    pub quickmatch_settings: i32,
+    pub quickmatch_settings: u32,
     pub host_tx: Sender<Vec<u8>>,
 }
 
 #[derive(Debug)]
 pub struct QuickMatchPoolQuery {
     pub player_id: i32,
-    pub arena_id: i32,
+    pub arenas: Vec<u32>,
     pub character_level: u32,
     pub weapon_level: u32,
     pub password: String,
-    pub quickmatch_settings: i32,
+    pub quickmatch_settings: u32,
 }
 
 impl QuickMatchPoolQuery {
@@ -92,7 +92,8 @@ impl QuickMatchPoolQuery {
             return false;
         }
         // TODO: password team matching
-        if self.arena_id != entry.arena_id || self.quickmatch_settings != entry.quickmatch_settings
+        if !self.arenas.contains(&entry.arena_id)
+            || self.quickmatch_settings != entry.quickmatch_settings
         {
             return false;
         }
@@ -126,7 +127,7 @@ pub static QUICKMATCH_JOIN_ATTEMPTS: LazyLock<QuickMatchJoinAttemptTracker> =
 
 #[derive(Clone)]
 pub struct QuickMatchJoinAttempt {
-    pub quickmatch_settings: i32,
+    pub quickmatch_settings: u32,
     /// Summoner channel sender for push notifs
     pub joining_player_tx: Sender<Vec<u8>>,
 }
@@ -187,7 +188,7 @@ mod test {
             character_level: 1,
             weapon_level: 1,
             password: String::default(),
-            arena_id: 0x0,
+            arenas: vec![0x0],
             quickmatch_settings: 0x0,
         };
 
@@ -213,7 +214,7 @@ mod test {
             character_level: 100,
             weapon_level: 1,
             password: String::default(),
-            arena_id: 0x0,
+            arenas: vec![0x0],
             quickmatch_settings: 0x0,
         };
 
@@ -239,7 +240,7 @@ mod test {
             character_level: 713,
             weapon_level: 1,
             password: String::from("test"),
-            arena_id: 0x0,
+            arenas: vec![0x0],
             quickmatch_settings: 0x0,
         };
 
@@ -265,7 +266,7 @@ mod test {
             character_level: 1,
             weapon_level: 1,
             password: String::from("456"),
-            arena_id: 0x0,
+            arenas: vec![0x0],
             quickmatch_settings: 0x0,
         };
 
@@ -291,7 +292,7 @@ mod test {
             character_level: 1,
             weapon_level: 1,
             password: String::from("456"),
-            arena_id: 0x0,
+            arenas: vec![0x0],
             quickmatch_settings: 0x0,
         };
 
@@ -317,7 +318,7 @@ mod test {
             character_level: 1,
             weapon_level: 1,
             password: String::default(),
-            arena_id: 0x1,
+            arenas: vec![0x1],
             quickmatch_settings: 0x0,
         };
 
@@ -343,7 +344,7 @@ mod test {
             character_level: 1,
             weapon_level: 1,
             password: String::default(),
-            arena_id: 0x0,
+            arenas: vec![0x0],
             quickmatch_settings: 0x1,
         };
 
@@ -369,7 +370,7 @@ mod test {
             character_level: 137,
             weapon_level: 25,
             password: String::default(),
-            arena_id: 0x0,
+            arenas: vec![0x0],
             quickmatch_settings: 0x0,
         };
 

@@ -72,7 +72,7 @@ impl HandleRequest<Box<RequestCreateMatchAreaSignParams>, ResponseCreateMatchAre
         &mut self,
         request: &Box<RequestCreateMatchAreaSignParams>,
     ) -> Result<ResponseCreateMatchAreaSignParams, Box<dyn std::error::Error>> {
-        log::info!("CreateMatchAreaSign {:?}", request.area);
+        log::info!("CreateMatchAreaSign {:?}", request.puddle_id);
 
         let token = self.services.pool_sign.insert(SignPoolEntry {
             player_id: self.session.player_id,
@@ -178,7 +178,7 @@ impl HandleRequest<Box<RequestGetMatchAreaSignListParams>, ResponseGetMatchAreaS
         &mut self,
         request: &Box<RequestGetMatchAreaSignListParams>,
     ) -> Result<ResponseGetMatchAreaSignListParams, Box<dyn std::error::Error>> {
-        log::info!("GetMatchAreaSignList {:?}", request.puddle);
+        log::info!("GetMatchAreaSignList {:?}", request.puddles);
 
         let mut pool_matches = self
             .services

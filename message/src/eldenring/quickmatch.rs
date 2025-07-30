@@ -5,11 +5,11 @@ use super::*;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct RequestSearchQuickMatchParams {
-    pub quickmatch_settings: i32,
-    pub unk1: u32,
-    pub arena_id: i32,
-    pub unk2: u32,
+    pub quickmatch_settings: u32,
+    pub arenas: Vec<u32>,
+    pub search_limit: u32,
     pub matching_parameters: MatchingParameters,
+    // PlayerGameData 0xec
     pub unk3: u32,
 }
 
@@ -17,7 +17,7 @@ pub struct RequestSearchQuickMatchParams {
 pub struct ResponseSearchQuickMatchParamsEntry {
     pub host_player_id: i32,
     pub host_external_id: String,
-    pub arena_id: i32,
+    pub arena_id: u32,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -28,8 +28,8 @@ pub struct ResponseSearchQuickMatchParams {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct RequestRegisterQuickMatchParams {
-    pub quickmatch_settings: i32,
-    pub arena_id: i32,
+    pub quickmatch_settings: u32,
+    pub arena_id: u32,
     pub matching_parameters: MatchingParameters,
     pub unk1: u8,
     pub unk2: u32,
@@ -48,8 +48,8 @@ pub struct ResponseUnregisterQuickMatchParams {}
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct RequestUpdateQuickMatchParams {
-    pub quickmatch_settings: i32,
-    pub arena_id: i32,
+    pub quickmatch_settings: u32,
+    pub arena_id: u32,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -60,7 +60,7 @@ pub struct RequestJoinQuickMatchParams {
     pub unk1: u32,
     pub host_player_id: i32,
     pub joining_player_id: i32,
-    pub arena_id: i32,
+    pub arena_id: u32,
     pub unk2: u8,
     pub password: ShiftJisString,
 }
