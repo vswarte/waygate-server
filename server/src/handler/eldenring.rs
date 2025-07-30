@@ -273,7 +273,7 @@ impl RequestHandler<RequestParams, ResponseParams> for BannedClientHandler {
         &mut self,
         request: &RequestParams,
     ) -> Result<Option<ResponseParams>, Box<dyn std::error::Error>> {
-        Ok(Some(match request {
+        let response = match request {
             RequestParams::GetAnnounceMessageList(request) => {
                 ResponseParams::GetAnnounceMessageList(self.handle(request).await?)
             }
@@ -281,8 +281,24 @@ impl RequestHandler<RequestParams, ResponseParams> for BannedClientHandler {
                 ResponseParams::PollMatchingTicket(ResponsePollMatchingTicketParams { unk0: 0 })
             }
             RequestParams::DeleteSession => ResponseParams::DeleteSession,
-            _ => return Ok(None),
-        }))
+            _ => {
+                log::warn!(
+                    context:serde = LogContext::current(),
+                    request_type = request.name(),
+                    request:serde = request;
+                    "Banned client attempted to make an unsupported request."
+                );
+                return Ok(None);
+            }
+        };
+        log::info!(
+            context:serde = LogContext::current(),
+            request_type = request.name(),
+            request:serde = request,
+            response:serde = &response;
+            "Banned client request processed successfully.",
+        );
+        Ok(Some(response))
     }
 }
 
