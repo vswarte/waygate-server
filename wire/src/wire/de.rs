@@ -1,4 +1,5 @@
 use byteorder::{ReadBytesExt, LE};
+use encoding_rs::SHIFT_JIS;
 use paste::item;
 use serde::de;
 
@@ -144,7 +145,13 @@ impl<'de> de::Deserializer<'de> for &mut Deserializer<'de> {
         } else {
             let (buf, rem) = self.input.split_at(str_len);
             self.input = rem;
-            visitor.visit_borrowed_str(std::str::from_utf8(buf)?)
+            let (decoded, _, had_errors) = SHIFT_JIS.decode(buf);
+            if had_errors {
+                return Err(FNWireError::Other(
+                    "Failed to decode string as Shift-JIS".to_string(),
+                ));
+            }
+            visitor.visit_str(&decoded)
         }
     }
 

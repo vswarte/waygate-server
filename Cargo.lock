@@ -2927,6 +2927,7 @@ name = "wire"
 version = "0.1.0"
 dependencies = [
  "byteorder",
+ "encoding_rs",
  "paste",
  "serde",
  "serde_repr",
