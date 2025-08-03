@@ -49,6 +49,7 @@ pub struct MultiplayerData {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct CharacterStatistics {
+    /// Play time in seconds, capped at 3599999 (999 hours, 59 minutes, 59 seconds)
     pub play_time: u32,
     pub sites_of_grace: Vec<SiteOfGrace>,
     pub unk1: u32,
@@ -107,7 +108,6 @@ pub struct CharacterData {
     pub password: ShiftJisString,
     /// For some reason, group passwords are encoded as utf8 strings instead of ShiftJis
     pub group_passwords: Vec<String>,
-    /// Play time in seconds, capped at 3599999 (999 hours, 59 minutes, 59 seconds)
     pub statistics: CharacterStatistics,
     pub equipment: CharacterEquipment,
     pub unk8: u32,
