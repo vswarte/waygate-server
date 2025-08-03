@@ -35,40 +35,36 @@ pub struct CharacterData {
     pub discovery: u32,
     pub attack_power: CharacterDataAttack,
     pub defense: CharacterDataDefense,
-    pub damage_negation: CharacterDataDamageNegation,
-    pub resistance: CharacterDataResistance,
-    pub unk3: u32,
-    pub unk4: u32,
+    /// Only read in message serialization, never written to
+    pub unused_resistances: [f32; 8],
+    /// Proc status gauges, 0 means status is active
+    pub gauges: CharacterDataGauges,
+    /// Only read in message serialization, never written to
+    pub unused_gauge_timers: [u32; 4],
+    pub hp_flasks: u32,
+    pub fp_flasks: u32,
+    pub unk1: u32,
+    pub unk2: u32,
+    /// list of DLCs owned by the player where each id is 1 or 0
+    /// e.g. [1, 1, 0] means the player owns preorder bonus gesture, SotE but not the SotE preorder bonus
+    pub owned_dlcs: Vec<u32>,
+    pub visited_areas: Vec<u32>,
+    pub scadutree_blessing: u32,
+    pub reversed_spirit_ash_blessing: u32,
+    pub has_beat_dlc: u32,
+    pub unk3: [u32; 4],
+    pub solo_break_in_point: u32,
+    pub max_reinforce_level: u32,
+    pub unk4: u8,
     pub unk5: u32,
     pub unk6: u32,
     pub unk7: u32,
     pub unk8: u32,
-    pub unk9: u32,
-    pub unk10: u32,
-    pub unk11: Vec<u32>,
-    pub visited_areas: Vec<u32>,
-    pub unk12: [u32; 8],
-    pub max_reinforce_level: u32,
-    pub unk13: u32,
-    pub unk14: [u8; 0x16],
-    pub taunters_tongue_active: bool,
-    pub unk15: u8,
-    pub blue_ring_active: bool,
-    pub unk16: u8,
-    pub unk17: u8,
-    /// Contains the character types of the players in the world
-    pub hosting_chr_types: Vec<u32>,
-    pub unk18: u32,
-    pub password: String,
-    pub group_passwords: Vec<String>,
-    pub unk19: u16,
-    pub unk20: u8,
-    pub unk21: u8,
-    pub sites_of_grace: Vec<SiteOfGrace>,
-    pub unk22: u64,
-    pub unk23: u64,
-    pub unk24: u64,
-    pub equipment: CharacterEquipment,
+    pub net_status: NetStatus,
+    /// Datetime in format "YYYYMMDDHHmmss000000000IsUTC"
+    pub unk9: ShiftJisString,
+    pub unk10: i32,
+    pub unk11: u32,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -120,23 +116,11 @@ pub struct CharacterDataDefense {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct CharacterDataDamageNegation {
-    pub physical: u32,
-    pub strike: u32,
-    pub slash: u32,
-    pub pierce: u32,
-    pub magic: u32,
-    pub fire: u32,
-    pub lightning: u32,
-    pub holy: u32,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct CharacterDataResistance {
-    pub immunity: u32,
-    pub robustness: u32,
-    pub focus: u32,
-    pub vitality: u32,
+pub struct CharacterDataGauges {
+    pub bleed: f32,
+    pub poison: f32,
+    pub frost: f32,
+    pub death_blight: f32,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

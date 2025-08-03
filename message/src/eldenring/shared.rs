@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::fmt;
+use wire::ShiftJisString;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq)]
 pub struct PlayRegionArea {
@@ -37,7 +38,7 @@ pub struct MatchingParameters {
     /// NG cycle.
     pub game_clear_count: u16,
     /// Main password in the multiplayer settings menu.
-    pub password: String,
+    pub password: ShiftJisString,
     /// Yes its still in here.
     pub vow_type: u32,
     /// Maximum reinforcement level for matching.

@@ -48,7 +48,7 @@ impl HandleRequest<Box<RequestSearchQuickMatchParams>, ResponseSearchQuickMatchP
             arena_id: request.arena_id,
             character_level: request.matching_parameters.character_level as u32,
             weapon_level: request.matching_parameters.max_reinforce as u32,
-            password: request.matching_parameters.password.clone(),
+            password: request.matching_parameters.password.0.clone(),
             quickmatch_settings: request.quickmatch_settings,
         });
 
@@ -84,7 +84,7 @@ impl HandleRequest<Box<RequestRegisterQuickMatchParams>, ResponseRegisterQuickMa
                 character_level: request.matching_parameters.character_level as u32,
                 weapon_level: request.matching_parameters.max_reinforce as u32,
                 arena_id: request.arena_id,
-                password: request.matching_parameters.password.clone(),
+                password: request.matching_parameters.password.clone().into(),
                 quickmatch_settings: request.quickmatch_settings,
                 host_tx: self.push_tx.clone(),
             },
@@ -171,7 +171,7 @@ impl HandleRequest<Box<RequestJoinQuickMatchParams>, ResponseJoinQuickMatchParam
                         unk2: 0,
                         arena_id: request.arena_id,
                         unk3: 0,
-                        password: request.password.clone(),
+                        password: request.password.clone().into(),
                     }),
                 }))
                 .build()?,

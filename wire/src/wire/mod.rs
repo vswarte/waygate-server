@@ -1,8 +1,11 @@
-pub mod ser;
 pub mod de;
+pub mod ser;
+pub mod string;
 
 use std::io;
 use thiserror::Error;
+
+use crate::wire::string::ShiftJisError;
 
 #[derive(Debug, Error)]
 pub enum FNWireError {
@@ -12,6 +15,8 @@ pub enum FNWireError {
     Io(#[from] io::Error),
     #[error("UTF8 error: {0}")]
     Utf8(#[from] std::str::Utf8Error),
+    #[error("Shift-JIS error: {0}")]
+    ShiftJis(#[from] ShiftJisError),
     #[error("Sequence size overflow: {0}")]
     SizeOverflow(usize),
     #[error("Unsupported type: {0}")]
@@ -30,7 +35,7 @@ pub enum FNWireError {
 
 #[cfg(test)]
 mod tests {
-    use crate::{Serializer, Deserializer};
+    use crate::{Deserializer, Serializer};
     use serde::{Deserialize, Serialize};
 
     #[derive(Serialize, Deserialize, PartialEq, Eq)]

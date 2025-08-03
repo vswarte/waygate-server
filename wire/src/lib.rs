@@ -3,9 +3,10 @@
 
 pub mod wire;
 
-pub use wire::FNWireError;
-pub use wire::ser::Serializer;
 pub use wire::de::Deserializer;
+pub use wire::ser::Serializer;
+pub use wire::string::ShiftJisString;
+pub use wire::FNWireError;
 
 pub fn deserialize<'de, T: serde::Deserialize<'de>>(input: &'de [u8]) -> Result<T, FNWireError> {
     let mut deserializer = Deserializer::new(input);

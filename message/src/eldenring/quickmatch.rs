@@ -1,4 +1,5 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
+use wire::ShiftJisString;
 
 use super::*;
 
@@ -61,7 +62,7 @@ pub struct RequestJoinQuickMatchParams {
     pub joining_player_id: i32,
     pub arena_id: i32,
     pub unk2: u8,
-    pub password: String,
+    pub password: ShiftJisString,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
