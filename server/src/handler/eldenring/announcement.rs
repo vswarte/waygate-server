@@ -55,8 +55,8 @@ impl From<&AnnouncementItem> for ResponseGetAnnounceMessageListParamsEntry {
             index: value.index,
             unk1: 0,
             unk2: 0,
-            title: value.title.clone(),
-            body: value.body.clone(),
+            title: value.title.clone().into(),
+            body: value.body.clone().into(),
             published_at: value.published_at,
         }
     }

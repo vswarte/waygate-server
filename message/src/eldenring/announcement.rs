@@ -1,4 +1,5 @@
 use serde::{Serialize, Deserialize};
+use wire::ShiftJisString;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct RequestGetAnnounceMessageListParams {
@@ -12,8 +13,8 @@ pub struct ResponseGetAnnounceMessageListParamsEntry {
     pub index: u32,
     pub unk1: u32,
     pub unk2: u32,
-    pub title: String,
-    pub body: String,
+    pub title: ShiftJisString,
+    pub body: ShiftJisString,
     pub published_at: u64,
 }
 
