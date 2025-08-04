@@ -168,10 +168,10 @@ pub struct CharacterDataDefense {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct CharacterDataGauges {
-    pub bleed: f32,
-    pub poison: f32,
-    pub frost: f32,
-    pub death_blight: f32,
+    pub bleed: u32,
+    pub poison: u32,
+    pub frost: u32,
+    pub death_blight: u32,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
