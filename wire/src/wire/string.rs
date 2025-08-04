@@ -103,6 +103,11 @@ impl Serialize for ShiftJisString {
     where
         S: Serializer,
     {
+        // if the serializer is human-readable, serialize as a UTF-8 string (eg JSON)
+        if serializer.is_human_readable() {
+            return serializer.serialize_str(&self.0);
+        }
+
         let (encoded, _, had_errors) = SHIFT_JIS.encode(&self.0);
         if had_errors {
             return Err(ser::Error::custom(ShiftJisError::EncodingError(
