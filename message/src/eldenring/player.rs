@@ -240,13 +240,20 @@ pub struct CharacterEquipment {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ResponseUpdatePlayerStatusParams {}
 
+#[repr(u32)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
+pub enum JoinMultiplayState {
+    Host = 0,
+    Client = 1,
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct RequestJoinMultiplayParams {
     pub unk1: u32,
-    pub unk2: u32,
+    pub play_region_param_id: u32,
     pub level: u32,
     pub unk4: u32,
-    pub unk5: u32,
+    pub state: JoinMultiplayState,
     pub max_reinforce_level: u32,
 }
 
@@ -292,7 +299,12 @@ mod test {
         assert_eq!(deserialized.character.multiplayer_data.platform, 0);
         assert_eq!(deserialized.character.multiplayer_data.player_count, 1);
         assert!(deserialized.character.multiplayer_data.can_be_hunter);
-        assert!(!deserialized.character.multiplayer_data.can_be_invaded_by_hunters);
+        assert!(
+            !deserialized
+                .character
+                .multiplayer_data
+                .can_be_invaded_by_hunters
+        );
         assert!(deserialized.character.multiplayer_data.is_invadeable);
     }
 }
