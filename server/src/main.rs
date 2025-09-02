@@ -11,7 +11,6 @@ use api::{
     ban::{delete_ban, get_ban, get_ban_by_id, post_ban},
     health::healthcheck,
     notification::announcement,
-    whitelist::{delete_whitelist, get_whitelist, post_whitelist},
     AppState,
 };
 use clap::Parser;
@@ -144,7 +143,6 @@ async fn serve_api(
                 .service(delete_ban)
                 .service(get_ban_by_id)
                 .service(announcement)
-
         })
     }
     .bind(&config.api_bind)?

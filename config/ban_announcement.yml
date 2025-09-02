@@ -1,0 +1,11 @@
+# Tell people they are banned now.
+notices:
+  - index: 1
+    order: 1
+    title: '<p align="center"><font size="28"><b>You have been banned from this server.</b></font></p>'
+    body: |
+      You can no longer log into your characters while connected to this server.
+    published_at: 1645681378
+
+# Any waygate or modded regbin changes.
+changes:

@@ -1,4 +1,4 @@
-use std::{collections::HashMap, sync::mpsc::Sender};
+use std::{collections::HashMap, fs::File, sync::mpsc::Sender};
 
 use message::eldenring::{
     ObjectIdentifier, RequestGetAnnounceMessageListParams, RequestParams,
@@ -20,6 +20,7 @@ mod sign;
 mod visit;
 
 use crate::{
+    handler::eldenring::announcement::AnnouncementConfig,
     handler::{HandleRequest, RequestHandler},
     notification::NotificationChannelPoolToken,
     protocol::ClientSession,
@@ -276,18 +277,21 @@ impl HandleRequest<Box<RequestGetAnnounceMessageListParams>, ResponseGetAnnounce
         &mut self,
         _request: &Box<RequestGetAnnounceMessageListParams>,
     ) -> Result<ResponseGetAnnounceMessageListParams, Box<dyn std::error::Error>> {
+        let announcements = serde_yaml::from_reader::<_, AnnouncementConfig>(File::open(
+            "config/ban_announcement.yml",
+        )?)?;
+
         Ok(ResponseGetAnnounceMessageListParams {
-            changes: vec![],
-            notices: vec![ResponseGetAnnounceMessageListParamsEntry {
-                index: 0,
-                unk1: 0,
-                unk2: 0,
-                title: String::from("You have been banned from this server."),
-                body: String::from(
-                    "You can no longer log into your characters while connected to this server.",
-                ),
-                published_at: 0,
-            }],
+            changes: announcements
+                .changes
+                .iter()
+                .map(ResponseGetAnnounceMessageListParamsEntry::from)
+                .collect(),
+            notices: announcements
+                .notices
+                .iter()
+                .map(ResponseGetAnnounceMessageListParamsEntry::from)
+                .collect(),
         })
     }
 }

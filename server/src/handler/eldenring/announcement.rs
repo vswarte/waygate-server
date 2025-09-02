@@ -37,8 +37,8 @@ impl HandleRequest<Box<RequestGetAnnounceMessageListParams>, ResponseGetAnnounce
 
 #[derive(Deserialize, Serialize)]
 pub struct AnnouncementConfig {
-    changes: Vec<AnnouncementItem>,
-    notices: Vec<AnnouncementItem>,
+    pub changes: Vec<AnnouncementItem>,
+    pub notices: Vec<AnnouncementItem>,
 }
 
 #[derive(Deserialize, Serialize)]
