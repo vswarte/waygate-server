@@ -72,16 +72,14 @@ impl HandleRequest<Box<RequestCreateMatchAreaSignParams>, ResponseCreateMatchAre
         &mut self,
         request: &Box<RequestCreateMatchAreaSignParams>,
     ) -> Result<ResponseCreateMatchAreaSignParams, Box<dyn std::error::Error>> {
-        log::info!("CreateMatchAreaSign {:?}", request.puddle_id);
-
         let token = self.services.pool_sign.insert(SignPoolEntry {
             player_id: self.session.player_id,
             external_id: self.session.external_id.clone(),
             character_level: request.matching_parameters.character_level,
             weapon_level: request.matching_parameters.max_reinforce as u32,
             location: MatchingArea::Puddle(PuddleArea {
-                puddle_id: request.puddle_id,
-                flags: request.puddle_flags.to_vec(),
+                puddle_id: request.puddle.puddle_id,
+                flags: request.puddle.flags,
             }),
             password: request.matching_parameters.password.clone().into(),
             group_passwords: request.group_passwords.clone(),
@@ -162,7 +160,7 @@ impl HandleRequest<Box<RequestGetSignListParams>, ResponseGetSignListParams>
                         area,
                         data: e.1.data.clone(),
                         external_id: e.1.external_id.clone(),
-                        unk_string: String::new(),
+                        unk1: 0,
                         group_passwords: e.1.group_passwords.clone(),
                     }
                 })
@@ -187,7 +185,14 @@ impl HandleRequest<Box<RequestGetMatchAreaSignListParams>, ResponseGetMatchAreaS
                 player_id: self.session.player_id,
                 character_level: request.matching_parameters.character_level,
                 weapon_level: request.matching_parameters.max_reinforce as u32,
-                puddles: request.puddles.clone(),
+                puddles: request
+                    .puddles
+                    .iter()
+                    .map(|p| PuddleArea {
+                        puddle_id: p.puddle_id,
+                        flags: p.flags_to_u64(),
+                    })
+                    .collect(),
                 password: &request.matching_parameters.password,
             });
 

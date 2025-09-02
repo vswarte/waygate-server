@@ -31,7 +31,7 @@ pub struct ResponseGetSignListParamsEntry {
     pub area: PlayRegionArea,
     pub data: Vec<u8>,
     pub external_id: String,
-    pub unk_string: String,
+    pub unk1: u32,
     pub group_passwords: Vec<String>,
 }
 
@@ -82,9 +82,24 @@ pub struct ResponseUpdateSignParams {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+/// Same as puddle area, but holds flags as a vec of u8,
+pub struct PuddleAreaVecFlags {
+    pub puddle_id: u32,
+    pub flags: Vec<u8>,
+}
+
+impl PuddleAreaVecFlags {
+    pub fn flags_to_u64(&self) -> u64 {
+        self.flags
+            .iter()
+            .fold(0u64, |acc, &flag| acc | (flag as u64) << (flag * 8))
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug)]
 pub struct RequestGetMatchAreaSignListParams {
     pub known_signs: Vec<ObjectIdentifier>,
-    pub puddles: Vec<PuddleArea>,
+    pub puddles: Vec<PuddleAreaVecFlags>,
     pub matching_parameters: MatchingParameters,
     pub unk5: u8,
     pub unk6: u8,
@@ -112,9 +127,7 @@ pub struct ResponseGetMatchAreaSignListParams {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct RequestCreateMatchAreaSignParams {
-    pub puddle_id: u32,
-    // This request uses a fixed-size array for flags, but all other requests use a Vec<u8>
-    pub puddle_flags: [u8; 8],
+    pub puddle: PuddleArea,
     pub matching_parameters: MatchingParameters,
     // MultiplayProperties + 0x10
     pub unk2: i32,
@@ -129,7 +142,7 @@ pub struct ResponseCreateMatchAreaSignParams {
 
 #[cfg(test)]
 mod test {
-    use crate::eldenring::SellRegion;
+    use crate::eldenring::{PuddleAreaVecFlags, SellRegion};
 
     use super::{ObjectIdentifier, RequestGetSignListParams, RequestUpdateSignParams};
     use wire::deserialize;
@@ -176,5 +189,14 @@ mod test {
         assert_eq!(deserialized.matching_parameters.vow_type, 0);
         assert_eq!(deserialized.matching_parameters.max_reinforce, 22);
         assert_eq!(deserialized.matching_parameters.max_spirit_ash_reinforce, 5);
+    }
+
+    #[test]
+    fn test_flags_to_u64() {
+        let flags = PuddleAreaVecFlags {
+            puddle_id: 1,
+            flags: vec![6],
+        };
+        assert_eq!(flags.flags_to_u64(), 0b00000110);
     }
 }

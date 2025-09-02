@@ -11,7 +11,7 @@ pub struct PlayRegionArea {
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct PuddleArea {
     pub puddle_id: u32,
-    pub flags: Vec<u8>,
+    pub flags: u64,
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Hash, Eq, Clone, Copy)]
