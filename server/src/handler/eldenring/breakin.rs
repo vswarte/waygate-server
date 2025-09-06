@@ -38,6 +38,7 @@ impl HandleRequest<Box<RequestGetBreakInTargetListParams>, ResponseGetBreakInTar
         request: &Box<RequestGetBreakInTargetListParams>,
     ) -> Result<ResponseGetBreakInTargetListParams, Box<dyn std::error::Error>> {
         let mut pool_matches = self.services.pool_breakin.matches(&BreakInPoolQuery {
+            player_id: self.session.player_id,
             play_region: request.play_region,
             character_level: request.matching_parameters.character_level as u32,
             weapon_level: request.matching_parameters.max_reinforce as u32,

@@ -48,6 +48,7 @@ pub struct VisitorPoolEntry {
 
 #[derive(Clone, Debug)]
 pub struct VisitorPoolQuery {
+    pub player_id: i32,
     pub character_level: u32,
     pub weapon_level: u32,
     pub play_region: u32,
@@ -55,6 +56,9 @@ pub struct VisitorPoolQuery {
 
 impl VisitorPoolQuery {
     fn matches(&self, entry: &VisitorPoolEntry) -> bool {
+        if entry.player_id == self.player_id {
+            return false;
+        }
         entry.play_region == self.play_region
             && Self::check_character_level(entry.character_level, self.character_level)
             && Self::check_weapon_level(entry.weapon_level, self.weapon_level)
@@ -160,6 +164,7 @@ mod test {
         };
 
         let host = VisitorPoolQuery {
+            player_id: 2,
             character_level: 1,
             weapon_level: 1,
             play_region: 0,
@@ -181,6 +186,7 @@ mod test {
         };
 
         let host = VisitorPoolQuery {
+            player_id: 2,
             character_level: 400,
             weapon_level: 1,
             play_region: 0,
@@ -202,6 +208,31 @@ mod test {
         };
 
         let host = VisitorPoolQuery {
+            player_id: 2,
+            character_level: 1,
+            weapon_level: 1,
+            play_region: 0,
+            visit_type: VisitType::Hunter,
+        };
+
+        assert!(!host.matches(&visitor));
+    }
+
+    #[test]
+    fn self_match_fails() {
+        let (visitor_tx, _) = channel();
+        let visitor = VisitorPoolEntry {
+            player_id: 1,
+            character_level: 1,
+            weapon_level: 1,
+            play_region: 0,
+            visit_type: VisitType::Hunter,
+            external_id: String::default(),
+            visitor_tx,
+        };
+
+        let host = VisitorPoolQuery {
+            player_id: 2,
             character_level: 1,
             weapon_level: 1,
             play_region: 0,

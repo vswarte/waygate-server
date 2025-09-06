@@ -75,6 +75,7 @@ pub struct SignPoolEntry {
 
 #[derive(Clone, Debug)]
 pub struct SignPoolQuery<'a> {
+    pub player_id: i32,
     pub character_level: u32,
     pub weapon_level: u32,
     pub areas: &'a [PlayRegionArea],
@@ -83,6 +84,9 @@ pub struct SignPoolQuery<'a> {
 
 impl SignPoolQuery<'_> {
     pub fn matches(&self, entry: &SignPoolEntry) -> bool {
+        if entry.player_id == self.player_id {
+            return false;
+        }
         if !self
             .areas
             .iter()
@@ -117,6 +121,7 @@ impl SignPoolQuery<'_> {
 
 #[derive(Clone, Debug)]
 pub struct PuddleSignPoolQuery<'a> {
+    pub player_id: i32,
     pub character_level: u32,
     pub weapon_level: u32,
     pub puddle: PuddleArea,
@@ -125,6 +130,9 @@ pub struct PuddleSignPoolQuery<'a> {
 
 impl PuddleSignPoolQuery<'_> {
     pub fn matches(&self, entry: &SignPoolEntry) -> bool {
+        if entry.player_id == self.player_id {
+            return false;
+        }
         if !entry.location.matches(&self.puddle.into()) {
             return false;
         }
@@ -233,6 +241,7 @@ mod test {
         };
 
         let finger = SignPoolQuery {
+            player_id: 2,
             character_level: 1,
             weapon_level: 1,
             areas: &[PlayRegionArea {
@@ -264,6 +273,7 @@ mod test {
         };
 
         let finger = SignPoolQuery {
+            player_id: 2,
             character_level: 100,
             weapon_level: 1,
             areas: &[PlayRegionArea {
@@ -295,6 +305,7 @@ mod test {
         };
 
         let finger = SignPoolQuery {
+            player_id: 2,
             character_level: 713,
             weapon_level: 1,
             areas: &[PlayRegionArea {
@@ -326,6 +337,7 @@ mod test {
         };
 
         let finger = SignPoolQuery {
+            player_id: 2,
             character_level: 1,
             weapon_level: 1,
             areas: &[PlayRegionArea {
@@ -357,6 +369,7 @@ mod test {
         };
 
         let finger = SignPoolQuery {
+            player_id: 2,
             character_level: 1,
             weapon_level: 1,
             areas: &[PlayRegionArea {
@@ -388,11 +401,44 @@ mod test {
         };
 
         let finger = SignPoolQuery {
+            player_id: 2,
             character_level: 1,
             weapon_level: 1,
             areas: &[PlayRegionArea {
                 area: 2,
                 play_region: 2,
+            }],
+            password: "",
+        };
+
+        assert!(!finger.matches(&host));
+    }
+
+    #[test]
+    fn self_match_fails() {
+        let (summonee_tx, _) = channel();
+        let host = SignPoolEntry {
+            player_id: 1,
+            external_id: String::new(),
+            character_level: 1,
+            weapon_level: 1,
+            location: MatchingArea::PlayRegion(PlayRegionArea {
+                area: 1,
+                play_region: 1,
+            }),
+            password: String::default(),
+            group_passwords: vec![],
+            data: vec![],
+            summonee_tx,
+        };
+
+        let finger = SignPoolQuery {
+            player_id: 1,
+            character_level: 1,
+            weapon_level: 1,
+            areas: &[PlayRegionArea {
+                area: 1,
+                play_region: 1,
             }],
             password: "",
         };

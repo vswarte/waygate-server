@@ -123,6 +123,7 @@ impl HandleRequest<Box<RequestGetSignListParams>, ResponseGetSignListParams>
         request: &Box<RequestGetSignListParams>,
     ) -> Result<ResponseGetSignListParams, Box<dyn std::error::Error>> {
         let mut pool_matches = self.services.pool_sign.matches(&SignPoolQuery {
+            player_id: self.session.player_id,
             character_level: request.matching_parameters.character_level as u32,
             weapon_level: request.matching_parameters.max_reinforce as u32,
             areas: &request.search_areas,
@@ -180,6 +181,7 @@ impl HandleRequest<Box<RequestGetMatchAreaSignListParams>, ResponseGetMatchAreaS
             .services
             .pool_sign
             .matches_puddle(&PuddleSignPoolQuery {
+                player_id: self.session.player_id,
                 character_level: request.matching_parameters.character_level as u32,
                 weapon_level: request.matching_parameters.max_reinforce as u32,
                 puddle: PuddleArea {

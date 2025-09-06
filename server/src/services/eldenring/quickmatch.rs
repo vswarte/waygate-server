@@ -1,6 +1,4 @@
-use std::
-    sync::{mpsc::Sender, LazyLock}
-;
+use std::sync::{mpsc::Sender, LazyLock};
 
 use dashmap::DashMap;
 
@@ -15,11 +13,7 @@ pub struct QuickMatchPool {
 }
 
 impl QuickMatchPool {
-    pub fn insert(
-        &self,
-        player_id: i32,
-        entry: QuickMatchPoolEntry,
-    ) -> QuickMatchPoolToken {
+    pub fn insert(&self, player_id: i32, entry: QuickMatchPoolEntry) -> QuickMatchPoolToken {
         let key = QuickMatchPoolKey(player_id);
         self.entries.insert(key.clone(), entry);
         QuickMatchPoolToken(self, key)
@@ -45,7 +39,11 @@ impl QuickMatchPool {
         Ok(())
     }
 
-    pub fn merge(&self, key: &QuickMatchPoolKey, merger: impl Fn(&mut QuickMatchPoolEntry)) -> Result<(), PoolError> {
+    pub fn merge(
+        &self,
+        key: &QuickMatchPoolKey,
+        merger: impl Fn(&mut QuickMatchPoolEntry),
+    ) -> Result<(), PoolError> {
         match self.entries.get_mut(key) {
             Some(mut e) => merger(e.value_mut()),
             None => return Err(PoolError::NotFound),
@@ -80,6 +78,7 @@ pub struct QuickMatchPoolEntry {
 
 #[derive(Debug)]
 pub struct QuickMatchPoolQuery {
+    pub player_id: i32,
     pub arena_id: i32,
     pub character_level: u32,
     pub weapon_level: u32,
@@ -89,8 +88,12 @@ pub struct QuickMatchPoolQuery {
 
 impl QuickMatchPoolQuery {
     fn matches(&self, entry: &QuickMatchPoolEntry) -> bool {
+        if entry.host_player_id == self.player_id {
+            return false;
+        }
         // TODO: password team matching
-        if self.arena_id != entry.arena_id || self.quickmatch_settings != entry.quickmatch_settings {
+        if self.arena_id != entry.arena_id || self.quickmatch_settings != entry.quickmatch_settings
+        {
             return false;
         }
 
@@ -180,6 +183,7 @@ mod test {
         };
 
         let joiner = QuickMatchPoolQuery {
+            player_id: 2,
             character_level: 1,
             weapon_level: 1,
             password: String::default(),
@@ -205,6 +209,7 @@ mod test {
         };
 
         let joiner = QuickMatchPoolQuery {
+            player_id: 2,
             character_level: 100,
             weapon_level: 1,
             password: String::default(),
@@ -230,6 +235,7 @@ mod test {
         };
 
         let joiner = QuickMatchPoolQuery {
+            player_id: 2,
             character_level: 713,
             weapon_level: 1,
             password: String::from("test"),
@@ -255,6 +261,7 @@ mod test {
         };
 
         let joiner = QuickMatchPoolQuery {
+            player_id: 2,
             character_level: 1,
             weapon_level: 1,
             password: String::from("456"),
@@ -280,6 +287,7 @@ mod test {
         };
 
         let joiner = QuickMatchPoolQuery {
+            player_id: 2,
             character_level: 1,
             weapon_level: 1,
             password: String::from("456"),
@@ -305,6 +313,7 @@ mod test {
         };
 
         let joiner = QuickMatchPoolQuery {
+            player_id: 2,
             character_level: 1,
             weapon_level: 1,
             password: String::default(),
@@ -330,6 +339,7 @@ mod test {
         };
 
         let joiner = QuickMatchPoolQuery {
+            player_id: 2,
             character_level: 1,
             weapon_level: 1,
             password: String::default(),
@@ -355,6 +365,7 @@ mod test {
         };
 
         let joiner = QuickMatchPoolQuery {
+            player_id: 2,
             character_level: 137,
             weapon_level: 25,
             password: String::default(),
@@ -363,5 +374,31 @@ mod test {
         };
 
         assert!(joiner.matches(&host));
+    }
+
+    #[test]
+    fn test_self_match_fails() {
+        let (host_tx, _) = channel();
+        let host = QuickMatchPoolEntry {
+            host_player_id: 1,
+            host_external_id: String::new(),
+            character_level: 1,
+            weapon_level: 1,
+            password: String::default(),
+            arena_id: 0x0,
+            quickmatch_settings: 0x0,
+            host_tx,
+        };
+
+        let joiner = QuickMatchPoolQuery {
+            player_id: 1,
+            character_level: 1,
+            weapon_level: 1,
+            password: String::default(),
+            arenas: vec![0x0],
+            quickmatch_settings: 0x0,
+        };
+
+        assert!(!joiner.matches(&host));
     }
 }

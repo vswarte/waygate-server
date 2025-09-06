@@ -38,6 +38,7 @@ impl HandleRequest<Box<RequestGetVisitorListParams>, ResponseGetVisitorListParam
         request: &Box<RequestGetVisitorListParams>,
     ) -> Result<ResponseGetVisitorListParams, Box<dyn std::error::Error>> {
         let pool_matches = self.services.pool_visitor.matches(&VisitorPoolQuery {
+            player_id: self.session.player_id,
             play_region: 0,
             character_level: request.matching_parameters.character_level as u32,
             weapon_level: request.matching_parameters.max_reinforce as u32,

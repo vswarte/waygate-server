@@ -44,6 +44,7 @@ impl HandleRequest<Box<RequestSearchQuickMatchParams>, ResponseSearchQuickMatchP
         request: &Box<RequestSearchQuickMatchParams>,
     ) -> Result<ResponseSearchQuickMatchParams, Box<dyn std::error::Error>> {
         let mut pool_matches = self.services.pool_quickmatch.matches(&QuickMatchPoolQuery {
+            player_id: self.session.player_id,
             arena_id: request.arena_id,
             character_level: request.matching_parameters.character_level as u32,
             weapon_level: request.matching_parameters.max_reinforce as u32,
