@@ -25,11 +25,12 @@ version = "0.4"
 features = ["kv", "kv_serde"]
 
 [dependencies.log4rs]
-# version = "1.4.0-rc2"
-git = "https://github.com/FeeeeK/log4rs.git"
-branch = "feat/kv-serde"
-revision = "7355a368b755681bac9020c5373bb34a7eac471d"
+version = "1.4.0"
 features = ["log_kv"]
+
+[patch.crates-io]
+# https://github.com/estk/log4rs/pull/426
+log4rs = { git = "https://github.com/estk/log4rs.git", revision = "7355a368b755681bac9020c5373bb34a7eac471d"}
 
 
 [dependencies]

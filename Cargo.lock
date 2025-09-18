@@ -1390,8 +1390,9 @@ checksum = "a94d21414c1f4a51209ad204c1776a3d0765002c76c6abcb602a6f09f1e881c7"
 
 [[package]]
 name = "log4rs"
-version = "1.4.0-rc2"
-source = "git+https://github.com/FeeeeK/log4rs.git?branch=feat%2Fkv-serde#7355a368b755681bac9020c5373bb34a7eac471d"
+version = "1.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3e947bb896e702c711fccc2bf02ab2abb6072910693818d1d6b07ee2b9dfd86c"
 dependencies = [
  "anyhow",
  "arc-swap",
