@@ -2725,6 +2725,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "waygate-generate-keys"
+version = "0.1.0"
+dependencies = [
+ "base64",
+ "libsodium-sys",
+]
+
+[[package]]
 name = "whoami"
 version = "1.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"

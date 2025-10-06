@@ -3,6 +3,7 @@ members = [
     "server/",
     "wire/",
     "message/",
+    "generate-keys/",
 ]
 
 [workspace.dependencies]
