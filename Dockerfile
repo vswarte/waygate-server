@@ -6,10 +6,11 @@ COPY Cargo.toml Cargo.lock ./
 COPY message ./message
 COPY server ./server
 COPY wire ./wire
+COPY generate-keys ./generate-keys
 
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
     --mount=type=cache,target=/waygate/target \
-    cargo build --release
+    cargo build --release -p server
 
 RUN mkdir -p /waygate/artifacts
 
