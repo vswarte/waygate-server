@@ -151,6 +151,7 @@ async fn serve_api(
         HttpServer::new(move || {
             App::new()
                 .app_data(state.clone())
+                .wrap(logging::LogContextMiddleware)
                 .wrap(CheckKey::new(&config.api_key))
                 .service(healthcheck)
                 .service(get_ban)
