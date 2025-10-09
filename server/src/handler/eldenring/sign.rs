@@ -78,7 +78,7 @@ impl HandleRequest<Box<RequestCreateMatchAreaSignParams>, ResponseCreateMatchAre
             character_level: request.matching_parameters.character_level,
             weapon_level: request.matching_parameters.max_reinforce as u32,
             location: MatchingArea::Puddle(PuddleArea {
-                puddle_id: request.puddle.puddle_id,
+                match_area: request.puddle.match_area,
                 flags: request.puddle.flags,
             }),
             password: request.matching_parameters.password.clone().into(),
@@ -189,7 +189,7 @@ impl HandleRequest<Box<RequestGetMatchAreaSignListParams>, ResponseGetMatchAreaS
                     .puddles
                     .iter()
                     .map(|p| PuddleArea {
-                        puddle_id: p.puddle_id,
+                        match_area: p.puddle_id,
                         flags: p.flags_to_u64(),
                     })
                     .collect(),
@@ -223,7 +223,6 @@ impl HandleRequest<Box<RequestGetMatchAreaSignListParams>, ResponseGetMatchAreaS
                         player_id: e.1.player_id,
                         identifier: ObjectIdentifier(e.0 .0),
                         puddle: puddle.clone(),
-                        unk1: 0,
                         data: e.1.data.clone(),
                         external_id: e.1.external_id.clone(),
                         unk2: 0,

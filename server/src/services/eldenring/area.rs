@@ -10,7 +10,9 @@ impl MatchingArea {
     pub fn matches(&self, other: &Self) -> bool {
         match (self, other) {
             (MatchingArea::PlayRegion(a), MatchingArea::PlayRegion(b)) => a == b,
-            (MatchingArea::Puddle(a), MatchingArea::Puddle(b)) => a.puddle_id == b.puddle_id,
+            (MatchingArea::Puddle(a), MatchingArea::Puddle(b)) => {
+                a.match_area == b.match_area && (a.flags & b.flags) != 0
+            }
             _ => false,
         }
     }

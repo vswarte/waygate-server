@@ -90,9 +90,15 @@ pub struct PuddleAreaVecFlags {
 
 impl PuddleAreaVecFlags {
     pub fn flags_to_u64(&self) -> u64 {
-        self.flags
-            .iter()
-            .fold(0u64, |acc, &flag| acc | (flag as u64) << (flag * 8))
+        let mut result = 0u64;
+
+        for &bit_index in &self.flags {
+            if bit_index < 64 {
+                result |= 1u64 << bit_index;
+            }
+        }
+
+        result
     }
 }
 
@@ -112,7 +118,6 @@ pub struct ResponseGetMatchAreaSignListParamsEntry {
     pub player_id: i32,
     pub identifier: ObjectIdentifier,
     pub puddle: PuddleArea,
-    pub unk1: i32,
     pub data: Vec<u8>,
     pub external_id: String,
     pub unk2: u32,

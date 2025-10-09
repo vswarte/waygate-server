@@ -133,12 +133,11 @@ impl PuddleSignPoolQuery<'_> {
         if entry.player_id == self.player_id {
             return false;
         }
-        if !self.puddles.iter().any(|puddle| {
-            let MatchingArea::Puddle(ref puddle_area) = entry.location else {
-                return false;
-            };
-            puddle_area.puddle_id == puddle.puddle_id
-        }) {
+        if !self
+            .puddles
+            .iter()
+            .any(|puddle| MatchingArea::Puddle(puddle.clone()).matches(&entry.location))
+        {
             return false;
         }
 

@@ -10,7 +10,9 @@ pub struct PlayRegionArea {
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct PuddleArea {
-    pub puddle_id: u32,
+    pub match_area: u32,
+    /// Bitfield indicating which sign puddles are active in this area.
+    /// Each bit (0-63) represents a puddle, indexed by SignPuddleParam row order within the match_area.
     pub flags: u64,
 }
 
