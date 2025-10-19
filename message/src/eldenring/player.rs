@@ -40,8 +40,9 @@ pub struct MultiplayerData {
     pub reached_max_rune_memory: bool,
     /// Whether the player can be summoned by other players as a hunter
     pub can_be_hunter: bool,
-    /// Whether the player can be invaded by hunters (e.g. Blades of the Darkmoon)
-    pub can_be_invaded_by_hunters: bool,
+    /// Whether the player can be summoned by other players as a sinner hunter
+    /// (e.g. Blades of the Darkmoon)
+    pub can_be_sinner_hunter: bool,
     pub unk3: u8,
     /// Contains the team types of the players in the world (excluding the Host)
     pub chr_team_types: Vec<u32>,
@@ -299,12 +300,7 @@ mod test {
         assert_eq!(deserialized.character.multiplayer_data.platform, 0);
         assert_eq!(deserialized.character.multiplayer_data.player_count, 1);
         assert!(deserialized.character.multiplayer_data.can_be_hunter);
-        assert!(
-            !deserialized
-                .character
-                .multiplayer_data
-                .can_be_invaded_by_hunters
-        );
+        assert!(!deserialized.character.multiplayer_data.can_be_sinner_hunter);
         assert!(deserialized.character.multiplayer_data.is_invadeable);
     }
 }

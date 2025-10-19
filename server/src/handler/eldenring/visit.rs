@@ -3,9 +3,10 @@ use std::time::Duration;
 use message::{
     builder::MessageBuilder,
     eldenring::{
-        JoinParams, JoinPayload, ObjectIdentifier, PushParams, RequestGetVisitorListParams, RequestRejectVisitParams, RequestVisitParams,
-        ResponseGetVisitorListParams, ResponseGetVisitorListParamsEntry, ResponseRejectVisitParams,
-        ResponseVisitParams, VisitParams,
+        JoinParams, JoinPayload, ObjectIdentifier, PushParams, RequestGetVisitorListParams,
+        RequestRejectVisitParams, RequestVisitParams, ResponseGetVisitorListParams,
+        ResponseGetVisitorListParamsEntry, ResponseRejectVisitParams, ResponseVisitParams,
+        VisitParams,
     },
 };
 use rand::Rng;
@@ -42,6 +43,7 @@ impl HandleRequest<Box<RequestGetVisitorListParams>, ResponseGetVisitorListParam
             play_region: 0,
             character_level: request.matching_parameters.character_level,
             weapon_level: request.matching_parameters.max_reinforce as u32,
+            visit_type: request.visit_type,
         });
 
         Ok(ResponseGetVisitorListParams {
@@ -97,8 +99,9 @@ impl HandleRequest<Box<RequestVisitParams>, ResponseVisitParams> for DefaultClie
                         host_player_id: summoner_id,
                         host_player_external_id: self.session.external_id.clone(),
                         join_data: request.join_data.clone(),
-                        unk1: 0,
-                        unk2: 0,
+                        // TODO: figure out how the game processes these fields
+                        unk1: request.visit_type as u32,
+                        unk2: request.visit_type as u32,
                         play_region: 0,
                     }),
                 }))

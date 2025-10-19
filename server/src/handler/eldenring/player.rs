@@ -1,6 +1,6 @@
 use message::eldenring::{
     RequestUpdateLoginPlayerCharacterParams, RequestUpdatePlayerStatusParams,
-    ResponseUpdateLoginPlayerCharacterParams, ResponseUpdatePlayerStatusParams,
+    ResponseUpdateLoginPlayerCharacterParams, ResponseUpdatePlayerStatusParams, VisitType,
 };
 
 use crate::{
@@ -47,6 +47,7 @@ impl HandleRequest<Box<RequestUpdatePlayerStatusParams>, ResponseUpdatePlayerSta
                     character_level: request.character.level,
                     weapon_level: request.character.max_reinforce_level,
                     play_region: 0,
+                    visit_type: VisitType::Hunter,
                     external_id: self.session.external_id.clone(),
                     visitor_tx: self.push_tx.clone(),
                 },
@@ -58,8 +59,7 @@ impl HandleRequest<Box<RequestUpdatePlayerStatusParams>, ResponseUpdatePlayerSta
             let _ = self.visitor_token.take();
         }
 
-        let is_invadeable = request.character.multiplayer_data.is_invadeable
-            || request.character.multiplayer_data.can_be_invaded_by_hunters;
+        let is_invadeable = request.character.multiplayer_data.is_invadeable;
 
         match self.breakin_token.as_ref() {
             Some(token) if is_invadeable => {

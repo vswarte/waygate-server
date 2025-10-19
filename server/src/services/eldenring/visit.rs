@@ -1,6 +1,7 @@
 use std::{collections::HashMap, sync::{mpsc::Sender, LazyLock, Mutex, MutexGuard}};
 
 use dashmap::DashMap;
+use message::eldenring::VisitType;
 
 use crate::services::eldenring::PoolError;
 
@@ -42,6 +43,7 @@ pub struct VisitorPoolEntry {
     pub character_level: u32,
     pub weapon_level: u32,
     pub play_region: u32,
+    pub visit_type: VisitType,
     pub external_id: String,
     pub visitor_tx: Sender<Vec<u8>>,
 }
@@ -52,6 +54,7 @@ pub struct VisitorPoolQuery {
     pub character_level: u32,
     pub weapon_level: u32,
     pub play_region: u32,
+    pub visit_type: VisitType,
 }
 
 impl VisitorPoolQuery {
@@ -60,6 +63,7 @@ impl VisitorPoolQuery {
             return false;
         }
         entry.play_region == self.play_region
+            && entry.visit_type == self.visit_type
             && Self::check_character_level(entry.character_level, self.character_level)
             && Self::check_weapon_level(entry.weapon_level, self.weapon_level)
     }
@@ -131,6 +135,8 @@ impl VisitorAttemptTracker {
 mod test {
     use std::sync::mpsc::channel;
 
+    use message::eldenring::VisitType;
+
     use super::{VisitorPoolEntry, VisitorPoolQuery};
 
     #[test]
@@ -159,6 +165,7 @@ mod test {
             character_level: 1,
             weapon_level: 1,
             play_region: 0,
+            visit_type: VisitType::Hunter,
             external_id: String::default(),
             visitor_tx,
         };
@@ -168,6 +175,7 @@ mod test {
             character_level: 1,
             weapon_level: 1,
             play_region: 0,
+            visit_type: VisitType::Hunter,
         };
 
         assert!(host.matches(&visitor));
@@ -181,6 +189,7 @@ mod test {
             character_level: 700,
             weapon_level: 1,
             play_region: 0,
+            visit_type: VisitType::Hunter,
             external_id: String::default(),
             visitor_tx,
         };
@@ -190,6 +199,7 @@ mod test {
             character_level: 400,
             weapon_level: 1,
             play_region: 0,
+            visit_type: VisitType::Hunter,
         };
 
         assert!(host.matches(&visitor));
@@ -203,6 +213,7 @@ mod test {
             character_level: 1,
             weapon_level: 1,
             play_region: 1,
+            visit_type: VisitType::Hunter,
             external_id: String::default(),
             visitor_tx,
         };
@@ -236,6 +247,7 @@ mod test {
             character_level: 1,
             weapon_level: 1,
             play_region: 0,
+            visit_type: VisitType::Hunter,
         };
 
         assert!(!host.matches(&visitor));
