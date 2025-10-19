@@ -50,10 +50,16 @@ impl SteamServer {
         ticket: &[u8],
     ) -> Result<SteamSession, steamworks::AuthSessionError> {
         let steam_id = SteamId::from_raw(steam_id);
-        self.server.begin_authentication_session(steam_id, ticket)?;
+        match self.server.begin_authentication_session(steam_id, ticket) {
+            Err(steamworks::AuthSessionError::DuplicateRequest) => {
+                self.server.end_authentication_session(steam_id);
+                self.server.begin_authentication_session(steam_id, ticket)?;
+            }
+            Err(e) => return Err(e),
+            _ => {}
+        }
 
         // TODO: listen for ValidateAuthTicket callbacks
-
         Ok(SteamSession {
             steam_id,
             session_end_tx: self.session_end_tx.clone(),
