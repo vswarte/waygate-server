@@ -12,7 +12,7 @@ pub struct RequestUseItemLogParams {
 pub struct RequestUseItemLogParamsEntry {
     pub item_id: u32,
     pub times_used: u32,
-    pub unk3: u32,
+    pub new_count: u32,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -56,7 +56,7 @@ mod test {
         assert_eq!(deserialized.used_items.len(), 1);
         assert_eq!(deserialized.used_items[0].item_id, 101);
         assert_eq!(deserialized.used_items[0].times_used, 1);
-        assert_eq!(deserialized.used_items[0].unk3, 1);
+        assert_eq!(deserialized.used_items[0].new_count, 1);
         assert_eq!(deserialized.location.map, 60423600);
         assert_eq!(deserialized.location.x, -45.939575);
         assert_eq!(deserialized.location.y, 92.36392);
