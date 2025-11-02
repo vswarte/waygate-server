@@ -56,6 +56,7 @@ const SELECT_BY_ID_QUERY: &str = "
     SELECT *
     FROM bloodstains
     WHERE bloodstain_id = $1";
+const ROUNDTABLE_PLAY_REGION_ID: i32 = 1110000;
 
 impl HandleRequest<Box<RequestCreateBloodstainParams>, ResponseCreateBloodstainParams>
     for DefaultClientHandler<'_>
@@ -64,6 +65,12 @@ impl HandleRequest<Box<RequestCreateBloodstainParams>, ResponseCreateBloodstainP
         &mut self,
         request: &Box<RequestCreateBloodstainParams>,
     ) -> Result<ResponseCreateBloodstainParams, Box<dyn std::error::Error>> {
+        if request.area.play_region == ROUNDTABLE_PLAY_REGION_ID {
+            // Don't store bloodstains in the Roundtable Hold area.
+            return Ok(ResponseCreateBloodstainParams {
+                identifier: ObjectIdentifier(0),
+            });
+        }
         let bloodstain_id = sqlx::query(INSERT_QUERY)
             .bind(self.session.player_id)
             .bind(self.session.session_id)
@@ -93,7 +100,12 @@ impl HandleRequest<Box<RequestGetBloodstainListParams>, ResponseGetBloodstainLis
             .search_areas
             .iter()
             .map(|a| a.play_region as i32)
+            .filter(|&pr| pr != ROUNDTABLE_PLAY_REGION_ID)
             .collect::<Vec<i32>>();
+
+        if play_regions.is_empty() {
+            return Ok(ResponseGetBloodstainListParams { entries: vec![] });
+        }
 
         let entries: Vec<ResponseGetBloodstainListParamsEntry> =
             sqlx::query_as::<_, BloodstainRecord>(SELECT_QUERY)
