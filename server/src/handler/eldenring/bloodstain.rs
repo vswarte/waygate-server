@@ -1,10 +1,11 @@
 use message::eldenring::{
-    ObjectIdentifier, PlayRegionArea, RequestCreateBloodstainParams,
-    RequestGetBloodstainListParams, RequestGetDeadingGhostParams, ResponseCreateBloodstainParams,
-    ResponseGetBloodstainListParams, ResponseGetBloodstainListParamsEntry,
-    ResponseGetDeadingGhostParams,
+    BloodstainAdvertisementData, ObjectIdentifier, PlayRegionArea, Position,
+    RequestCreateBloodstainParams, RequestGetBloodstainListParams, RequestGetDeadingGhostParams,
+    ResponseCreateBloodstainParams, ResponseGetBloodstainListParams,
+    ResponseGetBloodstainListParamsEntry, ResponseGetDeadingGhostParams,
 };
 use sqlx::Row;
+use wire::deserialize;
 
 use crate::handler::HandleRequest;
 
@@ -56,7 +57,23 @@ const SELECT_BY_ID_QUERY: &str = "
     SELECT *
     FROM bloodstains
     WHERE bloodstain_id = $1";
+
 const ROUNDTABLE_PLAY_REGION_ID: i32 = 1110000;
+/// BBOX defining the PVP-enabled area within the Roundtable Hold
+/// (lower part where player can be invaded by npc invader)
+const ROUNDTABLE_PVP_ENABLED_AREA_BBOX: [(f32, f32, f32); 2] =
+    [(-325.0, -35.0, -325.0), (-245.0, -25.0, -245.0)];
+
+fn is_in_bbox(pos: Position, bbox: [(f32, f32, f32); 2]) -> bool {
+    let min = bbox[0];
+    let max = bbox[1];
+    pos.x >= min.0
+        && pos.x <= max.0
+        && pos.y >= min.1
+        && pos.y <= max.1
+        && pos.z >= min.2
+        && pos.z <= max.2
+}
 
 impl HandleRequest<Box<RequestCreateBloodstainParams>, ResponseCreateBloodstainParams>
     for DefaultClientHandler<'_>
@@ -65,11 +82,15 @@ impl HandleRequest<Box<RequestCreateBloodstainParams>, ResponseCreateBloodstainP
         &mut self,
         request: &Box<RequestCreateBloodstainParams>,
     ) -> Result<ResponseCreateBloodstainParams, Box<dyn std::error::Error>> {
-        if request.area.play_region == ROUNDTABLE_PLAY_REGION_ID {
-            // Don't store bloodstains in the Roundtable Hold area.
-            return Ok(ResponseCreateBloodstainParams {
-                identifier: ObjectIdentifier(0),
-            });
+        if request.area.play_region as i32 == ROUNDTABLE_PLAY_REGION_ID {
+            // check that location is in the pvp-enabled area of the roundtable
+            let adv_data: BloodstainAdvertisementData = deserialize(&request.advertisement_data)?;
+            let pos = adv_data.location.position;
+            if !is_in_bbox(pos, ROUNDTABLE_PVP_ENABLED_AREA_BBOX) {
+                return Ok(ResponseCreateBloodstainParams {
+                    identifier: ObjectIdentifier(0),
+                });
+            }
         }
         let bloodstain_id = sqlx::query(INSERT_QUERY)
             .bind(self.session.player_id)
@@ -100,7 +121,6 @@ impl HandleRequest<Box<RequestGetBloodstainListParams>, ResponseGetBloodstainLis
             .search_areas
             .iter()
             .map(|a| a.play_region as i32)
-            .filter(|&pr| pr != ROUNDTABLE_PLAY_REGION_ID)
             .collect::<Vec<i32>>();
 
         if play_regions.is_empty() {

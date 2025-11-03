@@ -57,8 +57,8 @@ mod test {
         assert_eq!(deserialized.used_items[0].times_used, 1);
         assert_eq!(deserialized.used_items[0].new_count, 1);
         assert_eq!(deserialized.location.map, 60423600);
-        assert_eq!(deserialized.location.x, -45.939575);
-        assert_eq!(deserialized.location.y, 92.36392);
-        assert_eq!(deserialized.location.z, 79.65545);
+        assert_eq!(deserialized.location.position.x, -45.939575);
+        assert_eq!(deserialized.location.position.y, 92.36392);
+        assert_eq!(deserialized.location.position.z, 79.65545);
     }
 }
