@@ -126,7 +126,8 @@ impl<W: Write> ser::Serializer for &mut Serializer<W> {
         value: &T,
     ) -> Result<Self::Ok, Self::Error>
     where
-        T: Serialize, T: ?Sized
+        T: Serialize,
+        T: ?Sized,
     {
         value.serialize(self)
     }
@@ -159,7 +160,8 @@ impl<W: Write> ser::Serializer for &mut Serializer<W> {
         value: &T,
     ) -> Result<Self::Ok, Self::Error>
     where
-        T: Serialize, T: ?Sized
+        T: Serialize,
+        T: ?Sized,
     {
         self.serialize_u32(variant_index)?;
         self.serialize_newtype_struct(variant, value)?;
@@ -210,7 +212,8 @@ impl<W: Write> ser::Serializer for &mut Serializer<W> {
 
     fn serialize_some<T>(self, value: &T) -> Result<Self::Ok, Self::Error>
     where
-        T: Serialize, T: ?Sized
+        T: Serialize,
+        T: ?Sized,
     {
         self.out.write_u8(1)?;
         value.serialize(self)
@@ -223,7 +226,8 @@ impl<W: Write> ser::SerializeSeq for &mut Serializer<W> {
 
     fn serialize_element<T>(&mut self, value: &T) -> Result<(), Self::Error>
     where
-        T: Serialize, T: ?Sized
+        T: Serialize,
+        T: ?Sized,
     {
         value.serialize(&mut **self)
     }
@@ -239,7 +243,8 @@ impl<W: Write> ser::SerializeTuple for &mut Serializer<W> {
 
     fn serialize_element<T>(&mut self, value: &T) -> Result<(), Self::Error>
     where
-        T: Serialize, T: ?Sized
+        T: Serialize,
+        T: ?Sized,
     {
         value.serialize(&mut **self)
     }
@@ -255,7 +260,8 @@ impl<W: Write> ser::SerializeTupleStruct for &mut Serializer<W> {
 
     fn serialize_field<T>(&mut self, value: &T) -> Result<(), Self::Error>
     where
-        T: Serialize, T: ?Sized
+        T: Serialize,
+        T: ?Sized,
     {
         value.serialize(&mut **self)
     }
@@ -271,7 +277,8 @@ impl<W: Write> ser::SerializeTupleVariant for &mut Serializer<W> {
 
     fn serialize_field<T>(&mut self, value: &T) -> Result<(), Self::Error>
     where
-        T: Serialize, T: ?Sized
+        T: Serialize,
+        T: ?Sized,
     {
         value.serialize(&mut **self)
     }
@@ -285,13 +292,10 @@ impl<W: Write> ser::SerializeStruct for &mut Serializer<W> {
     type Ok = ();
     type Error = FNWireError;
 
-    fn serialize_field<T>(
-        &mut self,
-        key: &'static str,
-        value: &T,
-    ) -> Result<(), Self::Error>
+    fn serialize_field<T>(&mut self, key: &'static str, value: &T) -> Result<(), Self::Error>
     where
-        T: Serialize, T: ?Sized
+        T: Serialize,
+        T: ?Sized,
     {
         value.serialize(&mut **self)
     }
@@ -305,13 +309,10 @@ impl<W: Write> ser::SerializeStructVariant for &mut Serializer<W> {
     type Ok = ();
     type Error = FNWireError;
 
-    fn serialize_field<T>(
-        &mut self,
-        key: &'static str,
-        value: &T,
-    ) -> Result<(), Self::Error>
+    fn serialize_field<T>(&mut self, key: &'static str, value: &T) -> Result<(), Self::Error>
     where
-        T: Serialize, T: ?Sized
+        T: Serialize,
+        T: ?Sized,
     {
         value.serialize(&mut **self)
     }
@@ -327,14 +328,16 @@ impl<W: Write> ser::SerializeMap for &mut Serializer<W> {
 
     fn serialize_key<T>(&mut self, key: &T) -> Result<(), Self::Error>
     where
-        T: Serialize, T: ?Sized
+        T: Serialize,
+        T: ?Sized,
     {
         Err(FNWireError::UnsupportedType("map"))
     }
 
     fn serialize_value<T>(&mut self, value: &T) -> Result<(), Self::Error>
     where
-        T: Serialize, T: ?Sized
+        T: Serialize,
+        T: ?Sized,
     {
         Err(FNWireError::UnsupportedType("map"))
     }
@@ -343,5 +346,3 @@ impl<W: Write> ser::SerializeMap for &mut Serializer<W> {
         Err(FNWireError::UnsupportedType("map"))
     }
 }
-
-

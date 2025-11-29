@@ -1,4 +1,4 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 pub const POOL_TYPE_FIA: u32 = 0x0;
 pub const POOL_TYPE_JAR: u32 = 0x1;
@@ -12,8 +12,7 @@ pub struct RequestGrUploadPlayerEquipmentsParams {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct ResponseGrUploadPlayerEquipmentsParams {
-}
+pub struct ResponseGrUploadPlayerEquipmentsParams {}
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct RequestGrGetPlayerEquipmentsParams {

@@ -50,14 +50,15 @@ pub struct ResponseGetDeadingGhostParams {
 
 #[cfg(test)]
 mod test {
-    use wire::deserialize;
     use super::{RequestCreateBloodstainParams, RequestGetBloodstainListParams};
+    use wire::deserialize;
 
     #[test]
     fn deserialize_create_bloodstain() {
-        let deserialized: RequestCreateBloodstainParams = deserialize(
-            include_bytes!("../../test/data/RequestCreateBloodstain.bin"),
-        ).unwrap();
+        let deserialized: RequestCreateBloodstainParams = deserialize(include_bytes!(
+            "../../test/data/RequestCreateBloodstain.bin"
+        ))
+        .unwrap();
 
         assert_eq!(deserialized.area.play_region, 1400001);
         assert_eq!(deserialized.area.area, 1400001);
@@ -69,9 +70,10 @@ mod test {
 
     #[test]
     fn deserialize_get_bloodstain_list() {
-        let deserialized: RequestGetBloodstainListParams = deserialize(
-            include_bytes!("../../test/data/RequestGetBloodstainList.bin"),
-        ).unwrap();
+        let deserialized: RequestGetBloodstainListParams = deserialize(include_bytes!(
+            "../../test/data/RequestGetBloodstainList.bin"
+        ))
+        .unwrap();
 
         assert_eq!(deserialized.search_areas.len(), 10);
         assert_eq!(deserialized.search_areas[0].play_region, 3000001);

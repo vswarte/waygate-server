@@ -6,7 +6,11 @@ use base64::{prelude::BASE64_STANDARD, Engine};
 use crypto::ClientProtocolCrypto;
 
 use message::{
-    builder::MessageBuilder, eldenring::{RequestParams, ResponseParams}, reader::MessageReader, session::{ResponseCreateSessionParams, ResponseRestoreSessionParams, SessionData}, MessageType
+    builder::MessageBuilder,
+    eldenring::{RequestParams, ResponseParams},
+    reader::MessageReader,
+    session::{ResponseCreateSessionParams, ResponseRestoreSessionParams, SessionData},
+    MessageType,
 };
 use rand::prelude::*;
 use sqlx::{Pool, Postgres, Row};

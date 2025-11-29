@@ -1,10 +1,10 @@
 #![allow(unused, dead_code)]
 
-pub mod reader;
 pub mod builder;
+pub mod reader;
 
-pub mod session;
 pub mod eldenring;
+pub mod session;
 
 #[repr(u8)]
 #[derive(Debug)]

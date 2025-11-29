@@ -1,4 +1,4 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 use crate::session::{RequestCreateSessionParams, RequestRestoreSessionParams};
 
@@ -173,10 +173,10 @@ impl RequestParams {
             Self::SearchQuickMatch(_) => "SearchQuickMatch",
             Self::RegisterQuickMatch(_) => "RegisterQuickMatch",
             Self::UnregisterQuickMatch(_) => "UnregisterQuickMatch",
-            Self::UpdateQuickMatch(_)  => "UpdateQuickMatch",
+            Self::UpdateQuickMatch(_) => "UpdateQuickMatch",
             Self::JoinQuickMatch(_) => "JoinQuickMatch",
             Self::AcceptQuickMatch(_) => "AcceptQuickMatch",
-            Self::RejectQuickMatch(_)  => "RejectQuickMatch",
+            Self::RejectQuickMatch(_) => "RejectQuickMatch",
             Self::GrUploadPlayerEquipments(_) => "GrUploadPlayerEquipments",
             Self::GrGetPlayerEquipments(_) => "GrGetPlayerEquipments",
             Self::CreateMatchingTicket(_) => "CreateMatchingTicket",

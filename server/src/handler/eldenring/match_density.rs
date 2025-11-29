@@ -23,10 +23,7 @@ impl HandleRequest<Box<RequestGetMatchDensityParams>, ResponseGetMatchDensityPar
             .map(|(i, _)| (i % 9) as u8)
             .collect();
 
-        let red_activity = areas
-            .iter()
-            .map(|_| 3)
-            .collect();
+        let red_activity = areas.iter().map(|_| 3).collect();
 
         Ok(ResponseGetMatchDensityParams {
             areas,

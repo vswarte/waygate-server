@@ -1,4 +1,4 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 use super::*;
 
@@ -46,8 +46,7 @@ pub struct RequestEvaluateBloodMessageParams {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct ResponseEvaluateBloodMessageParams {
-}
+pub struct ResponseEvaluateBloodMessageParams {}
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct RequestReentryBloodMessageParams {
@@ -66,20 +65,20 @@ pub struct RequestRemoveBloodMessageParams {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct ResponseRemoveBloodMessageParams {
-}
+pub struct ResponseRemoveBloodMessageParams {}
 
 #[cfg(test)]
 mod test {
-    use wire::deserialize;
-    use super::RequestGetBloodMessageListParams;
     use super::RequestCreateBloodMessageParams;
+    use super::RequestGetBloodMessageListParams;
+    use wire::deserialize;
 
     #[test]
     fn deserialize_create_bloodmessage() {
-        let deserialized: RequestCreateBloodMessageParams = deserialize(
-            include_bytes!("../../test/data/RequestCreateBloodMessage.bin"),
-        ).unwrap();
+        let deserialized: RequestCreateBloodMessageParams = deserialize(include_bytes!(
+            "../../test/data/RequestCreateBloodMessage.bin"
+        ))
+        .unwrap();
 
         assert_eq!(deserialized.area.play_region, 1400001);
         assert_eq!(deserialized.area.area, 1400001);
@@ -92,9 +91,10 @@ mod test {
 
     #[test]
     fn deserialize_get_bloodmessage_list() {
-        let deserialized: RequestGetBloodMessageListParams = deserialize(
-            include_bytes!("../../test/data/RequestGetBloodMessageList.bin"),
-        ).unwrap();
+        let deserialized: RequestGetBloodMessageListParams = deserialize(include_bytes!(
+            "../../test/data/RequestGetBloodMessageList.bin"
+        ))
+        .unwrap();
 
         assert_eq!(deserialized.search_areas.len(), 8);
         assert_eq!(deserialized.search_areas[0].play_region, 6043340);

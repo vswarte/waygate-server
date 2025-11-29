@@ -1,6 +1,14 @@
-use std::{future::{ready, Ready}, pin::Pin, task::{Context, Poll}};
+use std::{
+    future::{ready, Ready},
+    pin::Pin,
+    task::{Context, Poll},
+};
 
-use actix_web::{dev::{Service, ServiceRequest, ServiceResponse, Transform}, error::ErrorUnauthorized, http::header::HeaderValue};
+use actix_web::{
+    dev::{Service, ServiceRequest, ServiceResponse, Transform},
+    error::ErrorUnauthorized,
+    http::header::HeaderValue,
+};
 
 pub struct CheckKey(String);
 
@@ -47,7 +55,8 @@ where
 
     fn call(&self, req: ServiceRequest) -> Self::Future {
         let expected = HeaderValue::from_str(&self.api_key).unwrap();
-        let authorized = req.headers()
+        let authorized = req
+            .headers()
             .get("X-Auth-Token")
             .map(|v| v == expected)
             .unwrap_or_default();

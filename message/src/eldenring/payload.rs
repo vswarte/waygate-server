@@ -4,7 +4,7 @@ pub enum PayloadType {
     Response,
     Push,
     Heartbeat,
-    Unknown(u8)
+    Unknown(u8),
 }
 
 impl From<u8> for PayloadType {
@@ -14,7 +14,7 @@ impl From<u8> for PayloadType {
             0x5 => Self::Response,
             0x6 => Self::Push,
             0x7 => Self::Heartbeat,
-            _   => Self::Unknown(value),
+            _ => Self::Unknown(value),
         }
     }
 }

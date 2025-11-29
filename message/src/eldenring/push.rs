@@ -127,22 +127,22 @@ pub struct UnkFParams {
 #[derive(Serialize, Debug)]
 #[repr(u32)]
 pub enum JoinPayload {
-    Unk0(Unk0Params), // 0x0
+    Unk0(Unk0Params),                                 // 0x0
     EvaluateBloodMessage(EvaluateBloodMessageParams), // 0x1
-    BreakInTarget(BreakInTargetParams), // 0x2
-    AllowBreakInTarget(AllowBreakInTargetParams), // 0x3
-    RejectBreakInTarget(RejectBreakInTargetParams), // 0x4
-    Unk5(Unk5Params), // 0x5
-    SummonSign(SummonSignParams), //0x6
-    RejectSign(RejectSignParams), // 0x7
-    Unk8(Unk8Params), // 0x8
-    Visit(VisitParams), // 0x9
-    RejectVisit(RejectVisitParams), // 0xA
-    JoinQuickMatch(JoinQuickMatchParams), // 0xB
-    AcceptQuickMatch(AcceptQuickMatchParams), // 0xC
-    UnkD(UnkDParams), // 0xD
-    UnkE(UnkEParams), // 0xE
-    UnkF(UnkFParams), // 0xF
+    BreakInTarget(BreakInTargetParams),               // 0x2
+    AllowBreakInTarget(AllowBreakInTargetParams),     // 0x3
+    RejectBreakInTarget(RejectBreakInTargetParams),   // 0x4
+    Unk5(Unk5Params),                                 // 0x5
+    SummonSign(SummonSignParams),                     //0x6
+    RejectSign(RejectSignParams),                     // 0x7
+    Unk8(Unk8Params),                                 // 0x8
+    Visit(VisitParams),                               // 0x9
+    RejectVisit(RejectVisitParams),                   // 0xA
+    JoinQuickMatch(JoinQuickMatchParams),             // 0xB
+    AcceptQuickMatch(AcceptQuickMatchParams),         // 0xC
+    UnkD(UnkDParams),                                 // 0xD
+    UnkE(UnkEParams),                                 // 0xE
+    UnkF(UnkFParams),                                 // 0xF
 }
 
 #[derive(Serialize, Debug)]
@@ -154,14 +154,8 @@ pub struct JoinParams {
 #[derive(Serialize, Debug)]
 #[repr(u32)]
 pub enum NotifyParamsSection1 {
-    Variant1 {
-        unk1: u32,
-        unk2: u32,
-    },
-    Variant2 {
-        unk1: u8,
-        password: String,
-    },
+    Variant1 { unk1: u32, unk2: u32 },
+    Variant2 { unk1: u8, password: String },
 }
 
 #[derive(Serialize, Debug)]

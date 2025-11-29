@@ -4,8 +4,8 @@ use sqlx::{Pool, Postgres};
 
 use crate::services::eldenring::GameServices;
 
-pub mod ban;
 pub mod auth;
+pub mod ban;
 pub mod health;
 pub mod notification;
 

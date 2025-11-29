@@ -44,14 +44,13 @@ pub struct RequestKillEnemyLogParamsEntry {
 }
 #[cfg(test)]
 mod test {
-    use wire::deserialize;
     use super::RequestUseItemLogParams;
+    use wire::deserialize;
 
     #[test]
     fn deserialize_use_item_log() {
-        let deserialized: RequestUseItemLogParams = deserialize(
-            include_bytes!("../../test/data/RequestUseItemLog.bin"),
-        ).unwrap();
+        let deserialized: RequestUseItemLogParams =
+            deserialize(include_bytes!("../../test/data/RequestUseItemLog.bin")).unwrap();
 
         assert_eq!(deserialized.used_items.len(), 1);
         assert_eq!(deserialized.used_items[0].item_id, 101);

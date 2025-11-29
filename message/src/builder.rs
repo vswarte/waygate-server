@@ -17,12 +17,22 @@ pub struct MessageBuilder {}
 
 impl MessageBuilder {
     /// Build a new response message.
-    pub fn response<R>() -> ResponseMessageBuilder<R> where R: serde::Serialize {
-        ResponseMessageBuilder { sequence: None, error: None, body: None }
+    pub fn response<R>() -> ResponseMessageBuilder<R>
+    where
+        R: serde::Serialize,
+    {
+        ResponseMessageBuilder {
+            sequence: None,
+            error: None,
+            body: None,
+        }
     }
 
     /// Build a new push message.
-    pub fn push<R>() -> PushMessageBuilder<R> where R: serde::Serialize {
+    pub fn push<R>() -> PushMessageBuilder<R>
+    where
+        R: serde::Serialize,
+    {
         PushMessageBuilder { body: None }
     }
 

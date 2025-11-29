@@ -36,7 +36,8 @@ pub async fn announcement(
             }))
             .build()
             .expect("Could not build push message"),
-    ).expect("Could not serialize push message");
+    )
+    .expect("Could not serialize push message");
 
     state
         .services
