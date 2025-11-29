@@ -28,11 +28,6 @@ features = ["kv", "kv_serde"]
 version = "1.4.0"
 features = ["log_kv"]
 
-[patch.crates-io]
-# https://github.com/estk/log4rs/pull/426
-log4rs = { git = "https://github.com/estk/log4rs.git", revision = "7355a368b755681bac9020c5373bb34a7eac471d"}
-
-
 [dependencies]
 tokio-tungstenite = "*"
 futures-util = "0.3"

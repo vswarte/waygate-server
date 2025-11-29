@@ -15,6 +15,11 @@ wire = { path = "wire/" }
 version = "1.0"
 features = ["derive"]
 
+[patch.crates-io]
+# https://github.com/estk/log4rs/pull/426
+log4rs = { git = "https://github.com/estk/log4rs.git", rev = "2e6dee8b10b54d9ddfef50aeed1bee5a1fd47e93"}
+
+
 [profile.release]
 strip = true
 lto = true
