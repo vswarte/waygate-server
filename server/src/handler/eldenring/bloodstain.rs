@@ -10,6 +10,53 @@ use crate::handler::HandleRequest;
 
 use super::DefaultClientHandler;
 
+const INSERT_QUERY: &str = "
+    INSERT INTO bloodstains (
+        player_id,
+        session_id,
+        advertisement_data,
+        replay_data,
+        area,
+        play_region,
+        group_passwords
+    ) VALUES (
+        $1,
+        $2,
+        $3,
+        $4,
+        $5,
+        $6,
+        $7
+    ) RETURNING bloodstain_id";
+
+const SELECT_QUERY: &str = "
+    WITH pivot AS (SELECT random() AS r)
+    SELECT b.*
+    FROM bloodstains b
+    JOIN (
+        SELECT bloodstain_id FROM (
+            SELECT bloodstain_id
+            FROM bloodstains, pivot
+            WHERE play_region = ANY($1) AND rnd >= pivot.r
+            ORDER BY rnd
+            LIMIT 64
+        ) above
+        UNION ALL
+        SELECT bloodstain_id FROM (
+            SELECT bloodstain_id
+            FROM bloodstains, pivot
+            WHERE play_region = ANY($1) AND rnd < pivot.r
+            ORDER BY rnd
+            LIMIT 64
+        ) below
+        LIMIT 64
+    ) s USING (bloodstain_id)";
+
+const SELECT_BY_ID_QUERY: &str = "
+    SELECT *
+    FROM bloodstains
+    WHERE bloodstain_id = $1";
+
 impl HandleRequest<Box<RequestCreateBloodstainParams>, ResponseCreateBloodstainParams>
     for DefaultClientHandler<'_>
 {
@@ -17,35 +64,17 @@ impl HandleRequest<Box<RequestCreateBloodstainParams>, ResponseCreateBloodstainP
         &mut self,
         request: &Box<RequestCreateBloodstainParams>,
     ) -> Result<ResponseCreateBloodstainParams, Box<dyn std::error::Error>> {
-        let bloodstain_id = sqlx::query(
-            "INSERT INTO bloodstains (
-            player_id,
-            session_id,
-            advertisement_data,
-            replay_data,
-            area,
-            play_region,
-            group_passwords
-        ) VALUES (
-            $1,
-            $2,
-            $3,
-            $4,
-            $5,
-            $6,
-            $7
-        ) RETURNING bloodstain_id",
-        )
-        .bind(self.session.player_id)
-        .bind(self.session.session_id)
-        .bind(&request.advertisement_data)
-        .bind(&request.replay_data)
-        .bind(request.area.area as i32)
-        .bind(request.area.play_region as i32)
-        .bind(&request.group_passwords)
-        .fetch_one(&self.services.database)
-        .await?
-        .get("bloodstain_id");
+        let bloodstain_id = sqlx::query(INSERT_QUERY)
+            .bind(self.session.player_id)
+            .bind(self.session.session_id)
+            .bind(&request.advertisement_data)
+            .bind(&request.replay_data)
+            .bind(request.area.area as i32)
+            .bind(request.area.play_region as i32)
+            .bind(&request.group_passwords)
+            .fetch_one(&self.services.database)
+            .await?
+            .get("bloodstain_id");
 
         Ok(ResponseCreateBloodstainParams {
             identifier: ObjectIdentifier(bloodstain_id),
@@ -67,23 +96,21 @@ impl HandleRequest<Box<RequestGetBloodstainListParams>, ResponseGetBloodstainLis
             .collect::<Vec<i32>>();
 
         let entries: Vec<ResponseGetBloodstainListParamsEntry> =
-            sqlx::query_as::<_, BloodstainRecord>(
-                "SELECT * FROM bloodstains WHERE play_region = ANY($1) ORDER BY random() LIMIT 64",
-            )
-            .bind(play_regions)
-            .fetch_all(&self.services.database)
-            .await?
-            .into_iter()
-            .map(|e| ResponseGetBloodstainListParamsEntry {
-                area: PlayRegionArea {
-                    play_region: e.play_region as u32,
-                    area: e.area as u32,
-                },
-                identifier: ObjectIdentifier(e.bloodstain_id),
-                advertisement_data: e.advertisement_data,
-                group_passwords: e.group_passwords,
-            })
-            .collect();
+            sqlx::query_as::<_, BloodstainRecord>(SELECT_QUERY)
+                .bind(play_regions)
+                .fetch_all(&self.services.database)
+                .await?
+                .into_iter()
+                .map(|e| ResponseGetBloodstainListParamsEntry {
+                    area: PlayRegionArea {
+                        play_region: e.play_region as u32,
+                        area: e.area as u32,
+                    },
+                    identifier: ObjectIdentifier(e.bloodstain_id),
+                    advertisement_data: e.advertisement_data,
+                    group_passwords: e.group_passwords,
+                })
+                .collect();
 
         Ok(ResponseGetBloodstainListParams { entries })
     }
@@ -96,12 +123,10 @@ impl HandleRequest<Box<RequestGetDeadingGhostParams>, ResponseGetDeadingGhostPar
         &mut self,
         request: &Box<RequestGetDeadingGhostParams>,
     ) -> Result<ResponseGetDeadingGhostParams, Box<dyn std::error::Error>> {
-        let bloodstain = sqlx::query_as::<_, BloodstainRecord>(
-            "SELECT * FROM bloodstains WHERE bloodstain_id = $1",
-        )
-        .bind(request.identifier.0)
-        .fetch_one(&self.services.database)
-        .await?;
+        let bloodstain = sqlx::query_as::<_, BloodstainRecord>(SELECT_BY_ID_QUERY)
+            .bind(request.identifier.0)
+            .fetch_one(&self.services.database)
+            .await?;
 
         Ok(ResponseGetDeadingGhostParams {
             unk0: 0,

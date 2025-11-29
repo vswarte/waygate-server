@@ -13,6 +13,52 @@ use message::eldenring::{
 use super::DefaultClientHandler;
 use crate::handler::HandleRequest;
 
+const INSERT_QUERY: &str = "
+    INSERT INTO bloodmessages (
+        player_id,
+        character_id,
+        session_id,
+        rating_good,
+        rating_bad,
+        data,
+        area,
+        play_region,
+        group_passwords
+    ) VALUES (
+        $1,
+        $2,
+        $3,
+        0,
+        0,
+        $4,
+        $5,
+        $6,
+        $7
+    ) RETURNING bloodmessage_id";
+
+const SELECT_QUERY: &str = "
+    WITH pivot AS (SELECT random() AS r)
+    SELECT b.*
+    FROM bloodmessages b
+    JOIN (
+        SELECT bloodmessage_id FROM (
+            SELECT bloodmessage_id
+            FROM bloodmessages, pivot
+            WHERE play_region = ANY($1) AND rnd >= pivot.r
+            ORDER BY rnd
+            LIMIT 64
+        ) above
+        UNION ALL
+        SELECT bloodmessage_id FROM (
+            SELECT bloodmessage_id
+            FROM bloodmessages, pivot
+            WHERE play_region = ANY($1) AND rnd < pivot.r
+            ORDER BY rnd
+            LIMIT 64
+        ) below
+        LIMIT 64
+    ) s USING (bloodmessage_id)";
+
 impl HandleRequest<Box<RequestCreateBloodMessageParams>, ResponseCreateBloodMessageParams>
     for DefaultClientHandler<'_>
 {
@@ -20,39 +66,17 @@ impl HandleRequest<Box<RequestCreateBloodMessageParams>, ResponseCreateBloodMess
         &mut self,
         request: &Box<RequestCreateBloodMessageParams>,
     ) -> Result<ResponseCreateBloodMessageParams, Box<dyn std::error::Error>> {
-        let bloodmessage_id = sqlx::query(
-            "INSERT INTO bloodmessages (
-            player_id,
-            character_id,
-            session_id,
-            rating_good,
-            rating_bad,
-            data,
-            area,
-            play_region,
-            group_passwords
-        ) VALUES (
-            $1,
-            $2,
-            $3,
-            0,
-            0,
-            $4,
-            $5,
-            $6,
-            $7
-        ) RETURNING bloodmessage_id",
-        )
-        .bind(self.session.player_id)
-        .bind(request.character_id)
-        .bind(self.session.session_id)
-        .bind(&request.data)
-        .bind(request.area.area as i32)
-        .bind(request.area.play_region as i32)
-        .bind(&request.group_passwords)
-        .fetch_one(&self.services.database)
-        .await?
-        .get("bloodmessage_id");
+        let bloodmessage_id = sqlx::query(INSERT_QUERY)
+            .bind(self.session.player_id)
+            .bind(request.character_id)
+            .bind(self.session.session_id)
+            .bind(&request.data)
+            .bind(request.area.area as i32)
+            .bind(request.area.play_region as i32)
+            .bind(&request.group_passwords)
+            .fetch_one(&self.services.database)
+            .await?
+            .get("bloodmessage_id");
 
         Ok(ResponseCreateBloodMessageParams {
             identifier: ObjectIdentifier(bloodmessage_id),
@@ -73,27 +97,25 @@ impl HandleRequest<Box<RequestGetBloodMessageListParams>, ResponseGetBloodMessag
             .map(|a| a.play_region as i32)
             .collect::<Vec<i32>>();
 
-        let entries = sqlx::query_as::<_, BloodMessageRecord>(
-            "SELECT * FROM bloodmessages WHERE play_region = ANY($1) ORDER BY random() LIMIT 64",
-        )
-        .bind(play_regions)
-        .fetch_all(&self.services.database)
-        .await?
-        .into_iter()
-        .map(|e| ResponseGetBloodMessageListParamsEntry {
-            player_id: e.player_id,
-            character_id: e.character_id,
-            identifier: ObjectIdentifier(e.bloodmessage_id),
-            rating_good: e.rating_good,
-            rating_bad: e.rating_bad,
-            data: e.data,
-            area: PlayRegionArea {
-                play_region: e.play_region as u32,
-                area: e.area as u32,
-            },
-            group_passwords: e.group_passwords,
-        })
-        .collect();
+        let entries = sqlx::query_as::<_, BloodMessageRecord>(SELECT_QUERY)
+            .bind(play_regions)
+            .fetch_all(&self.services.database)
+            .await?
+            .into_iter()
+            .map(|e| ResponseGetBloodMessageListParamsEntry {
+                player_id: e.player_id,
+                character_id: e.character_id,
+                identifier: ObjectIdentifier(e.bloodmessage_id),
+                rating_good: e.rating_good,
+                rating_bad: e.rating_bad,
+                data: e.data,
+                area: PlayRegionArea {
+                    play_region: e.play_region as u32,
+                    area: e.area as u32,
+                },
+                group_passwords: e.group_passwords,
+            })
+            .collect();
 
         Ok(ResponseGetBloodMessageListParams { entries })
     }
