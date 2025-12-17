@@ -22,7 +22,6 @@ pub struct NotificationChannelPool {
 
 impl NotificationChannelPool {
     /// Send a notification push message to a specific player.
-    #[allow(dead_code)]
     pub fn notify_player(
         &self,
         player: i32,
@@ -53,7 +52,11 @@ impl NotificationChannelPool {
         Ok(())
     }
 
-    pub fn insert(&self, player_id: i32, entry: Sender<Vec<u8>>) -> NotificationChannelPoolToken {
+    pub fn insert(
+        &self,
+        player_id: i32,
+        entry: Sender<Vec<u8>>,
+    ) -> NotificationChannelPoolToken<'_> {
         self.entries.insert(player_id, entry);
         NotificationChannelPoolToken(self, player_id)
     }

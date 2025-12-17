@@ -21,23 +21,20 @@ pub async fn announcement(
     state: Data<AppState>,
     req: web::Json<NotifyMessageRequest>,
 ) -> impl Responder {
-    let message = wire::serialize(
-        MessageBuilder::push()
-            .body(PushParams::Notify(NotifyParams {
-                identifier: ObjectIdentifier(rand::rng().random::<i64>()),
-                timestamp: 0,
-                section1: NotifyParamsSection1::Variant1 { unk1: 0, unk2: 0 },
-                section2: NotifyParamsSection2::Variant1 {
-                    message: req.message.clone(),
-                    unk1: 0x0,
-                    unk2: 0x0,
-                    unk3: 0x0,
-                },
-            }))
-            .build()
-            .expect("Could not build push message"),
-    )
-    .expect("Could not serialize push message");
+    let message = MessageBuilder::push()
+        .body(PushParams::Notify(NotifyParams {
+            identifier: ObjectIdentifier(rand::rng().random::<i64>()),
+            timestamp: 0,
+            section1: NotifyParamsSection1::Variant1 { unk1: 0, unk2: 0 },
+            section2: NotifyParamsSection2::Variant1 {
+                message: req.message.clone(),
+                unk1: 0x0,
+                unk2: 0x0,
+                unk3: 0x0,
+            },
+        }))
+        .build()
+        .expect("Could not build push message");
 
     state
         .services

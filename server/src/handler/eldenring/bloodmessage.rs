@@ -1,13 +1,17 @@
+use rand::Rng;
 use sqlx::Row;
-use thiserror::Error;
 
-use message::eldenring::{
-    ObjectIdentifier, PlayRegionArea, RequestCreateBloodMessageParams,
-    RequestEvaluateBloodMessageParams, RequestGetBloodMessageListParams,
-    RequestReentryBloodMessageParams, RequestRemoveBloodMessageParams,
-    ResponseCreateBloodMessageParams, ResponseEvaluateBloodMessageParams,
-    ResponseGetBloodMessageListParams, ResponseGetBloodMessageListParamsEntry,
-    ResponseReentryBloodMessageParams, ResponseRemoveBloodMessageParams,
+use message::{
+    builder::MessageBuilder,
+    eldenring::{
+        BloodMessageRating, EvaluateBloodMessageParams, JoinParams, JoinPayload, ObjectIdentifier,
+        PlayRegionArea, PushParams, RequestCreateBloodMessageParams,
+        RequestEvaluateBloodMessageParams, RequestGetBloodMessageListParams,
+        RequestReentryBloodMessageParams, RequestRemoveBloodMessageParams,
+        ResponseCreateBloodMessageParams, ResponseEvaluateBloodMessageParams,
+        ResponseGetBloodMessageListParams, ResponseGetBloodMessageListParamsEntry,
+        ResponseReentryBloodMessageParams, ResponseRemoveBloodMessageParams,
+    },
 };
 
 use super::DefaultClientHandler;
@@ -128,19 +132,37 @@ impl HandleRequest<Box<RequestEvaluateBloodMessageParams>, ResponseEvaluateBlood
         &mut self,
         request: &Box<RequestEvaluateBloodMessageParams>,
     ) -> Result<ResponseEvaluateBloodMessageParams, Box<dyn std::error::Error>> {
-        let query = match request.rating.try_into()? {
+        let rating = request.rating.try_into()?;
+        let query = match rating {
             BloodMessageRating::Good => sqlx::query(
-                "UPDATE bloodmessages SET rating_good = rating_good + 1 WHERE bloodmessage_id = $1",
+                "UPDATE bloodmessages SET rating_good = rating_good + 1 WHERE bloodmessage_id = $1 RETURNING player_id",
             ),
             BloodMessageRating::Bad => sqlx::query(
-                "UPDATE bloodmessages SET rating_bad = rating_bad + 1 WHERE bloodmessage_id = $1",
+                "UPDATE bloodmessages SET rating_bad = rating_bad + 1 WHERE bloodmessage_id = $1 RETURNING player_id",
             ),
         };
 
-        query
+        let player_id: i32 = query
             .bind(request.identifier.0)
-            .execute(&self.services.database)
-            .await?;
+            .fetch_one(&self.services.database)
+            .await?
+            .get("player_id");
+
+        let message = MessageBuilder::push()
+            .body(PushParams::Join(JoinParams {
+                identifier: ObjectIdentifier(rand::rng().random::<i64>()),
+                join_payload: JoinPayload::EvaluateBloodMessage(EvaluateBloodMessageParams {
+                    unk1: 0,
+                    sign_identifier: request.identifier,
+                    evaluation: rating,
+                }),
+            }))
+            .build()
+            .expect("Could not build push message");
+
+        self.services
+            .notifications
+            .notify_player(player_id, message)?;
 
         Ok(ResponseEvaluateBloodMessageParams {})
     }
@@ -201,28 +223,4 @@ struct BloodMessageRecord {
     area: i32,
     play_region: i32,
     group_passwords: Vec<String>,
-}
-
-#[derive(Debug)]
-pub enum BloodMessageRating {
-    Good,
-    Bad,
-}
-
-#[derive(Debug, Error)]
-pub enum BloodMessageRatingError {
-    #[error("Unknown rating value from write")]
-    UnknownRatingValue,
-}
-
-impl TryFrom<u32> for BloodMessageRating {
-    type Error = BloodMessageRatingError;
-
-    fn try_from(value: u32) -> Result<Self, Self::Error> {
-        Ok(match value {
-            0 => Self::Good,
-            1 => Self::Bad,
-            _ => return Err(BloodMessageRatingError::UnknownRatingValue),
-        })
-    }
 }

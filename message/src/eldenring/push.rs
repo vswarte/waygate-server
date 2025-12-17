@@ -1,4 +1,5 @@
 use serde::Serialize;
+use thiserror::Error;
 
 use crate::builder::PushMessageBuilder;
 
@@ -13,7 +14,32 @@ pub struct Unk0Params {
 pub struct EvaluateBloodMessageParams {
     pub unk1: i32,
     pub sign_identifier: ObjectIdentifier,
-    pub unk3: u32,
+    pub evaluation: BloodMessageRating,
+}
+
+#[repr(u32)]
+#[derive(Serialize, Debug)]
+pub enum BloodMessageRating {
+    Good = 0,
+    Bad = 1,
+}
+
+#[derive(Debug, Error)]
+pub enum BloodMessageRatingError {
+    #[error("Unknown rating value from write")]
+    UnknownRatingValue,
+}
+
+impl TryFrom<u32> for BloodMessageRating {
+    type Error = BloodMessageRatingError;
+
+    fn try_from(value: u32) -> Result<Self, Self::Error> {
+        Ok(match value {
+            0 => Self::Good,
+            1 => Self::Bad,
+            _ => return Err(BloodMessageRatingError::UnknownRatingValue),
+        })
+    }
 }
 
 #[derive(Serialize, Debug)]
@@ -124,8 +150,8 @@ pub struct UnkFParams {
     pub unk1: Vec<u8>,
 }
 
-#[derive(Serialize, Debug)]
 #[repr(u32)]
+#[derive(Serialize, Debug)]
 pub enum JoinPayload {
     Unk0(Unk0Params),                                 // 0x0
     EvaluateBloodMessage(EvaluateBloodMessageParams), // 0x1
@@ -183,8 +209,8 @@ pub struct NotifyParams {
     pub section2: NotifyParamsSection2,
 }
 
-#[derive(Serialize, Debug)]
 #[repr(u32)]
+#[derive(Serialize, Debug)]
 pub enum PushParams {
     Notify(NotifyParams),
     Join(JoinParams),
