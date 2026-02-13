@@ -107,10 +107,12 @@ impl QuickMatchPoolQuery {
     }
 
     fn check_character_level(host: u32, joiner: u32) -> bool {
-        let lower = host - (host / 10);
-        let upper = host + (host / 10) + 10;
+        let radius = (host as f32 * 0.1).ceil() as u32 + 10;
+        let lower = host.saturating_sub(radius);
 
-        joiner >= lower && joiner <= upper
+        let upper = if joiner >= 306 { 713 } else { host + radius };
+
+        (lower..=upper).contains(&joiner)
     }
 
     fn check_weapon_level(host: u32, joiner: u32) -> bool {
