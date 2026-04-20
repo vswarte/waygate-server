@@ -85,8 +85,8 @@ impl VisitorPoolQuery {
     }
 
     fn check_weapon_level(visitor: u32, host: u32) -> bool {
-        if let Some(entry) = weapon::get_level_table_entry(visitor) {
-            entry.regular_range.contains(&host)
+        if let Some(entry) = weapon::get_level_table_entry(host) {
+            entry.regular_range.contains(&visitor)
         } else {
             false
         }

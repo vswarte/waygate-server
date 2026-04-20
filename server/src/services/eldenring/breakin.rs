@@ -95,8 +95,8 @@ impl BreakInPoolQuery {
     }
 
     fn check_weapon_level(host: u32, invader: u32) -> bool {
-        if let Some(entry) = weapon::get_level_table_entry(host) {
-            entry.regular_range.contains(&invader)
+        if let Some(entry) = weapon::get_level_table_entry(invader) {
+            entry.regular_range.contains(&host)
         } else {
             false
         }
