@@ -83,19 +83,20 @@ impl BreakInPoolQuery {
     }
 
     fn check_character_level(host: u32, invader: u32) -> bool {
-        let lower = invader - (invader / 10);
-        let upper = invader + (invader / 10) + 20;
+        let lower = invader.saturating_sub(invader / 10);
 
-        if invader >= 301 {
-            host >= lower
+        let upper = if invader >= 301 {
+            713
         } else {
-            host >= lower && host <= upper
-        }
+            invader + (invader as f32 * 0.1).ceil() as u32 + 20
+        };
+
+        (lower..=upper).contains(&host)
     }
 
     fn check_weapon_level(host: u32, invader: u32) -> bool {
-        if let Some(entry) = weapon::get_level_table_entry(host) {
-            entry.regular_range.contains(&invader)
+        if let Some(entry) = weapon::get_level_table_entry(invader) {
+            entry.regular_range.contains(&host)
         } else {
             false
         }

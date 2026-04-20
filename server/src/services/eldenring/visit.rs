@@ -73,19 +73,20 @@ impl VisitorPoolQuery {
     }
 
     fn check_character_level(visitor: u32, host: u32) -> bool {
-        let lower = host - (host / 10);
-        let upper = host + (host / 10) + 20;
+        let lower = host.saturating_sub(host / 10);
 
-        if host >= 301 {
-            visitor >= lower
+        let upper = if host >= 301 {
+            713
         } else {
-            visitor >= lower && visitor <= upper
-        }
+            host + (host as f32 * 0.1).ceil() as u32 + 20
+        };
+
+        (lower..=upper).contains(&visitor)
     }
 
     fn check_weapon_level(visitor: u32, host: u32) -> bool {
-        if let Some(entry) = weapon::get_level_table_entry(visitor) {
-            entry.regular_range.contains(&host)
+        if let Some(entry) = weapon::get_level_table_entry(host) {
+            entry.regular_range.contains(&visitor)
         } else {
             false
         }
