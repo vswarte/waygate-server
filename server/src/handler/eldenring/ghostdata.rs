@@ -27,22 +27,35 @@ const INSERT_QUERY: &str = "
     ) RETURNING ghostdata_id";
 
 const SELECT_QUERY: &str = "
-    WITH pivot AS (SELECT random() AS r)
+    WITH pivot AS (SELECT random() AS r),
+         regions AS (SELECT unnest($1::int[]) AS region)
     SELECT g.*
     FROM ghostdata g
     JOIN (
         SELECT ghostdata_id FROM (
             SELECT ghostdata_id
-            FROM ghostdata, pivot
-            WHERE play_region = ANY($1) AND rnd >= pivot.r
+            FROM regions
+            CROSS JOIN LATERAL (
+                SELECT ghostdata_id, rnd
+                FROM ghostdata
+                WHERE play_region = regions.region AND rnd >= (SELECT r FROM pivot)
+                ORDER BY rnd
+                LIMIT 64
+            ) lat_above
             ORDER BY rnd
             LIMIT 64
         ) above
         UNION ALL
         SELECT ghostdata_id FROM (
             SELECT ghostdata_id
-            FROM ghostdata, pivot
-            WHERE play_region = ANY($1) AND rnd < pivot.r
+            FROM regions
+            CROSS JOIN LATERAL (
+                SELECT ghostdata_id, rnd
+                FROM ghostdata
+                WHERE play_region = regions.region AND rnd < (SELECT r FROM pivot)
+                ORDER BY rnd
+                LIMIT 64
+            ) lat_below
             ORDER BY rnd
             LIMIT 64
         ) below

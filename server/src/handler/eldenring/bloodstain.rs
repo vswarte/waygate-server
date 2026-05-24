@@ -30,22 +30,35 @@ const INSERT_QUERY: &str = "
     ) RETURNING bloodstain_id";
 
 const SELECT_QUERY: &str = "
-    WITH pivot AS (SELECT random() AS r)
+    WITH pivot AS (SELECT random() AS r),
+         regions AS (SELECT unnest($1::int[]) AS region)
     SELECT b.*
     FROM bloodstains b
     JOIN (
         SELECT bloodstain_id FROM (
             SELECT bloodstain_id
-            FROM bloodstains, pivot
-            WHERE play_region = ANY($1) AND rnd >= pivot.r
+            FROM regions
+            CROSS JOIN LATERAL (
+                SELECT bloodstain_id, rnd
+                FROM bloodstains
+                WHERE play_region = regions.region AND rnd >= (SELECT r FROM pivot)
+                ORDER BY rnd
+                LIMIT 64
+            ) lat_above
             ORDER BY rnd
             LIMIT 64
         ) above
         UNION ALL
         SELECT bloodstain_id FROM (
             SELECT bloodstain_id
-            FROM bloodstains, pivot
-            WHERE play_region = ANY($1) AND rnd < pivot.r
+            FROM regions
+            CROSS JOIN LATERAL (
+                SELECT bloodstain_id, rnd
+                FROM bloodstains
+                WHERE play_region = regions.region AND rnd < (SELECT r FROM pivot)
+                ORDER BY rnd
+                LIMIT 64
+            ) lat_below
             ORDER BY rnd
             LIMIT 64
         ) below
