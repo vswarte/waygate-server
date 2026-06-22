@@ -126,3 +126,12 @@ would've remained on my disk forever.
  - Shion for testing.
  - Dasaav for testing.
  - auramalexander (Dylan) for name.
+
+# License
+
+This project is licensed under the GNU Affero General Public License v3.0 only
+(AGPL-3.0-only). See [LICENSE](./LICENSE).
+
+If you modify this software and run it so users can interact with it over a
+network, you must make the Corresponding Source of your modified version
+available to those users, as required by AGPLv3 section 13.
