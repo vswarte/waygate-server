@@ -1,4 +1,4 @@
-use serde::{Deserialize, Serialize};
+use serde::{de, Deserialize, Serialize};
 
 use super::*;
 
@@ -8,6 +8,30 @@ pub struct RequestCreateBloodstainParams {
     pub advertisement_data: Vec<u8>,
     pub replay_data: Vec<u8>,
     pub group_passwords: Vec<String>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct BloodstainAdvertisementData {
+    pub magic: [u8; 8],
+    pub version: u32,
+    pub unkc: u32,
+    pub unk10: u32,
+    pub unk14: u32,
+    pub unk18: u32,
+    pub location: Location,
+    pub yaw: f32,
+    pub ghost_spawn_position: Position,
+    pub unk3c: u32,
+    pub unk40: u16,
+    pub unk42: u16,
+    pub unk44: u16,
+    pub unk46: u8,
+    pub unk47: u8,
+    pub unk48: u64,
+    pub play_region: u32,
+    pub character_name: [u16; 18],
+    pub unk70: u32,
+    pub unk74: u32,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -66,6 +90,15 @@ mod test {
         assert_eq!(deserialized.replay_data.len(), 1165);
         assert_eq!(deserialized.group_passwords.len(), 1);
         assert_eq!(deserialized.group_passwords[0], "schlong");
+
+        let adv_data: super::BloodstainAdvertisementData =
+            deserialize(&deserialized.advertisement_data).unwrap();
+        assert_eq!(&adv_data.magic, &[7, 0, 0, 0, 120, 0, 0, 0]);
+        assert_eq!(adv_data.version, 7);
+        assert_eq!(adv_data.play_region, 1400001);
+        assert_eq!(adv_data.location.position.x, 150.72684);
+        assert_eq!(adv_data.location.position.y, 112.589775);
+        assert_eq!(adv_data.location.position.z, -180.64731);
     }
 
     #[test]

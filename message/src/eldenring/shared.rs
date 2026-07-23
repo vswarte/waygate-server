@@ -60,9 +60,14 @@ pub struct MatchingParameters {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct Location {
-    pub map: u32,
+pub struct Position {
     pub x: f32,
     pub y: f32,
     pub z: f32,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct Location {
+    pub map: u32,
+    pub position: Position,
 }
