@@ -112,11 +112,25 @@ where
 
     fn call(&self, req: ServiceRequest) -> Self::Future {
         let srv = Rc::clone(&self.service);
+        let method = req.method().clone();
+        let path = req.path().to_string();
+
         let fut = srv.call(req);
 
         Box::pin(async move {
             LogContext::with(async move {
+                log::debug!("Incoming request: {} {}", method, path);
+
                 let res = fut.await?;
+
+                log::debug!(
+                    context:serde = LogContext::current();
+                    "Request completed: {} {} - status: {}",
+                    method,
+                    path,
+                    res.status()
+                );
+
                 Ok(res)
             })
             .await
