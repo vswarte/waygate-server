@@ -15,7 +15,7 @@ use message::{
 };
 
 use super::DefaultClientHandler;
-use crate::handler::HandleRequest;
+use crate::{handler::HandleRequest, notification::NotificationChannelPoolError};
 
 const INSERT_QUERY: &str = "
     INSERT INTO bloodmessages (
@@ -173,9 +173,14 @@ impl HandleRequest<Box<RequestEvaluateBloodMessageParams>, ResponseEvaluateBlood
             .build()
             .expect("Could not build push message");
 
-        self.services
+        match self
+            .services
             .notifications
-            .notify_player(player_id, message)?;
+            .notify_player(player_id, message)
+        {
+            Err(NotificationChannelPoolError::MissingPlayer) | Ok(_) => (),
+            Err(err) => return Err(Box::new(err)),
+        }
 
         Ok(ResponseEvaluateBloodMessageParams {})
     }
