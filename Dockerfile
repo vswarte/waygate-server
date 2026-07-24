@@ -57,6 +57,8 @@ COPY --from=builder /waygate/libs/lib64 /lib64/
 
 COPY --from=steamcmd_stage /steam/linux64/steamclient.so /waygate/.steam/sdk64/steamclient.so
 
+COPY --from=steamcmd_stage /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+
 COPY steam_appid.txt /waygate/steam_appid.txt
 
 ENV LD_LIBRARY_PATH=/waygate:/waygate/.steam/linux64
