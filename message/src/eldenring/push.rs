@@ -106,36 +106,36 @@ pub struct VisitParams {
 
 #[derive(Serialize, Debug)]
 pub struct RejectVisitParams {
-    pub unk1: u32,
+    pub visitor_player_id: i32,
     pub unk2: u32,
     pub unk3: String,
-    pub unk4: u32,
+    pub visit_type: VisitType,
 }
 
 #[derive(Serialize, Debug)]
 pub struct JoinQuickMatchParams {
-    pub quickmatch_settings: u32,
+    pub quickmatch_settings: QuickMatchSettings,
     pub joining_player_id: i32,
     pub joining_player_external_id: String,
     pub unk2: i32,
     pub arena_id: u32,
-    pub unk3: u8,
+    pub team: QuickmatchTeamSlot,
     pub password: String,
 }
 
 #[derive(Serialize, Debug)]
 pub struct AcceptQuickMatchParams {
-    pub quickmatch_settings: u32,
+    pub quickmatch_settings: QuickMatchSettings,
     pub host_player_id: i32,
     pub host_external_id: String,
     pub join_data: Vec<u8>,
 }
 
 #[derive(Serialize, Debug)]
-pub struct UnkDParams {
-    pub unk1: u32,
-    pub unk2: u32,
-    pub unk3: u32,
+pub struct RejectQuickMatchParams {
+    pub reject_reason: u32,
+    pub host_player_id: i32,
+    pub quickmatch_settings: QuickMatchSettings,
 }
 
 #[derive(Serialize, Debug)]
@@ -159,14 +159,14 @@ pub enum JoinPayload {
     AllowBreakInTarget(AllowBreakInTargetParams),     // 0x3
     RejectBreakInTarget(RejectBreakInTargetParams),   // 0x4
     Unk5(Unk5Params),                                 // 0x5
-    SummonSign(SummonSignParams),                     //0x6
+    SummonSign(SummonSignParams),                     // 0x6
     RejectSign(RejectSignParams),                     // 0x7
     Unk8(Unk8Params),                                 // 0x8
     Visit(VisitParams),                               // 0x9
     RejectVisit(RejectVisitParams),                   // 0xA
     JoinQuickMatch(JoinQuickMatchParams),             // 0xB
     AcceptQuickMatch(AcceptQuickMatchParams),         // 0xC
-    UnkD(UnkDParams),                                 // 0xD
+    RejectQuickMatch(RejectQuickMatchParams),         // 0xD
     UnkE(UnkEParams),                                 // 0xE
     UnkF(UnkFParams),                                 // 0xF
 }
@@ -204,7 +204,6 @@ pub enum NotifyParamsSection2 {
 pub struct NotifyParams {
     pub identifier: ObjectIdentifier,
     pub timestamp: u64,
-
     pub section1: NotifyParamsSection1,
     pub section2: NotifyParamsSection2,
 }

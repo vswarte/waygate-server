@@ -1,43 +1,35 @@
-use std::{
-    collections::HashMap,
-    sync::{mpsc::Sender, LazyLock, Mutex, MutexGuard},
-};
+use std::{sync::mpsc::Sender, time::Duration};
 
-use dashmap::DashMap;
 use message::eldenring::VisitType;
 
-use crate::{logging::LogContext, services::eldenring::PoolError};
+use crate::services::ordered_pool::{Keyed, OrderedPool, OrderedPoolToken};
 
 use super::weapon;
 
-/// Pool for summon signs. Both coop and duelist.
 #[derive(Default)]
 pub struct VisitorPool {
-    entries: DashMap<VisitorPoolKey, VisitorPoolEntry>,
+    inner: OrderedPool<VisitorPoolEntry>,
 }
 
 impl VisitorPool {
-    pub fn insert(&self, player_id: i32, entry: VisitorPoolEntry) -> VisitorPoolToken {
-        let key = VisitorPoolKey(player_id);
-        self.entries.insert(key.clone(), entry);
-        VisitorPoolToken(self, key)
+    pub fn sync<'a>(
+        &'a self,
+        token: &mut Option<VisitorPoolToken<'a>>,
+        entry: Option<VisitorPoolEntry>,
+    ) {
+        self.inner.sync(token, entry)
+    }
+
+    pub fn sweep_expired(&self, ttl: Duration) {
+        self.inner.sweep_expired(ttl);
     }
 
     pub fn get(&self, key: &VisitorPoolKey) -> Option<VisitorPoolEntry> {
-        self.entries.get(key).map(|i| i.clone())
+        self.inner.get(key)
     }
 
-    pub fn matches(&self, query: &VisitorPoolQuery) -> Vec<(VisitorPoolKey, VisitorPoolEntry)> {
-        self.entries
-            .iter()
-            .filter(|e| query.matches(e.value()))
-            .map(|e| (e.key().clone(), e.value().clone()))
-            .collect()
-    }
-
-    pub fn remove(&self, key: &VisitorPoolKey) -> Result<(), PoolError> {
-        self.entries.remove(key).ok_or(PoolError::NotFound)?;
-        Ok(())
+    pub fn matches(&self, query: &VisitorPoolQuery) -> Vec<VisitorPoolEntry> {
+        self.inner.matches_all(|e| query.matches(e))
     }
 }
 
@@ -50,6 +42,26 @@ pub struct VisitorPoolEntry {
     pub visit_type: VisitType,
     pub external_id: String,
     pub visitor_tx: Sender<Vec<u8>>,
+    pub updated_at: tokio::time::Instant,
+}
+
+impl Keyed for VisitorPoolEntry {
+    type Key = VisitorPoolKey;
+
+    fn key(&self) -> VisitorPoolKey {
+        VisitorPoolKey {
+            player_id: self.player_id,
+            visit_type: self.visit_type,
+        }
+    }
+
+    fn updated_at(&self) -> tokio::time::Instant {
+        self.updated_at
+    }
+
+    fn touch(&mut self) {
+        self.updated_at = tokio::time::Instant::now();
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -94,50 +106,23 @@ impl VisitorPoolQuery {
 }
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
-pub struct VisitorPoolKey(pub i32);
-
-/// Represents an entry in the sign pool. Removes corresponding entry when dropped.
-pub struct VisitorPoolToken<'a>(&'a VisitorPool, pub VisitorPoolKey);
-
-impl Drop for VisitorPoolToken<'_> {
-    fn drop(&mut self) {
-        let _ = self.0.remove(&self.1);
-    }
+pub struct VisitorPoolKey {
+    pub player_id: i32,
+    pub visit_type: VisitType,
 }
 
-pub static VISIT_ATTEMPTS: LazyLock<VisitorAttemptTracker> = LazyLock::new(Default::default);
+pub type VisitorPoolToken<'a> = OrderedPoolToken<'a, VisitorPoolEntry>;
+
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
+pub struct VisitAttemptKey {
+    pub visitor_id: VisitorPoolKey,
+    pub summoner_id: i32,
+}
 
 #[derive(Clone)]
 pub struct VisitorAttempt {
     /// Summoners notification channel
-    #[allow(dead_code)]
     pub summoner_tx: Sender<Vec<u8>>,
-}
-
-#[derive(Default)]
-pub struct VisitorAttemptTracker {
-    entries: Mutex<HashMap<(VisitorPoolKey, i32), VisitorAttempt>>,
-}
-
-impl VisitorAttemptTracker {
-    pub fn insert(&'static self, key: (VisitorPoolKey, i32), attempt: VisitorAttempt) {
-        self.lock().insert(key, attempt);
-    }
-
-    pub fn remove(&self, key: &(VisitorPoolKey, i32)) -> Option<VisitorAttempt> {
-        self.lock().remove(key)
-    }
-
-    fn lock(&self) -> MutexGuard<'_, HashMap<(VisitorPoolKey, i32), VisitorAttempt>> {
-        self.entries.lock().unwrap_or_else(|p| {
-            log::warn!(
-                context:serde = LogContext::current();
-                "Sign pool recovering from mutex poisoning"
-            );
-            self.entries.clear_poison();
-            p.into_inner()
-        })
-    }
 }
 
 #[cfg(test)]
@@ -177,6 +162,7 @@ mod test {
             visit_type: VisitType::Hunter,
             external_id: String::default(),
             visitor_tx,
+            updated_at: tokio::time::Instant::now(),
         };
 
         let host = VisitorPoolQuery {
@@ -201,6 +187,7 @@ mod test {
             visit_type: VisitType::Hunter,
             external_id: String::default(),
             visitor_tx,
+            updated_at: tokio::time::Instant::now(),
         };
 
         let host = VisitorPoolQuery {
@@ -225,6 +212,7 @@ mod test {
             visit_type: VisitType::Hunter,
             external_id: String::default(),
             visitor_tx,
+            updated_at: tokio::time::Instant::now(),
         };
 
         let host = VisitorPoolQuery {
@@ -242,13 +230,14 @@ mod test {
     fn self_match_fails() {
         let (visitor_tx, _) = channel();
         let visitor = VisitorPoolEntry {
-            player_id: 1,
+            player_id: 2,
             character_level: 1,
             weapon_level: 1,
             play_region: 0,
             visit_type: VisitType::Hunter,
             external_id: String::default(),
             visitor_tx,
+            updated_at: tokio::time::Instant::now(),
         };
 
         let host = VisitorPoolQuery {

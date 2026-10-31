@@ -10,7 +10,7 @@ use message::{
         RequestReentryBloodMessageParams, RequestRemoveBloodMessageParams,
         ResponseCreateBloodMessageParams, ResponseEvaluateBloodMessageParams,
         ResponseGetBloodMessageListParams, ResponseGetBloodMessageListParamsEntry,
-        ResponseReentryBloodMessageParams, ResponseRemoveBloodMessageParams,
+        ResponseReentryBloodMessageParams, ResponseRemoveBloodMessageParams, ServerError,
     },
 };
 
@@ -145,7 +145,11 @@ impl HandleRequest<Box<RequestEvaluateBloodMessageParams>, ResponseEvaluateBlood
         &mut self,
         request: &Box<RequestEvaluateBloodMessageParams>,
     ) -> Result<ResponseEvaluateBloodMessageParams, Box<dyn std::error::Error>> {
-        let rating = request.rating.try_into()?;
+        let rating = match request.rating {
+            0 => BloodMessageRating::Good,
+            1 => BloodMessageRating::Bad,
+            _ => return Err(Box::new(ServerError::Args)),
+        };
         let query = match rating {
             BloodMessageRating::Good => sqlx::query(
                 "UPDATE bloodmessages SET rating_good = rating_good + 1 WHERE bloodmessage_id = $1 RETURNING player_id",
@@ -158,7 +162,13 @@ impl HandleRequest<Box<RequestEvaluateBloodMessageParams>, ResponseEvaluateBlood
         let player_id: i32 = query
             .bind(request.identifier.0)
             .fetch_one(&self.services.database)
-            .await?
+            .await
+            .map_err(|e| -> Box<dyn std::error::Error> {
+                match e {
+                    sqlx::Error::RowNotFound => Box::new(ServerError::DbDataNotFound),
+                    e => Box::new(e),
+                }
+            })?
             .get("player_id");
 
         let message = MessageBuilder::push()
@@ -193,11 +203,16 @@ impl HandleRequest<Box<RequestRemoveBloodMessageParams>, ResponseRemoveBloodMess
         &mut self,
         request: &Box<RequestRemoveBloodMessageParams>,
     ) -> Result<ResponseRemoveBloodMessageParams, Box<dyn std::error::Error>> {
-        sqlx::query("DELETE FROM bloodmessages WHERE bloodmessage_id = $1 AND player_id = $2")
-            .bind(request.identifier.0)
-            .bind(self.session.player_id)
-            .execute(&self.services.database)
-            .await?;
+        let result =
+            sqlx::query("DELETE FROM bloodmessages WHERE bloodmessage_id = $1 AND player_id = $2")
+                .bind(request.identifier.0)
+                .bind(self.session.player_id)
+                .execute(&self.services.database)
+                .await?;
+
+        if result.rows_affected() == 0 {
+            return Err(Box::new(ServerError::DbDataNotFound));
+        }
 
         Ok(ResponseRemoveBloodMessageParams {})
     }

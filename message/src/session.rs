@@ -2,11 +2,10 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct RequestCreateSessionParams {
-    pub unk1: u32,
-    pub unk2: u32,
-    pub unk3: u32,
-    pub game_version: u32,
-    pub unk4: u32,
+    pub magic_1: u32,
+    pub magic_2: u32,
+    pub magic_3: u32,
+    pub game_version: u64,
     pub unk5: u32,
     pub steam_ticket: Vec<u8>,
     pub unk6: u32,

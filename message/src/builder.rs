@@ -3,6 +3,8 @@ use std::{io::Write, marker::PhantomData};
 use byteorder::{WriteBytesExt, LE};
 use thiserror::Error;
 
+use crate::MessageType;
+
 #[derive(Debug, Error)]
 pub enum Error {
     #[error("Missing data for field. {0}")]
@@ -84,7 +86,7 @@ where
 
         let mut result = vec![];
         // Response message type
-        result.write_u8(5)?;
+        result.write_u8(MessageType::Response as u8)?;
         // Write sequence so client knows what message this is a response for.
         result.write_u32::<LE>(sequence)?;
 
@@ -92,7 +94,7 @@ where
             // Write error status
             result.write_u8(0)?;
             // Write error code
-            result.write_u32::<LE>(0)?;
+            result.write_u32::<LE>(error)?;
         } else {
             // Write success status
             result.write_u8(1)?;
@@ -126,7 +128,7 @@ where
         let mut result = vec![];
 
         // Response message type
-        result.write_u8(6)?;
+        result.write_u8(MessageType::Push as u8)?;
         // ???
         result.write_u8(0)?;
 

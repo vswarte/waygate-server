@@ -1,4 +1,5 @@
 pub mod de;
+pub mod repr_enum;
 pub mod ser;
 pub mod string;
 

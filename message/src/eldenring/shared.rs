@@ -16,7 +16,7 @@ pub struct PuddleArea {
     pub flags: u64,
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, Hash, Eq, Clone, Copy)]
+#[derive(Debug, Default, Serialize, Deserialize, PartialEq, Hash, Eq, Clone, Copy)]
 pub struct ObjectIdentifier(pub i64);
 
 #[repr(u32)]

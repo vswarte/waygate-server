@@ -6,23 +6,23 @@ fn main() {
     let (client_public, client_secret) = generate_keypair();
     let (server_public, server_secret) = generate_keypair();
 
-    println!("# Pass this to your servers launch command");
+    println!("# Pass this to your server's env");
     println!(
-        "--client-public-key = \"{}\"",
+        "WAYGATE_CLIENT_PUBLIC_KEY={}",
         BASE64_STANDARD.encode(client_public)
     );
     println!(
-        "--server-secret-key = \"{}\"",
+        "WAYGATE_SERVER_SECRET_KEY={}",
         BASE64_STANDARD.encode(server_secret)
     );
     println!();
-    println!("# Add this to your clients's waygate.toml");
+    println!("# Add this to your clients's env");
     println!(
-        "client_secret_key = \"{}\"",
+        "WAYGATE_CLIENT_SECRET_KEY={}",
         BASE64_STANDARD.encode(client_secret)
     );
     println!(
-        "server_public_key = \"{}\"",
+        "WAYGATE_SERVER_PUBLIC_KEY={}",
         BASE64_STANDARD.encode(server_public)
     );
 }

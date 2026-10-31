@@ -6,29 +6,19 @@ use message::{
         RequestBreakInTargetParams, RequestGetBreakInTargetListParams,
         RequestRejectBreakInTargetParams, ResponseAllowBreakInTargetParams,
         ResponseBreakInTargetParams, ResponseGetBreakInTargetListParams,
-        ResponseGetBreakInTargetListParamsEntry, ResponseRejectBreakInTargetParams,
+        ResponseGetBreakInTargetListParamsEntry, ResponseRejectBreakInTargetParams, ServerError,
     },
 };
 use rand::prelude::*;
-use thiserror::Error;
 
 use crate::{
     handler::HandleRequest,
     services::eldenring::breakin::{
-        BreakInAttempt, BreakInPoolKey, BreakInPoolQuery, BREAKIN_ATTEMPTS,
-        BREAKIN_ATTEMPT_CLEANUP_TIMEOUT,
+        BreakInAttempt, BreakInAttemptKey, BreakInPoolKey, BreakInPoolQuery,
     },
 };
 
 use super::DefaultClientHandler;
-
-#[derive(Debug, Error)]
-enum Error {
-    #[error("BreakIn target could not be found.")]
-    BreakInTargetNotFound,
-    #[error("BreakIn attempt could not be found.")]
-    BreakInAttemptNotFound,
-}
 
 impl HandleRequest<Box<RequestGetBreakInTargetListParams>, ResponseGetBreakInTargetListParams>
     for DefaultClientHandler<'_>
@@ -37,22 +27,21 @@ impl HandleRequest<Box<RequestGetBreakInTargetListParams>, ResponseGetBreakInTar
         &mut self,
         request: &Box<RequestGetBreakInTargetListParams>,
     ) -> Result<ResponseGetBreakInTargetListParams, Box<dyn std::error::Error>> {
-        let mut pool_matches = self.services.pool_breakin.matches(&BreakInPoolQuery {
+        let entries = self.services.pool_breakin.matches(&BreakInPoolQuery {
             player_id: self.session.player_id,
             play_region: request.play_region,
             character_level: request.matching_parameters.character_level,
             weapon_level: request.matching_parameters.max_reinforce as u32,
+            limit: request.max_count,
         });
-
-        pool_matches.shuffle(&mut rand::rng());
-        let limited = pool_matches.iter().take(request.max_count as usize);
 
         Ok(ResponseGetBreakInTargetListParams {
             play_region: request.play_region,
-            entries: limited
+            entries: entries
+                .into_iter()
                 .map(|e| ResponseGetBreakInTargetListParamsEntry {
-                    player_id: e.1.player_id,
-                    external_id: e.1.external_id.clone(),
+                    player_id: e.player_id,
+                    external_id: e.external_id.clone(),
                 })
                 .collect(),
         })
@@ -69,27 +58,20 @@ impl HandleRequest<Box<RequestBreakInTargetParams>, ResponseBreakInTargetParams>
         // Retrieve pool entry for tapped sign if it's still there.
         let pool_key = BreakInPoolKey(request.player_id);
         let Some(entry) = self.services.pool_breakin.get(&pool_key) else {
-            return Err(Box::new(Error::BreakInTargetNotFound));
+            return Err(Box::new(ServerError::NotFound));
         };
 
-        // Save our connection attempt for cancellation if required.
         let invader_id = self.session.player_id;
-        BREAKIN_ATTEMPTS.insert(
-            (pool_key.clone(), invader_id),
+
+        self.services.breakin_attempts.insert(
+            BreakInAttemptKey {
+                target_id: pool_key.clone(),
+                invader_id,
+            },
             BreakInAttempt {
                 invader_tx: self.push_tx.clone(),
             },
         );
-
-        // Remove attempt entry after a while so it doesn't linger if the invasion request
-        // got no response at all.
-        {
-            let pool_key = pool_key.clone();
-            tokio::spawn(async move {
-                tokio::time::sleep(BREAKIN_ATTEMPT_CLEANUP_TIMEOUT).await;
-                let _ = BREAKIN_ATTEMPTS.remove(&(pool_key, invader_id));
-            });
-        }
 
         entry.target_tx.send(
             MessageBuilder::push()
@@ -119,9 +101,14 @@ impl HandleRequest<Box<RequestAllowBreakInTargetParams>, ResponseAllowBreakInTar
     ) -> Result<ResponseAllowBreakInTargetParams, Box<dyn std::error::Error>> {
         let pool_key = BreakInPoolKey(self.session.player_id);
 
-        let attempt = BREAKIN_ATTEMPTS
-            .remove(&(pool_key, request.invading_player_id))
-            .ok_or(Error::BreakInAttemptNotFound)?;
+        let attempt = self
+            .services
+            .breakin_attempts
+            .remove(&BreakInAttemptKey {
+                target_id: pool_key,
+                invader_id: request.invading_player_id,
+            })
+            .ok_or(ServerError::NotFound)?;
 
         attempt.invader_tx.send(
             MessageBuilder::push()
@@ -149,9 +136,14 @@ impl HandleRequest<Box<RequestRejectBreakInTargetParams>, ResponseRejectBreakInT
     ) -> Result<ResponseRejectBreakInTargetParams, Box<dyn std::error::Error>> {
         let pool_key = BreakInPoolKey(self.session.player_id);
 
-        let attempt = BREAKIN_ATTEMPTS
-            .remove(&(pool_key, request.invading_player_id))
-            .ok_or(Error::BreakInAttemptNotFound)?;
+        let attempt = self
+            .services
+            .breakin_attempts
+            .remove(&BreakInAttemptKey {
+                target_id: pool_key,
+                invader_id: request.invading_player_id,
+            })
+            .ok_or(ServerError::NotFound)?;
 
         attempt.invader_tx.send(
             MessageBuilder::push()

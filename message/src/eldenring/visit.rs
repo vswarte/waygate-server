@@ -3,12 +3,13 @@ use serde::{Deserialize, Serialize};
 use super::*;
 
 #[repr(u32)]
-#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum VisitType {
     /// Regular blue hunter helping host defeat invaders
     Hunter = 0,
     /// Hunter that invades "sinners"
     SinnerHunter = 1,
+    Other = 2,
 }
 
 #[derive(Serialize, Deserialize, Debug)]

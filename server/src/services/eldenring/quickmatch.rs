@@ -1,68 +1,16 @@
-use std::sync::{mpsc::Sender, LazyLock};
+use message::eldenring::{QuickMatchSettings, QuickmatchTeamSlot};
 
-use dashmap::DashMap;
+use std::{sync::mpsc::Sender, time::Duration};
 
-use crate::services::eldenring::PoolError;
+use tokio::time::Instant;
 
-use super::weapon;
+use crate::services::attempt_tracker::AttemptTracker;
+use crate::services::eldenring::weapon;
+use crate::services::ordered_pool::{Keyed, Order, OrderedPool, OrderedPoolToken, PoolError};
 
-/// Pool for summon signs. Both coop and duelist.
-#[derive(Default)]
-pub struct QuickMatchPool {
-    entries: DashMap<QuickMatchPoolKey, QuickMatchPoolEntry>,
-}
+pub type QuickMatchPoolToken<'a> = OrderedPoolToken<'a, QuickMatchPoolEntry>;
 
-impl QuickMatchPool {
-    pub fn insert(&self, player_id: i32, entry: QuickMatchPoolEntry) -> QuickMatchPoolToken {
-        let key = QuickMatchPoolKey(player_id);
-        self.entries.insert(key.clone(), entry);
-        QuickMatchPoolToken(self, key)
-    }
-
-    pub fn get(&self, key: &QuickMatchPoolKey) -> Option<QuickMatchPoolEntry> {
-        self.entries.get(key).map(|e| e.clone())
-    }
-
-    pub fn matches(
-        &self,
-        query: &QuickMatchPoolQuery,
-    ) -> Vec<(QuickMatchPoolKey, QuickMatchPoolEntry)> {
-        self.entries
-            .iter()
-            .filter(|e| query.matches(e.value()))
-            .map(|e| (e.key().clone(), e.value().clone()))
-            .collect()
-    }
-
-    pub fn remove(&self, key: &QuickMatchPoolKey) -> Result<(), PoolError> {
-        self.entries.remove(key).ok_or(PoolError::NotFound)?;
-        Ok(())
-    }
-
-    pub fn merge(
-        &self,
-        key: &QuickMatchPoolKey,
-        merger: impl Fn(&mut QuickMatchPoolEntry),
-    ) -> Result<(), PoolError> {
-        match self.entries.get_mut(key) {
-            Some(mut e) => merger(e.value_mut()),
-            None => return Err(PoolError::NotFound),
-        };
-        Ok(())
-    }
-}
-
-#[derive(Clone, Debug, Eq, Hash, PartialEq)]
-pub struct QuickMatchPoolKey(pub i32);
-
-/// Represents an entry in the sign pool. Removes corresponding entry when dropped.
-pub struct QuickMatchPoolToken<'a>(&'a QuickMatchPool, pub QuickMatchPoolKey);
-
-impl Drop for QuickMatchPoolToken<'_> {
-    fn drop(&mut self) {
-        let _ = self.0.remove(&self.1);
-    }
-}
+type Pool = OrderedPool<QuickMatchPoolEntry>;
 
 #[derive(Clone, Debug)]
 pub struct QuickMatchPoolEntry {
@@ -72,8 +20,25 @@ pub struct QuickMatchPoolEntry {
     pub weapon_level: u32,
     pub arena_id: u32,
     pub password: String,
-    pub quickmatch_settings: u32,
+    pub quickmatch_settings: QuickMatchSettings,
     pub host_tx: Sender<Vec<u8>>,
+    pub updated_at: Instant,
+}
+
+impl Keyed for QuickMatchPoolEntry {
+    type Key = i32;
+
+    fn key(&self) -> i32 {
+        self.host_player_id
+    }
+
+    fn updated_at(&self) -> Instant {
+        self.updated_at
+    }
+
+    fn touch(&mut self) {
+        self.updated_at = Instant::now();
+    }
 }
 
 #[derive(Debug)]
@@ -83,7 +48,7 @@ pub struct QuickMatchPoolQuery {
     pub character_level: u32,
     pub weapon_level: u32,
     pub password: String,
-    pub quickmatch_settings: u32,
+    pub quickmatch_settings: QuickMatchSettings,
 }
 
 impl QuickMatchPoolQuery {
@@ -91,25 +56,38 @@ impl QuickMatchPoolQuery {
         if entry.host_player_id == self.player_id {
             return false;
         }
-        // TODO: password team matching
-        if !self.arenas.contains(&entry.arena_id)
-            || self.quickmatch_settings != entry.quickmatch_settings
-        {
+
+        if !self.arenas.contains(&entry.arena_id) {
             return false;
         }
 
-        if !entry.password.is_empty() || !self.password.is_empty() {
-            return entry.password.eq(&self.password);
+        if !Self::settings_compatible(self.quickmatch_settings, entry.quickmatch_settings) {
+            return false;
+        }
+
+        if !entry.quickmatch_settings.is_allies_password_mode()
+            && (!entry.password.is_empty() || !self.password.is_empty())
+        {
+            return entry.password == self.password;
         }
 
         Self::check_character_level(self.character_level, entry.character_level)
             && Self::check_weapon_level(self.weapon_level, entry.weapon_level)
     }
 
+    fn settings_compatible(searcher: QuickMatchSettings, host: QuickMatchSettings) -> bool {
+        if searcher.match_size() != host.match_size() {
+            return false;
+        }
+        if searcher.spirit_ashes_allowed() != host.spirit_ashes_allowed() {
+            return false;
+        }
+        searcher.is_allies_password_mode() == host.is_allies_password_mode()
+    }
+
     fn check_character_level(host: u32, joiner: u32) -> bool {
         let radius = (host as f32 * 0.1).ceil() as u32 + 10;
         let lower = host.saturating_sub(radius);
-
         let upper = if joiner >= 306 { 713 } else { host + radius };
 
         (lower..=upper).contains(&joiner)
@@ -124,284 +102,118 @@ impl QuickMatchPoolQuery {
     }
 }
 
-pub static QUICKMATCH_JOIN_ATTEMPTS: LazyLock<QuickMatchJoinAttemptTracker> =
-    LazyLock::new(Default::default);
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
+pub struct QuickMatchJoinAttemptKey {
+    pub host_player_id: i32,
+    pub joining_player_id: i32,
+}
 
 #[derive(Clone)]
 pub struct QuickMatchJoinAttempt {
-    pub quickmatch_settings: u32,
-    /// Summoner channel sender for push notifs
+    pub quickmatch_settings: QuickMatchSettings,
+    pub team: QuickmatchTeamSlot,
     pub joining_player_tx: Sender<Vec<u8>>,
 }
 
 #[derive(Default)]
-pub struct QuickMatchJoinAttemptTracker {
-    entries: DashMap<(QuickMatchPoolKey, i32), QuickMatchJoinAttempt>,
+pub struct MatchmakingService {
+    pool: Pool,
+    pool_allied_pw: Pool,
+    join_attempts: AttemptTracker<QuickMatchJoinAttemptKey, QuickMatchJoinAttempt>,
 }
 
-impl QuickMatchJoinAttemptTracker {
-    pub fn insert(&'static self, key: (QuickMatchPoolKey, i32), attempt: QuickMatchJoinAttempt) {
-        self.entries.insert(key, attempt);
-    }
-
-    pub fn remove(&self, key: &(QuickMatchPoolKey, i32)) -> Option<QuickMatchJoinAttempt> {
-        self.entries.remove(key).map(|(_, v)| v)
-    }
+pub struct SearchResult {
+    pub matches: Vec<QuickMatchPoolEntry>,
+    pub target_team: QuickmatchTeamSlot,
+    pub is_allied_password_opponent_search: bool,
 }
 
-#[cfg(test)]
-mod test {
-    use std::sync::mpsc::channel;
-
-    use super::{QuickMatchPoolEntry, QuickMatchPoolQuery};
-
-    #[test]
-    fn test_character_level() {
-        assert!(!QuickMatchPoolQuery::check_character_level(1, 300));
-        assert!(QuickMatchPoolQuery::check_character_level(28, 31));
+impl MatchmakingService {
+    fn pool(&self, allied_pw: bool) -> &Pool {
+        if allied_pw {
+            &self.pool_allied_pw
+        } else {
+            &self.pool
+        }
     }
 
-    #[test]
-    fn test_weapon_level() {
-        assert!(QuickMatchPoolQuery::check_weapon_level(0, 0));
-        assert!(QuickMatchPoolQuery::check_weapon_level(0, 2));
-        assert!(!QuickMatchPoolQuery::check_weapon_level(0, 4));
-        assert!(QuickMatchPoolQuery::check_weapon_level(12, 14));
-        assert!(QuickMatchPoolQuery::check_weapon_level(12, 8));
-        assert!(!QuickMatchPoolQuery::check_weapon_level(12, 25));
+    fn candidates(
+        pool: &Pool,
+        query: &QuickMatchPoolQuery,
+        limit: usize,
+        require_password: bool,
+    ) -> Vec<QuickMatchPoolEntry> {
+        pool.matches_bounded(limit, Order::NewestFirst, |entry| {
+            query.matches(entry)
+                && (!require_password
+                    || !entry.quickmatch_settings.is_allies_password_mode()
+                    || query.password == entry.password)
+        })
     }
 
-    #[test]
-    fn level_1_characters_match() {
-        let (host_tx, _) = channel();
-        let host = QuickMatchPoolEntry {
-            host_player_id: 1,
-            host_external_id: String::new(),
-            character_level: 1,
-            weapon_level: 1,
-            password: String::default(),
-            arena_id: 0x0,
-            quickmatch_settings: 0x0,
-            host_tx,
-        };
-
-        let joiner = QuickMatchPoolQuery {
-            player_id: 2,
-            character_level: 1,
-            weapon_level: 1,
-            password: String::default(),
-            arenas: vec![0x0],
-            quickmatch_settings: 0x0,
-        };
-
-        assert!(joiner.matches(&host));
+    pub fn register(&self, entry: QuickMatchPoolEntry, allied_pw: bool) -> QuickMatchPoolToken<'_> {
+        self.pool(allied_pw).insert(entry)
     }
 
-    #[test]
-    fn doesnt_match_differing_levels() {
-        let (host_tx, _) = channel();
-        let host = QuickMatchPoolEntry {
-            host_player_id: 1,
-            host_external_id: String::new(),
-            character_level: 1,
-            weapon_level: 1,
-            password: String::default(),
-            arena_id: 0x0,
-            quickmatch_settings: 0x0,
-            host_tx,
-        };
-
-        let joiner = QuickMatchPoolQuery {
-            player_id: 2,
-            character_level: 100,
-            weapon_level: 1,
-            password: String::default(),
-            arenas: vec![0x0],
-            quickmatch_settings: 0x0,
-        };
-
-        assert!(!joiner.matches(&host));
+    pub fn lobby_for_join(
+        &self,
+        host_player_id: i32,
+        team: QuickmatchTeamSlot,
+    ) -> Option<QuickMatchPoolEntry> {
+        let ally_entry = self.pool.get(&host_player_id);
+        let enemy_entry = self.pool_allied_pw.get(&host_player_id);
+        if team == QuickmatchTeamSlot::Ally {
+            ally_entry.or(enemy_entry)
+        } else {
+            enemy_entry.or(ally_entry)
+        }
     }
 
-    #[test]
-    fn password_matches_regardless() {
-        let (host_tx, _) = channel();
-        let host = QuickMatchPoolEntry {
-            host_player_id: 1,
-            host_external_id: String::new(),
-            character_level: 1,
-            weapon_level: 1,
-            password: String::from("test"),
-            arena_id: 0x0,
-            quickmatch_settings: 0x0,
-            host_tx,
-        };
-
-        let joiner = QuickMatchPoolQuery {
-            player_id: 2,
-            character_level: 713,
-            weapon_level: 1,
-            password: String::from("test"),
-            arenas: vec![0x0],
-            quickmatch_settings: 0x0,
-        };
-
-        assert!(joiner.matches(&host));
+    pub fn merge(
+        &self,
+        host_player_id: &i32,
+        allied_pw: bool,
+        merger: impl FnOnce(&mut QuickMatchPoolEntry),
+    ) -> Result<(), PoolError> {
+        self.pool(allied_pw).merge(host_player_id, merger)
     }
 
-    #[test]
-    fn doesnt_match_on_differing_passwords() {
-        let (host_tx, _) = channel();
-        let host = QuickMatchPoolEntry {
-            host_player_id: 1,
-            host_external_id: String::new(),
-            character_level: 1,
-            weapon_level: 1,
-            password: String::from("123"),
-            arena_id: 0x0,
-            quickmatch_settings: 0x0,
-            host_tx,
-        };
-
-        let joiner = QuickMatchPoolQuery {
-            player_id: 2,
-            character_level: 1,
-            weapon_level: 1,
-            password: String::from("456"),
-            arenas: vec![0x0],
-            quickmatch_settings: 0x0,
-        };
-
-        assert!(!joiner.matches(&host));
+    pub fn record_join_attempt(
+        &self,
+        key: QuickMatchJoinAttemptKey,
+        attempt: QuickMatchJoinAttempt,
+    ) {
+        self.join_attempts.insert(key, attempt);
     }
 
-    #[test]
-    fn doesnt_match_when_password_isnt_set_on_joiner() {
-        let (host_tx, _) = channel();
-        let host = QuickMatchPoolEntry {
-            host_player_id: 1,
-            host_external_id: String::new(),
-            character_level: 1,
-            weapon_level: 1,
-            password: String::default(),
-            arena_id: 0x0,
-            quickmatch_settings: 0x0,
-            host_tx,
-        };
-
-        let joiner = QuickMatchPoolQuery {
-            player_id: 2,
-            character_level: 1,
-            weapon_level: 1,
-            password: String::from("456"),
-            arenas: vec![0x0],
-            quickmatch_settings: 0x0,
-        };
-
-        assert!(!joiner.matches(&host));
+    pub fn take_join_attempt(
+        &self,
+        key: &QuickMatchJoinAttemptKey,
+    ) -> Option<QuickMatchJoinAttempt> {
+        self.join_attempts.remove(key)
     }
 
-    #[test]
-    fn doesnt_match_mismatching_arena_ids() {
-        let (host_tx, _) = channel();
-        let host = QuickMatchPoolEntry {
-            host_player_id: 1,
-            host_external_id: String::new(),
-            character_level: 1,
-            weapon_level: 1,
-            password: String::default(),
-            arena_id: 0x0,
-            quickmatch_settings: 0x0,
-            host_tx,
-        };
+    pub async fn search(&self, query: &QuickMatchPoolQuery, limit: usize) -> SearchResult {
+        let mut matches = Self::candidates(&self.pool, query, limit, true);
+        let mut target_team = QuickmatchTeamSlot::Ally;
+        let is_allied_password_opponent_search =
+            query.quickmatch_settings.is_allies_password_mode();
 
-        let joiner = QuickMatchPoolQuery {
-            player_id: 2,
-            character_level: 1,
-            weapon_level: 1,
-            password: String::default(),
-            arenas: vec![0x1],
-            quickmatch_settings: 0x0,
-        };
+        if matches.is_empty() && is_allied_password_opponent_search {
+            matches = Self::candidates(&self.pool_allied_pw, query, limit, false);
+            target_team = QuickmatchTeamSlot::Enemy;
+        }
 
-        assert!(!joiner.matches(&host));
+        SearchResult {
+            matches,
+            target_team,
+            is_allied_password_opponent_search,
+        }
     }
 
-    #[test]
-    fn doesnt_match_mismatching_settings() {
-        let (host_tx, _) = channel();
-        let host = QuickMatchPoolEntry {
-            host_player_id: 1,
-            host_external_id: String::new(),
-            character_level: 1,
-            weapon_level: 1,
-            password: String::default(),
-            arena_id: 0x0,
-            quickmatch_settings: 0x0,
-            host_tx,
-        };
-
-        let joiner = QuickMatchPoolQuery {
-            player_id: 2,
-            character_level: 1,
-            weapon_level: 1,
-            password: String::default(),
-            arenas: vec![0x0],
-            quickmatch_settings: 0x1,
-        };
-
-        assert!(!joiner.matches(&host));
-    }
-
-    #[test]
-    fn test_clayamore_group() {
-        let (host_tx, _) = channel();
-        let host = QuickMatchPoolEntry {
-            host_player_id: 1,
-            host_external_id: String::new(),
-            character_level: 130,
-            weapon_level: 25,
-            password: String::default(),
-            arena_id: 0x0,
-            quickmatch_settings: 0x0,
-            host_tx,
-        };
-
-        let joiner = QuickMatchPoolQuery {
-            player_id: 2,
-            character_level: 137,
-            weapon_level: 25,
-            password: String::default(),
-            arenas: vec![0x0],
-            quickmatch_settings: 0x0,
-        };
-
-        assert!(joiner.matches(&host));
-    }
-
-    #[test]
-    fn test_self_match_fails() {
-        let (host_tx, _) = channel();
-        let host = QuickMatchPoolEntry {
-            host_player_id: 1,
-            host_external_id: String::new(),
-            character_level: 1,
-            weapon_level: 1,
-            password: String::default(),
-            arena_id: 0x0,
-            quickmatch_settings: 0x0,
-            host_tx,
-        };
-
-        let joiner = QuickMatchPoolQuery {
-            player_id: 1,
-            character_level: 1,
-            weapon_level: 1,
-            password: String::default(),
-            arenas: vec![0x0],
-            quickmatch_settings: 0x0,
-        };
-
-        assert!(!joiner.matches(&host));
+    pub fn sweep_expired(&self, pool_ttl: Duration, join_attempt_ttl: Duration) {
+        self.pool.sweep_expired(pool_ttl);
+        self.pool_allied_pw.sweep_expired(pool_ttl);
+        self.join_attempts.sweep_expired(join_attempt_ttl);
     }
 }

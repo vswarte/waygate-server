@@ -1,36 +1,22 @@
-use std::time::Duration;
-
 use message::{
     builder::MessageBuilder,
     eldenring::{
-        JoinParams, JoinPayload, ObjectIdentifier, PushParams, RequestGetVisitorListParams,
-        RequestRejectVisitParams, RequestVisitParams, ResponseGetVisitorListParams,
-        ResponseGetVisitorListParamsEntry, ResponseRejectVisitParams, ResponseVisitParams,
-        VisitParams,
+        JoinParams, JoinPayload, ObjectIdentifier, PushParams, RejectVisitParams,
+        RequestGetVisitorListParams, RequestRejectVisitParams, RequestVisitParams,
+        ResponseGetVisitorListParams, ResponseGetVisitorListParamsEntry, ResponseRejectVisitParams,
+        ResponseVisitParams, ServerError, VisitParams,
     },
 };
-use rand::Rng;
-use thiserror::Error;
+use rand::{seq::SliceRandom, Rng};
 
 use crate::{
     handler::HandleRequest,
     services::eldenring::visit::{
-        VisitorAttempt, VisitorPoolKey, VisitorPoolQuery, VISIT_ATTEMPTS,
+        VisitAttemptKey, VisitorAttempt, VisitorPoolKey, VisitorPoolQuery,
     },
 };
 
 use super::DefaultClientHandler;
-
-#[derive(Debug, Error)]
-enum Error {
-    #[error("Visitor could not be found.")]
-    VisitorNotFound,
-    #[allow(dead_code)]
-    #[error("Visit attempt could not be found.")]
-    VisitAttemptNotFound,
-}
-
-const ATTEMPT_CLEANUP_TIMEOUT: Duration = Duration::from_secs(30);
 
 impl HandleRequest<Box<RequestGetVisitorListParams>, ResponseGetVisitorListParams>
     for DefaultClientHandler<'_>
@@ -39,20 +25,21 @@ impl HandleRequest<Box<RequestGetVisitorListParams>, ResponseGetVisitorListParam
         &mut self,
         request: &Box<RequestGetVisitorListParams>,
     ) -> Result<ResponseGetVisitorListParams, Box<dyn std::error::Error>> {
-        let pool_matches = self.services.pool_visitor.matches(&VisitorPoolQuery {
+        let mut pool_matches = self.services.pool_visitor.matches(&VisitorPoolQuery {
             player_id: self.session.player_id,
             play_region: 0,
             character_level: request.matching_parameters.character_level,
             weapon_level: request.matching_parameters.max_reinforce as u32,
             visit_type: request.visit_type,
         });
+        pool_matches.shuffle(&mut rand::rng());
 
         Ok(ResponseGetVisitorListParams {
             entries: pool_matches
                 .into_iter()
                 .map(|e| ResponseGetVisitorListParamsEntry {
-                    player_id: e.1.player_id,
-                    external_id: e.1.external_id.clone(),
+                    player_id: e.player_id,
+                    external_id: e.external_id.clone(),
                     unk1: 0,
                     play_region: 0,
                     unk2: 0,
@@ -68,29 +55,25 @@ impl HandleRequest<Box<RequestVisitParams>, ResponseVisitParams> for DefaultClie
         request: &Box<RequestVisitParams>,
     ) -> Result<ResponseVisitParams, Box<dyn std::error::Error>> {
         // Retrieve pool entry for tapped sign if it's still there.
-        let pool_key = VisitorPoolKey(request.player_id);
+        let pool_key = VisitorPoolKey {
+            player_id: request.player_id,
+            visit_type: request.visit_type,
+        };
         let Some(entry) = self.services.pool_visitor.get(&pool_key) else {
-            return Err(Box::new(Error::VisitorNotFound));
+            return Err(Box::new(ServerError::NotFound));
         };
 
         // Save our connection attempt for cancellation if required.
         let summoner_id = self.session.player_id;
-        VISIT_ATTEMPTS.insert(
-            (pool_key.clone(), summoner_id),
+        self.services.visit_attempts.insert(
+            VisitAttemptKey {
+                visitor_id: pool_key.clone(),
+                summoner_id,
+            },
             VisitorAttempt {
                 summoner_tx: self.push_tx.clone(),
             },
         );
-
-        // Remove attempt entry after a while so it doesn't linger if the summoning was
-        // successful or the summonee goes offline.
-        {
-            let pool_key = pool_key.clone();
-            tokio::spawn(async move {
-                tokio::time::sleep(ATTEMPT_CLEANUP_TIMEOUT).await;
-                let _ = VISIT_ATTEMPTS.remove(&(pool_key, summoner_id));
-            });
-        }
 
         entry.visitor_tx.send(
             MessageBuilder::push()
@@ -118,27 +101,33 @@ impl HandleRequest<Box<RequestRejectVisitParams>, ResponseRejectVisitParams>
 {
     async fn handle(
         &mut self,
-        _request: &Box<RequestRejectVisitParams>,
+        request: &Box<RequestRejectVisitParams>,
     ) -> Result<ResponseRejectVisitParams, Box<dyn std::error::Error>> {
-        // let pool_key = VisitorPoolKey(request.host_player_id);
+        let attempt = self
+            .services
+            .visit_attempts
+            .remove(&VisitAttemptKey {
+                visitor_id: VisitorPoolKey {
+                    player_id: self.session.player_id,
+                    visit_type: request.visit_type,
+                },
+                summoner_id: request.host_player_id,
+            })
+            .ok_or(ServerError::NotFound)?;
 
-        // let attempt = VISIT_ATTEMPTS
-        //     .remove(&(pool_key, request.host_player_id))
-        //     .ok_or(Error::VisitAttemptNotFound)?;
-
-        // attempt.summoner_tx.send(
-        //     MessageBuilder::push()
-        //         .body(PushParams::Join(JoinParams {
-        //             identifier: ObjectIdentifier(rand::rng().random::<i64>()),
-        //             join_payload: JoinPayload::RejectVisit(RejectVisitParams {
-        //                 unk1: todo!(),
-        //                 unk2: todo!(),
-        //                 unk3: todo!(),
-        //                 unk4: todo!(),
-        //             }),
-        //         }))
-        //         .build()?,
-        // )?;
+        attempt.summoner_tx.send(
+            MessageBuilder::push()
+                .body(PushParams::Join(JoinParams {
+                    identifier: ObjectIdentifier(rand::rng().random::<i64>()),
+                    join_payload: JoinPayload::RejectVisit(RejectVisitParams {
+                        visitor_player_id: self.session.player_id,
+                        unk2: 0,
+                        unk3: String::new(),
+                        visit_type: request.visit_type,
+                    }),
+                }))
+                .build()?,
+        )?;
 
         Ok(ResponseRejectVisitParams {})
     }

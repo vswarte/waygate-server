@@ -39,6 +39,16 @@ impl BanService {
         Ok(ban)
     }
 
+    pub async fn is_banned(&self, steam_id: u64) -> Result<bool, sqlx::Error> {
+        let banned = sqlx::query("SELECT EXISTS(SELECT 1 FROM bans WHERE external_id = $1)")
+            .bind(format!("{steam_id:x}"))
+            .fetch_one(&self.database)
+            .await?
+            .get(0);
+
+        Ok(banned)
+    }
+
     pub async fn list_bans(&self, limit: i64, offset: i64) -> Result<Vec<BanRecord>, sqlx::Error> {
         let bans =
             sqlx::query_as::<_, BanRecord>("SELECT * FROM bans ORDER BY ban_id LIMIT $1 OFFSET $2")
