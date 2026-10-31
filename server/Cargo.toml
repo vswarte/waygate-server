@@ -37,11 +37,17 @@ wire.workspace = true
 base64 = "0.22"
 libsodium-sys = "0.2"
 rand = "0.9"
-steamworks = "0.11"
+steamworks = "0.13.1"
 serde = "1.0"
 serde_yaml = "0.9"
 actix-web = "4"
 dashmap = "6"
+dotenvy = "0.15.7"
+indexmap = "2"
+parking_lot = "0.12"
+
+[dev-dependencies]
+tokio = { version = "1", features = ["test-util"] }
 
 [target.'cfg(target_env = "musl")'.dependencies]
 mimalloc = "0.1"

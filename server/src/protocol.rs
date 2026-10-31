@@ -1,6 +1,9 @@
 mod crypto;
 
-use std::time::{self};
+use std::{
+    sync::Arc,
+    time::{self},
+};
 
 use base64::{prelude::BASE64_STANDARD, Engine};
 use crypto::ClientProtocolCrypto;
@@ -15,7 +18,10 @@ use message::{
 use rand::prelude::*;
 use sqlx::{Pool, Postgres, Row};
 
-use crate::Config;
+use crate::{
+    services::eldenring::GameServices,
+    steam::{SteamSession, TicketValidationError},
+};
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -35,6 +41,8 @@ pub enum Error {
     MessageBuilder,
     #[error("Failed encrypting message.")]
     Encrypt,
+    #[error("Steam ticket validation failed: {0}")]
+    TicketValidation(#[from] TicketValidationError),
 }
 
 pub struct ClientProtocolConfig {
@@ -42,13 +50,14 @@ pub struct ClientProtocolConfig {
     kx_client_public_key: Vec<u8>,
 }
 
-impl TryFrom<&Config> for ClientProtocolConfig {
+impl TryFrom<(&str, &str)> for ClientProtocolConfig {
     type Error = base64::DecodeError;
 
-    fn try_from(value: &Config) -> Result<Self, Self::Error> {
+    /// `(server_secret_key, client_public_key)`, each base64-encoded.
+    fn try_from(value: (&str, &str)) -> Result<Self, Self::Error> {
         Ok(ClientProtocolConfig {
-            kx_server_secret_key: BASE64_STANDARD.decode(&value.server_secret_key)?,
-            kx_client_public_key: BASE64_STANDARD.decode(&value.client_public_key)?,
+            kx_server_secret_key: BASE64_STANDARD.decode(value.0)?,
+            kx_client_public_key: BASE64_STANDARD.decode(value.1)?,
         })
     }
 }
@@ -57,26 +66,37 @@ impl TryFrom<&Config> for ClientProtocolConfig {
 pub struct ClientProtocol {
     database: Pool<Postgres>,
     external_id: String,
+    steam_id: u64,
     peer_address: String,
     crypto: ClientProtocolCrypto,
     state: ClientProtocolState,
     session: Option<ClientSession>,
+    services: Arc<GameServices>,
+    steam_session: Option<SteamSession>,
+    banned: bool,
 }
 
 impl ClientProtocol {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         database: Pool<Postgres>,
         external_id: String,
+        steam_id: u64,
         peer_address: String,
         config: ClientProtocolConfig,
+        services: Arc<GameServices>,
     ) -> Result<Self, Error> {
         Ok(Self {
             database,
             external_id,
+            steam_id,
             peer_address,
             crypto: ClientProtocolCrypto::generate(&config)?,
             state: ClientProtocolState::AwaitingHello,
             session: None,
+            services,
+            steam_session: None,
+            banned: false,
         })
     }
 
@@ -110,6 +130,21 @@ impl ClientProtocol {
                     ));
                 }
 
+                let request = reader.deserialize_request().map_err(|_| {
+                    Error::ProtocolViolation("Deserialization of session request failed")
+                })?;
+
+                let steam_ticket: &[u8] = match &request {
+                    RequestParams::CreateSession(r) => &r.steam_ticket,
+                    RequestParams::RestoreSession(r) => &r.steam_ticket,
+                    _ => {
+                        return Err(Error::ProtocolViolation(
+                            "First request was not CreateSesion or RestoreSession",
+                        ))
+                    }
+                };
+                self.authenticate(steam_ticket).await?;
+
                 let player_id = self
                     .acquire_player_id(&self.external_id)
                     .await
@@ -123,9 +158,7 @@ impl ClientProtocol {
                 let valid_from = (now - valid_for).as_secs() as i64;
                 let valid_until = (now + valid_for).as_secs() as i64;
 
-                let response = match reader.deserialize_request().map_err(|_| {
-                    Error::ProtocolViolation("Deserialization of session request failed")
-                })? {
+                let response = match request {
                     RequestParams::CreateSession(_) => {
                         let session_id = self
                             .create_session(player_id, &cookie, valid_until)
@@ -136,6 +169,7 @@ impl ClientProtocol {
                             player_id,
                             session_id,
                             external_id: self.external_id.clone(),
+                            steam_id: self.steam_id,
                             peer_address: self.peer_address.clone(),
                         });
 
@@ -165,6 +199,7 @@ impl ClientProtocol {
                             player_id,
                             session_id: session.session_id,
                             external_id: self.external_id.clone(),
+                            steam_id: self.steam_id,
                             peer_address: self.peer_address.clone(),
                         });
 
@@ -178,11 +213,7 @@ impl ClientProtocol {
                             redirect_url: String::new(),
                         })
                     }
-                    _ => {
-                        return Err(Error::ProtocolViolation(
-                            "First request was not CreateSesion or RestoreSession",
-                        ))
-                    }
+                    _ => unreachable!("checked above"),
                 };
 
                 let mut response = MessageBuilder::response()
@@ -209,6 +240,26 @@ impl ClientProtocol {
             }
             _ => unimplemented!(),
         }
+    }
+
+    async fn authenticate(&mut self, steam_ticket: &[u8]) -> Result<(), Error> {
+        let session = self
+            .services
+            .steam
+            .start_session(self.steam_id, steam_ticket)?;
+        self.steam_session = Some(session);
+
+        self.banned = self
+            .services
+            .bans
+            .is_banned(self.steam_id)
+            .await
+            .map_err(|_| Error::AcquirePlayer)?;
+        Ok(())
+    }
+
+    pub fn is_banned(&self) -> bool {
+        self.banned
     }
 
     /// Decrypts a received message.
@@ -292,6 +343,7 @@ pub struct ClientSession {
     /// External ID of the player's account.
     /// In case of steam, this will be hex-encoded steam ID.
     pub external_id: String,
+    pub steam_id: u64,
     pub peer_address: String,
 }
 

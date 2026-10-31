@@ -21,6 +21,9 @@ pub struct NotificationChannelPool {
 }
 
 impl NotificationChannelPool {
+    pub fn len(&self) -> usize {
+        self.entries.len()
+    }
     /// Send a notification push message to a specific player.
     pub fn notify_player(
         &self,

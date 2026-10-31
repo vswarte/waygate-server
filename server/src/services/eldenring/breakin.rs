@@ -1,56 +1,36 @@
-use std::{
-    collections::HashMap,
-    sync::{mpsc::Sender, LazyLock, Mutex, MutexGuard},
-    time::Duration,
-};
+use std::{sync::mpsc::Sender, time::Duration};
 
-use dashmap::DashMap;
-
-use crate::{logging::LogContext, services::eldenring::PoolError};
+use crate::services::ordered_pool::{Keyed, Order, OrderedPool, OrderedPoolToken};
 
 use super::weapon;
 
-pub const BREAKIN_ATTEMPT_CLEANUP_TIMEOUT: Duration = Duration::from_secs(30);
-
-// TODO: in case of far breakins the client will send a request **per area**. This leads to a lot
-// of locking. It might be better to split out these pools per area.
 #[derive(Default)]
 pub struct BreakInPool {
-    entries: DashMap<BreakInPoolKey, BreakInPoolEntry>,
+    inner: OrderedPool<BreakInPoolEntry>,
 }
 
 impl BreakInPool {
-    pub fn insert(&self, player_id: i32, entry: BreakInPoolEntry) -> BreakInPoolToken {
-        let key = BreakInPoolKey(player_id);
-        self.entries.insert(key.clone(), entry);
-        BreakInPoolToken(self, key)
+    pub fn sync<'a>(
+        &'a self,
+        token: &mut Option<BreakInPoolToken<'a>>,
+        entry: Option<BreakInPoolEntry>,
+    ) {
+        self.inner.sync(token, entry)
+    }
+
+    pub fn sweep_expired(&self, ttl: Duration) {
+        self.inner.sweep_expired(ttl);
     }
 
     pub fn get(&self, key: &BreakInPoolKey) -> Option<BreakInPoolEntry> {
-        self.entries.get(key).map(|e| e.clone())
+        self.inner.get(key)
     }
 
-    pub fn matches(&self, query: &BreakInPoolQuery) -> Vec<(BreakInPoolKey, BreakInPoolEntry)> {
-        self.entries
-            .iter()
-            .filter(|e| query.matches(e.value()))
-            .map(|e| (e.key().clone(), e.value().clone()))
-            .collect()
-    }
-
-    pub fn remove(&self, key: &BreakInPoolKey) -> Result<(), PoolError> {
-        self.entries.remove(key).ok_or(PoolError::NotFound)?;
-        Ok(())
-    }
-
-    pub fn replace(
-        &self,
-        key: &BreakInPoolKey,
-        entry: BreakInPoolEntry,
-    ) -> Result<BreakInPoolEntry, PoolError> {
-        self.entries
-            .insert(key.clone(), entry)
-            .ok_or(PoolError::NotFound)
+    pub fn matches(&self, query: &BreakInPoolQuery) -> Vec<BreakInPoolEntry> {
+        self.inner
+            .matches_bounded(query.limit as usize, Order::OldestFirst, |e| {
+                query.matches(e)
+            })
     }
 }
 
@@ -62,6 +42,23 @@ pub struct BreakInPoolEntry {
     pub play_region: u32,
     pub external_id: String,
     pub target_tx: Sender<Vec<u8>>,
+    pub updated_at: tokio::time::Instant,
+}
+
+impl Keyed for BreakInPoolEntry {
+    type Key = BreakInPoolKey;
+
+    fn key(&self) -> BreakInPoolKey {
+        BreakInPoolKey(self.player_id)
+    }
+
+    fn updated_at(&self) -> tokio::time::Instant {
+        self.updated_at
+    }
+
+    fn touch(&mut self) {
+        self.updated_at = tokio::time::Instant::now();
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -70,6 +67,7 @@ pub struct BreakInPoolQuery {
     pub character_level: u32,
     pub weapon_level: u32,
     pub play_region: u32,
+    pub limit: u32,
 }
 
 impl BreakInPoolQuery {
@@ -106,47 +104,18 @@ impl BreakInPoolQuery {
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub struct BreakInPoolKey(pub i32);
 
-/// Represents an entry in the sign pool. Removes corresponding entry when dropped.
-pub struct BreakInPoolToken<'a>(&'a BreakInPool, pub BreakInPoolKey);
+pub type BreakInPoolToken<'a> = OrderedPoolToken<'a, BreakInPoolEntry>;
 
-impl Drop for BreakInPoolToken<'_> {
-    fn drop(&mut self) {
-        let _ = self.0.remove(&self.1);
-    }
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
+pub struct BreakInAttemptKey {
+    pub target_id: BreakInPoolKey,
+    pub invader_id: i32,
 }
-
-pub static BREAKIN_ATTEMPTS: LazyLock<BreakInAttemptTracker> = LazyLock::new(Default::default);
 
 #[derive(Clone)]
 pub struct BreakInAttempt {
     /// invader channel sender for push notifs
     pub invader_tx: Sender<Vec<u8>>,
-}
-
-#[derive(Default)]
-pub struct BreakInAttemptTracker {
-    entries: Mutex<HashMap<(BreakInPoolKey, i32), BreakInAttempt>>,
-}
-
-impl BreakInAttemptTracker {
-    pub fn insert(&'static self, key: (BreakInPoolKey, i32), attempt: BreakInAttempt) {
-        self.lock().insert(key, attempt);
-    }
-
-    pub fn remove(&self, key: &(BreakInPoolKey, i32)) -> Option<BreakInAttempt> {
-        self.lock().remove(key)
-    }
-
-    fn lock(&self) -> MutexGuard<'_, HashMap<(BreakInPoolKey, i32), BreakInAttempt>> {
-        self.entries.lock().unwrap_or_else(|p| {
-            log::warn!(
-                context:serde = LogContext::current();
-                "Sign pool recovering from mutex poisoning"
-            );
-            self.entries.clear_poison();
-            p.into_inner()
-        })
-    }
 }
 
 #[cfg(test)]
@@ -183,6 +152,7 @@ mod test {
             play_region: 0,
             external_id: String::default(),
             target_tx,
+            updated_at: tokio::time::Instant::now(),
         };
 
         let invader = BreakInPoolQuery {
@@ -190,6 +160,7 @@ mod test {
             character_level: 1,
             weapon_level: 1,
             play_region: 0,
+            limit: 10,
         };
 
         assert!(invader.matches(&host));
@@ -205,6 +176,7 @@ mod test {
             play_region: 0,
             external_id: String::default(),
             target_tx,
+            updated_at: tokio::time::Instant::now(),
         };
 
         let invader = BreakInPoolQuery {
@@ -212,6 +184,7 @@ mod test {
             character_level: 400,
             weapon_level: 1,
             play_region: 0,
+            limit: 10,
         };
 
         assert!(invader.matches(&host));
@@ -227,6 +200,7 @@ mod test {
             play_region: 1,
             external_id: String::default(),
             target_tx,
+            updated_at: tokio::time::Instant::now(),
         };
 
         let invader = BreakInPoolQuery {
@@ -234,6 +208,7 @@ mod test {
             character_level: 1,
             weapon_level: 1,
             play_region: 0,
+            limit: 10,
         };
 
         assert!(!invader.matches(&host));
@@ -249,6 +224,7 @@ mod test {
             play_region: 0,
             external_id: String::default(),
             target_tx,
+            updated_at: tokio::time::Instant::now(),
         };
 
         let invader = BreakInPoolQuery {
@@ -256,6 +232,7 @@ mod test {
             character_level: 1,
             weapon_level: 1,
             play_region: 0,
+            limit: 10,
         };
 
         assert!(!invader.matches(&host));

@@ -1,6 +1,6 @@
 use std::fs::File;
 
-use crate::handler::HandleRequest;
+use crate::handler::{eldenring::BannedClientHandler, HandleRequest};
 use message::eldenring::{
     RequestGetAnnounceMessageListParams, ResponseGetAnnounceMessageListParams,
     ResponseGetAnnounceMessageListParamsEntry,
@@ -35,13 +35,39 @@ impl HandleRequest<Box<RequestGetAnnounceMessageListParams>, ResponseGetAnnounce
     }
 }
 
+impl HandleRequest<Box<RequestGetAnnounceMessageListParams>, ResponseGetAnnounceMessageListParams>
+    for BannedClientHandler
+{
+    async fn handle(
+        &mut self,
+        _request: &Box<RequestGetAnnounceMessageListParams>,
+    ) -> Result<ResponseGetAnnounceMessageListParams, Box<dyn std::error::Error>> {
+        let announcements = serde_yaml::from_reader::<_, AnnouncementConfig>(File::open(
+            "config/ban_announcement.yml",
+        )?)?;
+
+        Ok(ResponseGetAnnounceMessageListParams {
+            changes: announcements
+                .changes
+                .iter()
+                .map(ResponseGetAnnounceMessageListParamsEntry::from)
+                .collect(),
+            notices: announcements
+                .notices
+                .iter()
+                .map(ResponseGetAnnounceMessageListParamsEntry::from)
+                .collect(),
+        })
+    }
+}
+
 #[derive(Deserialize, Serialize)]
 pub struct AnnouncementConfig {
     pub changes: Vec<AnnouncementItem>,
     pub notices: Vec<AnnouncementItem>,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone)]
 pub struct AnnouncementItem {
     index: u32,
     published_at: u64,

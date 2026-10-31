@@ -2,7 +2,7 @@ use message::eldenring::{
     BloodstainAdvertisementData, ObjectIdentifier, PlayRegionArea, Position,
     RequestCreateBloodstainParams, RequestGetBloodstainListParams, RequestGetDeadingGhostParams,
     ResponseCreateBloodstainParams, ResponseGetBloodstainListParams,
-    ResponseGetBloodstainListParamsEntry, ResponseGetDeadingGhostParams,
+    ResponseGetBloodstainListParamsEntry, ResponseGetDeadingGhostParams, ServerError,
 };
 use sqlx::Row;
 use wire::deserialize;
@@ -171,7 +171,13 @@ impl HandleRequest<Box<RequestGetDeadingGhostParams>, ResponseGetDeadingGhostPar
         let bloodstain = sqlx::query_as::<_, BloodstainRecord>(SELECT_BY_ID_QUERY)
             .bind(request.identifier.0)
             .fetch_one(&self.services.database)
-            .await?;
+            .await
+            .map_err(|e| -> Box<dyn std::error::Error> {
+                match e {
+                    sqlx::Error::RowNotFound => Box::new(ServerError::DbDataNotFound),
+                    e => Box::new(e),
+                }
+            })?;
 
         Ok(ResponseGetDeadingGhostParams {
             unk0: 0,

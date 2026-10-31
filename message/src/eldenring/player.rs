@@ -53,12 +53,12 @@ pub struct CharacterStatistics {
     /// Play time in seconds, capped at 3599999 (999 hours, 59 minutes, 59 seconds)
     pub play_time: u32,
     pub sites_of_grace: Vec<SiteOfGrace>,
-    pub unk1: u32,
-    pub unk2: u32,
-    pub unk3: u32,
-    pub unk4: u32,
-    pub unk5: u32,
-    pub unk6: u32,
+    pub quickmatch_united_combat_rank: u32,
+    pub quickmatch_united_combat_points: u32,
+    pub quickmatch_duel_rank: u32,
+    pub quickmatch_duel_points: u32,
+    pub quickmatch_spirit_ashes_rank: u32,
+    pub quickmatch_spirit_ashes_points: u32,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -268,17 +268,20 @@ pub struct RequestLeaveMultiplayParams {}
 pub struct ResponseLeaveMultiplayParams {}
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct RequestUpdateLoginPlayerCharacterParams {}
+pub struct RequestUpdateLoginPlayerCharacterParams {
+    pub character_id: u32,
+    pub unk1: u32,
+}
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ResponseUpdateLoginPlayerCharacterParams {
     pub character_id: u32,
-    pub unk1: u32,
-    pub unk2: u32,
-    pub unk3: u32,
-    pub unk4: u32,
-    pub unk5: u32,
-    pub unk6: u32,
+    pub quickmatch_united_combat_rank: u32,
+    pub quickmatch_united_combat_points: u32,
+    pub quickmatch_duel_rank: u32,
+    pub quickmatch_duel_points: u32,
+    pub quickmatch_spirit_ashes_rank: u32,
+    pub quickmatch_spirit_ashes_points: u32,
 }
 
 #[cfg(test)]

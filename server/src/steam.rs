@@ -3,7 +3,7 @@ use std::{
     time::Duration,
 };
 
-use steamworks::{Server, SteamAPIInitError, SteamId};
+use steamworks::{Server, SteamId};
 
 use crate::logging::LogContext;
 
@@ -12,8 +12,17 @@ pub struct SteamServer {
     session_end_tx: Sender<SteamId>,
 }
 
+#[derive(Debug, thiserror::Error)]
+pub enum TicketValidationError {
+    #[error("steam init failed: {0}")]
+    Init(#[from] steamworks::SteamAPIInitError),
+
+    #[error("ticket rejected: {0}")]
+    Rejected(#[from] steamworks::AuthSessionError),
+}
+
 impl SteamServer {
-    pub fn init() -> Result<Self, SteamAPIInitError> {
+    pub fn init() -> Result<Self, TicketValidationError> {
         let (server, single) = steamworks::Server::init(
             "127.0.0.1".parse().unwrap(),
             10901,
@@ -50,18 +59,16 @@ impl SteamServer {
         &self,
         steam_id: u64,
         ticket: &[u8],
-    ) -> Result<SteamSession, steamworks::AuthSessionError> {
+    ) -> Result<SteamSession, TicketValidationError> {
         let steam_id = SteamId::from_raw(steam_id);
         match self.server.begin_authentication_session(steam_id, ticket) {
             Err(steamworks::AuthSessionError::DuplicateRequest) => {
                 self.server.end_authentication_session(steam_id);
-                self.server.begin_authentication_session(steam_id, ticket)?;
+                self.server.begin_authentication_session(steam_id, ticket)
             }
-            Err(e) => return Err(e),
-            _ => {}
-        }
+            other => other,
+        }?;
 
-        // TODO: listen for ValidateAuthTicket callbacks
         Ok(SteamSession {
             steam_id,
             session_end_tx: self.session_end_tx.clone(),

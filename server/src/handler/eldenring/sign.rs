@@ -8,33 +8,23 @@ use message::{
         ResponseCreateMatchAreaSignParams, ResponseCreateSignParams,
         ResponseGetMatchAreaSignListParams, ResponseGetMatchAreaSignListParamsEntry,
         ResponseGetSignListParams, ResponseGetSignListParamsEntry, ResponseRejectSignParams,
-        ResponseRemoveSignParams, ResponseSummonSignParams, ResponseUpdateSignParams,
+        ResponseRemoveSignParams, ResponseSummonSignParams, ResponseUpdateSignParams, ServerError,
         SummonSignParams,
     },
 };
 use rand::prelude::*;
-use thiserror::Error;
 
 use crate::{
     handler::HandleRequest,
     services::eldenring::{
         area::MatchingArea,
         sign::{
-            PuddleSignPoolQuery, SignPoolEntry, SignPoolKey, SignPoolQuery, SummonAttempt,
-            SIGN_ATTEMPT_CLEANUP_TIMEOUT, SUMMON_ATTEMPTS,
+            PuddleSignPoolQuery, SignPoolEntry, SignPoolQuery, SummonAttempt, SummonAttemptKey,
         },
     },
 };
 
 use super::DefaultClientHandler;
-
-#[derive(Debug, Error)]
-enum Error {
-    #[error("Sign could not be found.")]
-    SignNotFound,
-    #[error("Summon attempt could not be found.")]
-    SummonAttemptNotFound,
-}
 
 impl HandleRequest<Box<RequestCreateSignParams>, ResponseCreateSignParams>
     for DefaultClientHandler<'_>
@@ -44,6 +34,7 @@ impl HandleRequest<Box<RequestCreateSignParams>, ResponseCreateSignParams>
         request: &Box<RequestCreateSignParams>,
     ) -> Result<ResponseCreateSignParams, Box<dyn std::error::Error>> {
         let token = self.services.pool_sign.insert(SignPoolEntry {
+            id: ObjectIdentifier::default(),
             player_id: self.session.player_id,
             external_id: self.session.external_id.clone(),
             character_level: request.matching_parameters.character_level,
@@ -56,10 +47,11 @@ impl HandleRequest<Box<RequestCreateSignParams>, ResponseCreateSignParams>
             group_passwords: request.group_passwords.clone(),
             data: request.data.clone(),
             summonee_tx: self.push_tx.clone(),
+            updated_at: tokio::time::Instant::now(),
         });
 
-        let identifier = ObjectIdentifier(token.1 .0);
-        self.sign_tokens.insert(identifier, token);
+        let identifier = *token.key();
+        self.sign_token = Some(token);
 
         Ok(ResponseCreateSignParams { identifier })
     }
@@ -73,6 +65,7 @@ impl HandleRequest<Box<RequestCreateMatchAreaSignParams>, ResponseCreateMatchAre
         request: &Box<RequestCreateMatchAreaSignParams>,
     ) -> Result<ResponseCreateMatchAreaSignParams, Box<dyn std::error::Error>> {
         let token = self.services.pool_sign.insert(SignPoolEntry {
+            id: ObjectIdentifier::default(),
             player_id: self.session.player_id,
             external_id: self.session.external_id.clone(),
             character_level: request.matching_parameters.character_level,
@@ -85,10 +78,11 @@ impl HandleRequest<Box<RequestCreateMatchAreaSignParams>, ResponseCreateMatchAre
             group_passwords: request.group_passwords.clone(),
             data: request.data.clone(),
             summonee_tx: self.push_tx.clone(),
+            updated_at: tokio::time::Instant::now(),
         });
 
-        let identifier = ObjectIdentifier(token.1 .0);
-        self.sign_tokens.insert(identifier, token);
+        let identifier = *token.key();
+        self.sign_token = Some(token);
 
         Ok(ResponseCreateMatchAreaSignParams { identifier })
     }
@@ -101,12 +95,8 @@ impl HandleRequest<Box<RequestUpdateSignParams>, ResponseUpdateSignParams>
         &mut self,
         request: &Box<RequestUpdateSignParams>,
     ) -> Result<ResponseUpdateSignParams, Box<dyn std::error::Error>> {
-        if !self
-            .services
-            .pool_sign
-            .has(&SignPoolKey(request.identifier.0))
-        {
-            Err(Box::new(Error::SignNotFound))
+        if self.services.pool_sign.touch(&request.identifier).is_err() {
+            Err(Box::new(ServerError::NotFound))
         } else {
             Ok(ResponseUpdateSignParams {
                 identifier: request.identifier,
@@ -134,34 +124,33 @@ impl HandleRequest<Box<RequestGetSignListParams>, ResponseGetSignListParams>
         let known_signs = pool_matches
             .iter()
             .filter_map(|e| {
-                let identifier = ObjectIdentifier(e.0 .0);
-                if request.known_signs.contains(&identifier) {
-                    Some(identifier)
+                if request.known_signs.contains(&e.id) {
+                    Some(e.id)
                 } else {
                     None
                 }
             })
             .collect::<Vec<ObjectIdentifier>>();
 
-        pool_matches.retain(|e| !known_signs.contains(&ObjectIdentifier(e.0 .0)));
+        pool_matches.retain(|e| !known_signs.contains(&e.id));
 
         Ok(ResponseGetSignListParams {
             known_signs,
             entries: pool_matches
                 .iter()
                 .map(|e| {
-                    let MatchingArea::PlayRegion(area) = e.1.location.clone() else {
+                    let MatchingArea::PlayRegion(area) = e.location.clone() else {
                         panic!("Filter tried passing puddle sign to GetSignList response.");
                     };
 
                     ResponseGetSignListParamsEntry {
-                        player_id: e.1.player_id,
-                        identifier: ObjectIdentifier(e.0 .0),
+                        player_id: e.player_id,
+                        identifier: e.id,
                         area,
-                        data: e.1.data.clone(),
-                        external_id: e.1.external_id.clone(),
+                        data: e.data.clone(),
+                        external_id: e.external_id.clone(),
                         unk1: 0,
-                        group_passwords: e.1.group_passwords.clone(),
+                        group_passwords: e.group_passwords.clone(),
                     }
                 })
                 .collect(),
@@ -197,34 +186,33 @@ impl HandleRequest<Box<RequestGetMatchAreaSignListParams>, ResponseGetMatchAreaS
         let known_signs = pool_matches
             .iter()
             .filter_map(|e| {
-                let identifier = ObjectIdentifier(e.0 .0);
-                if request.known_signs.contains(&identifier) {
-                    Some(identifier)
+                if request.known_signs.contains(&e.id) {
+                    Some(e.id)
                 } else {
                     None
                 }
             })
             .collect::<Vec<ObjectIdentifier>>();
 
-        pool_matches.retain(|e| !known_signs.contains(&ObjectIdentifier(e.0 .0)));
+        pool_matches.retain(|e| !known_signs.contains(&e.id));
 
         Ok(ResponseGetMatchAreaSignListParams {
             known_signs,
             entries: pool_matches
                 .iter()
                 .map(|e| {
-                    let MatchingArea::Puddle(ref puddle) = e.1.location else {
+                    let MatchingArea::Puddle(ref puddle) = e.location else {
                         panic!("Filter tried passing non-puddle sign to GetMatchAreaSignList response.");
                     };
 
                     ResponseGetMatchAreaSignListParamsEntry {
-                        player_id: e.1.player_id,
-                        identifier: ObjectIdentifier(e.0 .0),
+                        player_id: e.player_id,
+                        identifier: e.id,
                         puddle: puddle.clone(),
-                        data: e.1.data.clone(),
-                        external_id: e.1.external_id.clone(),
+                        data: e.data.clone(),
+                        external_id: e.external_id.clone(),
                         unk2: 0,
-                        group_passwords: e.1.group_passwords.clone(),
+                        group_passwords: e.group_passwords.clone(),
                     }
                 })
                 .collect(),
@@ -239,7 +227,13 @@ impl HandleRequest<Box<RequestRemoveSignParams>, ResponseRemoveSignParams>
         &mut self,
         request: &Box<RequestRemoveSignParams>,
     ) -> Result<ResponseRemoveSignParams, Box<dyn std::error::Error>> {
-        self.sign_tokens.remove(&request.sign_identifier);
+        if self
+            .sign_token
+            .as_ref()
+            .is_some_and(|token| token.key() == &request.sign_identifier)
+        {
+            self.sign_token = None;
+        }
 
         Ok(ResponseRemoveSignParams {})
     }
@@ -253,29 +247,20 @@ impl HandleRequest<Box<RequestSummonSignParams>, ResponseSummonSignParams>
         request: &Box<RequestSummonSignParams>,
     ) -> Result<ResponseSummonSignParams, Box<dyn std::error::Error>> {
         // Retrieve pool entry for tapped sign if it's still there.
-        let pool_key = SignPoolKey(request.identifier.0);
-        let Some(entry) = self.services.pool_sign.get(&pool_key) else {
-            return Err(Box::new(Error::SignNotFound));
+        let Some(entry) = self.services.pool_sign.get(&request.identifier) else {
+            return Err(Box::new(ServerError::NotFound));
         };
 
-        // Save our connection attempt for cancellation if required.
         let summoner_id = self.session.player_id;
-        SUMMON_ATTEMPTS.insert(
-            (pool_key.clone(), summoner_id),
+        self.services.summon_attempts.insert(
+            SummonAttemptKey {
+                sign_id: request.identifier,
+                summoner_id,
+            },
             SummonAttempt {
                 summoner_tx: self.push_tx.clone(),
             },
         );
-
-        // Remove attempt entry after a while so it doesn't linger if the summoning was
-        // successful or the summonee goes offline.
-        {
-            let pool_key = pool_key.clone();
-            tokio::spawn(async move {
-                tokio::time::sleep(SIGN_ATTEMPT_CLEANUP_TIMEOUT).await;
-                let _ = SUMMON_ATTEMPTS.remove(&(pool_key, summoner_id));
-            });
-        }
 
         entry.summonee_tx.send(
             MessageBuilder::push()
@@ -303,11 +288,14 @@ impl HandleRequest<Box<RequestRejectSignParams>, ResponseRejectSignParams>
         &mut self,
         request: &Box<RequestRejectSignParams>,
     ) -> Result<ResponseRejectSignParams, Box<dyn std::error::Error>> {
-        let pool_key = SignPoolKey(request.sign_identifier.0);
-
-        let attempt = SUMMON_ATTEMPTS
-            .remove(&(pool_key, request.summoning_player_id))
-            .ok_or(Error::SummonAttemptNotFound)?;
+        let attempt = self
+            .services
+            .summon_attempts
+            .remove(&SummonAttemptKey {
+                sign_id: request.sign_identifier,
+                summoner_id: request.summoning_player_id,
+            })
+            .ok_or(ServerError::NotFound)?;
 
         attempt.summoner_tx.send(
             MessageBuilder::push()

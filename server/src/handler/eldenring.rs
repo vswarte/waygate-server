@@ -1,27 +1,22 @@
-use std::{collections::HashMap, fs::File, sync::mpsc::Sender};
+use std::sync::mpsc::Sender;
 
-use message::eldenring::{
-    ObjectIdentifier, RequestGetAnnounceMessageListParams, RequestParams,
-    ResponseGetAnnounceMessageListParams, ResponseGetAnnounceMessageListParamsEntry,
-    ResponseParams, ResponsePollMatchingTicketParams,
-};
+use message::eldenring::{NetError, RequestParams, ResponseParams};
 
 mod announcement;
+mod antitamper;
 mod bloodmessage;
 mod bloodstain;
 mod breakin;
 mod ghostdata;
 mod match_density;
-mod matchingticket;
 mod player;
 mod player_equipments;
-mod quickmatch;
+pub mod quickmatch;
 mod sign;
 mod visit;
 
 use crate::{
-    handler::eldenring::announcement::AnnouncementConfig,
-    handler::{HandleRequest, RequestHandler},
+    handler::{into_net_err, HandleRequest, RequestHandler},
     logging::LogContext,
     notification::NotificationChannelPoolToken,
     protocol::ClientSession,
@@ -36,10 +31,14 @@ pub struct DefaultClientHandler<'a> {
     pub push_tx: Sender<Vec<u8>>,
     pub session: ClientSession,
 
-    pub sign_tokens: HashMap<ObjectIdentifier, SignPoolToken<'a>>,
+    pub sign_token: Option<SignPoolToken<'a>>,
     pub breakin_token: Option<BreakInPoolToken<'a>>,
+    /// Every plain lobby, and the teammate entry of an allied-password lobby.
     pub quickmatch_token: Option<QuickMatchPoolToken<'a>>,
-    pub visitor_token: Option<VisitorPoolToken<'a>>,
+    /// Only the opponent entry of an allied-password lobby.
+    pub quickmatch_allied_pw_token: Option<QuickMatchPoolToken<'a>>,
+    pub hunter_token: Option<VisitorPoolToken<'a>>,
+    pub sinner_hunter_token: Option<VisitorPoolToken<'a>>,
 
     _notification_token: NotificationChannelPoolToken<'a>,
 }
@@ -58,17 +57,19 @@ impl<'a> DefaultClientHandler<'a> {
             services,
             push_tx,
             session,
-            sign_tokens: Default::default(),
+            sign_token: Default::default(),
             breakin_token: Default::default(),
             quickmatch_token: Default::default(),
-            visitor_token: Default::default(),
+            quickmatch_allied_pw_token: Default::default(),
+            hunter_token: Default::default(),
+            sinner_hunter_token: Default::default(),
             _notification_token,
         }
     }
 }
 
-impl RequestHandler<RequestParams, ResponseParams> for DefaultClientHandler<'_> {
-    async fn dispatch_request(
+impl DefaultClientHandler<'_> {
+    async fn dispatch_inner(
         &mut self,
         request: &RequestParams,
     ) -> Result<Option<ResponseParams>, Box<dyn std::error::Error>> {
@@ -79,18 +80,6 @@ impl RequestHandler<RequestParams, ResponseParams> for DefaultClientHandler<'_> 
 
             RequestParams::GetAnnounceMessageList(request) => {
                 ResponseParams::GetAnnounceMessageList(self.handle(request).await?)
-            }
-
-            RequestParams::CreateMatchingTicket(request) => {
-                ResponseParams::CreateMatchingTicket(self.handle(request).await?)
-            }
-
-            RequestParams::PollMatchingTicket(request) => {
-                ResponseParams::PollMatchingTicket(self.handle(request).await?)
-            }
-
-            RequestParams::DeleteMatchingTicket(request) => {
-                ResponseParams::DeleteMatchingTicket(self.handle(request).await?)
             }
 
             RequestParams::UpdateLoginPlayerCharacter(request) => {
@@ -148,6 +137,18 @@ impl RequestHandler<RequestParams, ResponseParams> for DefaultClientHandler<'_> 
             RequestParams::GrGetPlayerEquipments(request) => {
                 ResponseParams::GrGetPlayerEquipments(self.handle(request).await?)
             }
+
+            RequestParams::SendArxanInfo(request) => {
+                ResponseParams::SendArxanInfo(self.handle(request).await?)
+            }
+
+            RequestParams::SendFamilySharing(request) => {
+                ResponseParams::SendFamilySharing(self.handle(request).await?)
+            }
+
+            RequestParams::SendRegulationHash => ResponseParams::SendRegulationHash,
+
+            RequestParams::Hoge => ResponseParams::Hoge,
 
             RequestParams::CreateSign(request) => {
                 ResponseParams::CreateSign(self.handle(request).await?)
@@ -221,12 +222,16 @@ impl RequestHandler<RequestParams, ResponseParams> for DefaultClientHandler<'_> 
                 ResponseParams::AcceptQuickMatch(self.handle(request).await?)
             }
 
+            RequestParams::RejectQuickMatch(request) => {
+                ResponseParams::RejectQuickMatch(self.handle(request).await?)
+            }
+
             RequestParams::QuickMatchResultLog => ResponseParams::QuickMatchResultLog,
 
             RequestParams::QuickMatchEndLog => ResponseParams::QuickMatchEndLog,
 
-            RequestParams::CreateBattleSession(request) => {
-                ResponseParams::CreateBattleSession(self.handle(request).await?)
+            RequestParams::SendQuickMatchResult(request) => {
+                ResponseParams::SendQuickMatchResult(self.handle(request).await?)
             }
 
             RequestParams::GetMatchDensity(request) => {
@@ -241,6 +246,10 @@ impl RequestHandler<RequestParams, ResponseParams> for DefaultClientHandler<'_> 
 
             RequestParams::RejectVisit(request) => {
                 ResponseParams::RejectVisit(self.handle(request).await?)
+            }
+
+            RequestParams::SendQuickMatchStart(request) => {
+                ResponseParams::SendQuickMatchStart(self.handle(request).await?)
             }
 
             _ => {
@@ -265,11 +274,20 @@ impl RequestHandler<RequestParams, ResponseParams> for DefaultClientHandler<'_> 
     }
 }
 
+impl RequestHandler<RequestParams, ResponseParams> for DefaultClientHandler<'_> {
+    async fn dispatch_request(
+        &mut self,
+        request: &RequestParams,
+    ) -> Result<Option<ResponseParams>, Box<dyn NetError>> {
+        self.dispatch_inner(request).await.map_err(into_net_err)
+    }
+}
+
 #[derive(Default)]
 pub struct BannedClientHandler {}
 
-impl RequestHandler<RequestParams, ResponseParams> for BannedClientHandler {
-    async fn dispatch_request(
+impl BannedClientHandler {
+    async fn dispatch_inner(
         &mut self,
         request: &RequestParams,
     ) -> Result<Option<ResponseParams>, Box<dyn std::error::Error>> {
@@ -277,10 +295,10 @@ impl RequestHandler<RequestParams, ResponseParams> for BannedClientHandler {
             RequestParams::GetAnnounceMessageList(request) => {
                 ResponseParams::GetAnnounceMessageList(self.handle(request).await?)
             }
-            RequestParams::PollMatchingTicket(_) => {
-                ResponseParams::PollMatchingTicket(ResponsePollMatchingTicketParams { unk0: 0 })
-            }
             RequestParams::DeleteSession => ResponseParams::DeleteSession,
+            RequestParams::SendFamilySharing(request) => {
+                ResponseParams::SendFamilySharing(self.handle(request).await?)
+            }
             _ => {
                 log::warn!(
                     context:serde = LogContext::current(),
@@ -302,33 +320,16 @@ impl RequestHandler<RequestParams, ResponseParams> for BannedClientHandler {
     }
 }
 
-impl HandleRequest<Box<RequestGetAnnounceMessageListParams>, ResponseGetAnnounceMessageListParams>
-    for BannedClientHandler
-{
-    async fn handle(
+impl RequestHandler<RequestParams, ResponseParams> for BannedClientHandler {
+    async fn dispatch_request(
         &mut self,
-        _request: &Box<RequestGetAnnounceMessageListParams>,
-    ) -> Result<ResponseGetAnnounceMessageListParams, Box<dyn std::error::Error>> {
-        let announcements = serde_yaml::from_reader::<_, AnnouncementConfig>(File::open(
-            "config/ban_announcement.yml",
-        )?)?;
-
-        Ok(ResponseGetAnnounceMessageListParams {
-            changes: announcements
-                .changes
-                .iter()
-                .map(ResponseGetAnnounceMessageListParamsEntry::from)
-                .collect(),
-            notices: announcements
-                .notices
-                .iter()
-                .map(ResponseGetAnnounceMessageListParamsEntry::from)
-                .collect(),
-        })
+        request: &RequestParams,
+    ) -> Result<Option<ResponseParams>, Box<dyn NetError>> {
+        self.dispatch_inner(request).await.map_err(into_net_err)
     }
 }
 
 pub enum ActiveHandler<'a> {
-    Default(DefaultClientHandler<'a>),
+    Default(Box<DefaultClientHandler<'a>>),
     Banned(BannedClientHandler),
 }

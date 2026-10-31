@@ -59,6 +59,10 @@ impl<W: Write> ser::Serializer for &mut Serializer<W> {
     type SerializeStruct = Self;
     type SerializeStructVariant = Self;
 
+    fn is_human_readable(&self) -> bool {
+        false
+    }
+
     ser_primitive!(i8);
     ser_primitive!(u8);
     ser_primitive_le!(i16);

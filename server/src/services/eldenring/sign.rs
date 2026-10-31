@@ -2,66 +2,53 @@ use std::{
     sync::{
         atomic::{AtomicI64, Ordering},
         mpsc::Sender,
-        LazyLock,
     },
     time::Duration,
 };
 
-use dashmap::DashMap;
-use message::eldenring::{PlayRegionArea, PuddleArea};
+use message::eldenring::{ObjectIdentifier, PlayRegionArea, PuddleArea};
 
-use crate::services::eldenring::{area::MatchingArea, PoolError};
+use crate::services::eldenring::area::MatchingArea;
+use crate::services::ordered_pool::{Keyed, OrderedPool, OrderedPoolToken, PoolError};
 
 use super::weapon;
 
-pub const SIGN_ATTEMPT_CLEANUP_TIMEOUT: Duration = Duration::from_secs(30);
-
-/// Pool for summon signs. Both coop and duelist.
 #[derive(Default)]
 pub struct SignPool {
     counter: AtomicI64,
-    entries: DashMap<SignPoolKey, SignPoolEntry>,
+    inner: OrderedPool<SignPoolEntry>,
 }
 
 impl SignPool {
-    pub fn insert(&self, entry: SignPoolEntry) -> SignPoolToken {
-        let key = SignPoolKey(self.counter.fetch_add(1, Ordering::Relaxed));
-        self.entries.insert(key.clone(), entry);
-        SignPoolToken(self, key)
+    pub fn insert(&self, mut entry: SignPoolEntry) -> SignPoolToken<'_> {
+        entry.id = ObjectIdentifier(self.counter.fetch_add(1, Ordering::Relaxed));
+        self.inner.insert(entry)
     }
 
-    pub fn get(&self, key: &SignPoolKey) -> Option<SignPoolEntry> {
-        self.entries.get(key).map(|e| e.clone())
+    pub fn get(&self, key: &ObjectIdentifier) -> Option<SignPoolEntry> {
+        self.inner.get(key)
     }
 
-    pub fn has(&self, key: &SignPoolKey) -> bool {
-        self.entries.contains_key(key)
+    pub fn touch(&self, key: &ObjectIdentifier) -> Result<(), PoolError> {
+        self.inner.merge(key, |_| {})
     }
 
-    pub fn matches(&self, query: &SignPoolQuery) -> Vec<(SignPoolKey, SignPoolEntry)> {
-        self.entries
-            .iter()
-            .filter(|e| query.matches(e.value()))
-            .map(|e| (e.key().clone(), e.value().clone()))
-            .collect()
+    pub fn matches(&self, query: &SignPoolQuery) -> Vec<SignPoolEntry> {
+        self.inner.matches_all(|e| query.matches(e))
     }
 
-    pub fn matches_puddle(&self, query: &PuddleSignPoolQuery) -> Vec<(SignPoolKey, SignPoolEntry)> {
-        self.entries
-            .iter()
-            .filter(|e| query.matches(e.value()))
-            .map(|e| (e.key().clone(), e.value().clone()))
-            .collect()
+    pub fn matches_puddle(&self, query: &PuddleSignPoolQuery) -> Vec<SignPoolEntry> {
+        self.inner.matches_all(|e| query.matches(e))
     }
 
-    pub fn remove(&self, key: &SignPoolKey) -> Result<(), PoolError> {
-        self.entries.remove(key).ok_or(PoolError::NotFound)?;
-        Ok(())
+    pub fn sweep_expired(&self, ttl: Duration) {
+        self.inner.sweep_expired(ttl);
     }
 }
 
 #[derive(Clone, Debug)]
 pub struct SignPoolEntry {
+    pub id: ObjectIdentifier,
     pub player_id: i32,
     pub external_id: String,
     pub character_level: u32,
@@ -71,6 +58,23 @@ pub struct SignPoolEntry {
     pub group_passwords: Vec<String>,
     pub data: Vec<u8>,
     pub summonee_tx: Sender<Vec<u8>>,
+    pub updated_at: tokio::time::Instant,
+}
+
+impl Keyed for SignPoolEntry {
+    type Key = ObjectIdentifier;
+
+    fn key(&self) -> ObjectIdentifier {
+        self.id
+    }
+
+    fn updated_at(&self) -> tokio::time::Instant {
+        self.updated_at
+    }
+
+    fn touch(&mut self) {
+        self.updated_at = tokio::time::Instant::now();
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -169,39 +173,18 @@ impl PuddleSignPoolQuery<'_> {
     }
 }
 
+pub type SignPoolToken<'a> = OrderedPoolToken<'a, SignPoolEntry>;
+
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
-pub struct SignPoolKey(pub i64);
-
-/// Represents an entry in the sign pool. Removes corresponding entry when dropped.
-pub struct SignPoolToken<'a>(&'a SignPool, pub SignPoolKey);
-
-impl Drop for SignPoolToken<'_> {
-    fn drop(&mut self) {
-        let _ = self.0.remove(&self.1);
-    }
+pub struct SummonAttemptKey {
+    pub sign_id: ObjectIdentifier,
+    pub summoner_id: i32,
 }
-
-pub static SUMMON_ATTEMPTS: LazyLock<SummonAttemptTracker> = LazyLock::new(Default::default);
 
 #[derive(Clone)]
 pub struct SummonAttempt {
     /// Summoner channel sender for push notifs
     pub summoner_tx: Sender<Vec<u8>>,
-}
-
-#[derive(Default)]
-pub struct SummonAttemptTracker {
-    entries: DashMap<(SignPoolKey, i32), SummonAttempt>,
-}
-
-impl SummonAttemptTracker {
-    pub fn insert(&'static self, key: (SignPoolKey, i32), attempt: SummonAttempt) {
-        self.entries.insert(key, attempt);
-    }
-
-    pub fn remove(&self, key: &(SignPoolKey, i32)) -> Option<SummonAttempt> {
-        self.entries.remove(key).map(|(_, v)| v)
-    }
 }
 
 #[cfg(test)]
@@ -246,6 +229,8 @@ mod test {
             group_passwords: vec![],
             data: vec![],
             summonee_tx,
+            id: Default::default(),
+            updated_at: tokio::time::Instant::now(),
         };
 
         let finger = SignPoolQuery {
@@ -278,6 +263,8 @@ mod test {
             group_passwords: vec![],
             data: vec![],
             summonee_tx,
+            id: Default::default(),
+            updated_at: tokio::time::Instant::now(),
         };
 
         let finger = SignPoolQuery {
@@ -310,6 +297,8 @@ mod test {
             group_passwords: vec![],
             data: vec![],
             summonee_tx,
+            id: Default::default(),
+            updated_at: tokio::time::Instant::now(),
         };
 
         let finger = SignPoolQuery {
@@ -342,6 +331,8 @@ mod test {
             group_passwords: vec![],
             data: vec![],
             summonee_tx,
+            id: Default::default(),
+            updated_at: tokio::time::Instant::now(),
         };
 
         let finger = SignPoolQuery {
@@ -374,6 +365,8 @@ mod test {
             group_passwords: vec![],
             data: vec![],
             summonee_tx,
+            id: Default::default(),
+            updated_at: tokio::time::Instant::now(),
         };
 
         let finger = SignPoolQuery {
@@ -406,6 +399,8 @@ mod test {
             group_passwords: vec![],
             data: vec![],
             summonee_tx,
+            id: Default::default(),
+            updated_at: tokio::time::Instant::now(),
         };
 
         let finger = SignPoolQuery {
@@ -438,6 +433,8 @@ mod test {
             group_passwords: vec![],
             data: vec![],
             summonee_tx,
+            id: Default::default(),
+            updated_at: tokio::time::Instant::now(),
         };
 
         let finger = SignPoolQuery {
